@@ -75,20 +75,6 @@ class pcCreateRigArms(UI):
 
         mc.separator(st="in", h=20, w=500)
 
-        '''mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-
-        mc.setParent("..")
-
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Spine Rig GRP: ")
-        mc.textFieldButtonGrp("jointRigSpine_tfbg", cw=(1, 322), bl="  Load  ", tx="GRP_rig_spine")
-
-        mc.setParent("..")
-
-        # Attributes
-'''
-
-
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
         mc.setParent("..")
@@ -440,7 +426,7 @@ class pcCreateRigArms(UI):
 
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
         numTwistsPlus1 = numTwists + 1
-        twists = 3
+        twists = numTwists
         twistJnts = []
         twistExpression = ""
         for i in range(len(jntArmArray)):
@@ -452,7 +438,7 @@ class pcCreateRigArms(UI):
 
 
                 nextJntYVal = mc.getAttr("{0}.ty".format(nextJnt))
-                nextJntIncrement = nextJntYVal / (twists + 1)
+                nextJntIncrement = nextJntYVal / (numTwistsPlus1)
                 twistJnt = mc.duplicate(val, po=True, n="ToDelete")
 
             # create the joint twists at the proper location
@@ -465,7 +451,7 @@ class pcCreateRigArms(UI):
                     mc.parent(twistTemp, self.jointArmArray[i])
                     mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
                     twistJntsSubgroup.append(twistTemp[0])
-                twistInverse = 1.0 / (twists + 1)
+                twistInverse = 1.0 / (numTwistsPlus1)
                 if makeExpression:
                     twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
                                                                                valx * twistInverse)
@@ -842,6 +828,8 @@ class pcCreateRigArms(UI):
 
             print(mirrorRig)
             if mirrorRig:
+
+                # TO DELETE: Consider changing things so that you duplicate the arm before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
 
                 print("I got here!")
                 toReplace = "_" + leftRight
