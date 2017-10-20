@@ -419,7 +419,8 @@ class pcCreateRigArms(UI):
 
         # Organize the rig
         self.armCleanUp(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot, checkboxSpine,
-                     shoulderOffsetCtrl, ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], ctrlIKChest,
+                     shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
+                        ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], ctrlIKChest,
                         ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
 
 
@@ -539,7 +540,7 @@ class pcCreateRigArms(UI):
 
         elbowOffsetCtrl = []
         elbowOffsetCtrl.append(mc.group(n="OFFSET_" + elbowName, w=True, em=True))
-        elbowOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=elbowName))
+        elbowOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=elbowName)[0])
         elbowOffsetCtrl.append(mc.group(n="AUTO_" + elbowName, w=True, em=True))
 
         mc.parent(elbowOffsetCtrl[2], elbowOffsetCtrl[0])
@@ -665,7 +666,8 @@ class pcCreateRigArms(UI):
 
         return ikOffsetCtrl, ikArms, ikJntsDrive,ikSide
 
-    def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine, shoulderOffsetCtrl,
+    def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine,
+                   shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                 ikOffsetCtrl, elbowOffsetCtrl, ikArms0, ctrlIKChest, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr,  *args):
         #TO DELETE: come back to make the elbow invisible
         if not isCopy:
@@ -697,6 +699,10 @@ class pcCreateRigArms(UI):
         self.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
         for fkJntOC in fkJntOffsetCtrls:
             self.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
+        self.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True)
+        self.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True)
+        self.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True)
+
 
         # linking JNT visibility to their respective parent
         mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikArms0))
