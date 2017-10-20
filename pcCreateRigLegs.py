@@ -572,9 +572,9 @@ class pcCreateRigLegs(UI):
         # creates nodes that will affect whether or not the twist will go one way or another
         mc.setAttr("{0}.operation".format(ikCtrlLegTwistNode), 2)
         if isLeft:
-        mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), 1)
+            mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), 1)
         else:
-        mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), -1)
+            mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), -1)
         
         
         mc.connectAttr("{0}.{1}".format(ikOffsetCtrl1, legTwistAttr), ikCtrlLegTwistNode + ".i1x")
