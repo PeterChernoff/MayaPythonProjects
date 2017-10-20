@@ -17,11 +17,11 @@ bc.tgpBlendColors()
 '''
 
 
-class pcCreateRigFoot(UI):
+class pcCreateRigFingers(UI):
     def __init__(self):
 
         self.window = "bcWindow"
-        self.title = "pcRigFeet"
+        self.title = "pcRigFingers"
         self.winSize = (500, 325)
 
         self.createUI()
@@ -38,9 +38,9 @@ class pcCreateRigFoot(UI):
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
-        mc.text(l="Mirror Foot As Well?")
+        mc.text(l="Mirror Fingers As Well?")
         # mc.setParent("..")
-        mc.radioButtonGrp("selLegMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
+        mc.radioButtonGrp("selFingersMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
@@ -48,20 +48,18 @@ class pcCreateRigFoot(UI):
         mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
-        mc.radioButtonGrp("selLegType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
+        mc.radioButtonGrp("selFingersType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Ankle Locator: ")
-        mc.textFieldButtonGrp("locLoad_tfbg", cw=(1, 322), bl="  Load  ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Fingers Control: ")
+        mc.textFieldButtonGrp("ctrlFingersLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="IK Foot CTRL: ")
-        mc.textFieldButtonGrp("ctrlIKLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_l_leg")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Palm CTRL: ")
+        mc.textFieldButtonGrp("ctrlPalmLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_palm")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Leg CTRL: ")
-        mc.textFieldButtonGrp("jntLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_upperLeg")
 
         mc.setParent("..")
 
@@ -71,12 +69,11 @@ class pcCreateRigFoot(UI):
         # load buttons
         #
 
-        mc.textFieldButtonGrp("locLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-        mc.textFieldButtonGrp("ctrlIKLegLoad_tf", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("jntLegLoad_tf", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("ctrlFingersLoad_tfbg", e=True, bc=self.loadSrc1Btn)
+        mc.textFieldButtonGrp("ctrlPalmLoad_tf", e=True, bc=self.loadSrc2Btn)
 
         self.selLoad = []
-        self.locArray = []
+        self.ctrlsArray = []
         mc.showWindow(self.window)
 
     def createButtonCmd(self, *args):
@@ -95,16 +92,12 @@ class pcCreateRigFoot(UI):
         return
 
     def loadSrc1Btn(self):
-        self.locSel = self.tgpLoadTxBtn("locLoad_tfbg", "locator")
-        print(self.locSel)
+        self.ctrlsSel = self.tgpLoadTxBtn("ctrlFingersLoad_tfbg", "nurbsCurve")
+        print(self.ctrlsSel)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.loadCtrlBtn("ctrlIKLegLoad_tf")
+        self.ctrlSel = self.loadCtrlBtn("ctrlPalmLoad_tf")
         print(self.ctrlSel)
-
-    def loadSrc3Btn(self):
-        self.jntSel = self.tgpLoadJntBtn("jntLegLoad_tf", "joint")
-        print(self.jntSel)
 
 
     def loadCtrlBtn(self, loadBtn):
@@ -123,51 +116,13 @@ class pcCreateRigFoot(UI):
             #print(selName)
 
 
-    def tgpLoadJntBtn(self, loadBtn, myType):
-        # hierarchy
-        self.selLoad = []
-
-        self.selLoad = mc.ls(sl=True, fl=True, type=myType)
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the root {0}".format(myType))
-            return
-        else:
-            self.jointLegArray = self.getLegJnts(loadBtn, self.selLoad)
-
-
-        return self.jointLegArray
-
-    def getLegJnts(self, loadBtn, loadedValue):
-        selName = ', '.join(loadedValue)
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = loadedValue[0]
-        self.child = mc.listRelatives(loadedValue, ad=True, type="joint")
-        # collect the joints in an array
-        self.jointArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArray.extend(self.child)
-
-        # checks if the joints are legs but not if there's a twist in it
-        jointLegArray = [x for x in self.jointArray if ("leg" in x.lower() ) and "Twist" not in x]
-        self.jointRoot = loadedValue[0]
-
-        return jointLegArray
-
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
-
-
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root locator")
+            mc.warning("Select only the root control")
             return
         else:
 
@@ -178,24 +133,26 @@ class pcCreateRigFoot(UI):
             self.parent = self.selLoad[0]
             self.child = mc.listRelatives(self.selLoad, ad=True, type="transform")
             # collect the joints in an array
-            self.locArray = [self.parent]
+            self.ctrlsArray = [self.parent]
             # reverse the order of the children joints
             self.child.reverse()
 
             # add to the current list
-            self.locArray.extend(self.child)
-            locArraySorted = []
-            #print(self.locArray)
-            for i in range(len(self.locArray)):
-                sels = mc.listRelatives(self.locArray[i], c=True, s=True)
+            self.ctrlsArray.extend(self.child)
+            #print(self.ctrlsArray)
+            ctrlsArraySorted = []
+            #print(self.ctrlsArray)
+            #sort the array
+            for i in range(len(self.ctrlsArray)):
+                sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
                 if myType in mc.objectType(sels) or myType == mc.objectType(sels):
-                    locArraySorted.append(self.locArray[i])
+                    ctrlsArraySorted.append(self.ctrlsArray[i])
 
-            self.locRoot = self.selLoad[0]
-            #print(locArraySorted)
-            self.locArray = locArraySorted
+            self.ctrlsRoot = self.selLoad[0]
+            #print(ctrlsArraySorted)
+            self.ctrlsArray = ctrlsArraySorted
 
-        return self.locArray
+        return self.ctrlsArray
 
     def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
                     addPrefix=False):
@@ -286,208 +243,364 @@ class pcCreateRigFoot(UI):
                                  cd='{0}.{1}'.format(driver, driverAttribute),
                                  dv=driverValue, v=drivenValue)
 
+    def makeFingers(self, ctrlPalm, ctrlsArray, leftRight, colourTU, *args):
+
+        fingersPalmSetup = mc.listRelatives(ctrlPalm, ad=True, s=False)
+        fingersPalmSetup.reverse()
+        print(fingersPalmSetup)
+        autoThumbs = [x for x in fingersPalmSetup if ("thumb" in x.lower()) and "AUTO" in x]
+        autoIndex = [x for x in fingersPalmSetup if ("index" in x.lower()) and "AUTO" in x]
+        autoMiddle = [x for x in fingersPalmSetup if ("middle" in x.lower()) and "AUTO" in x]
+        autoRing = [x for x in fingersPalmSetup if ("ring" in x.lower()) and "AUTO" in x]
+        autoPink = [x for x in fingersPalmSetup if ("pink" in x.lower()) and "AUTO" in x]
+        ctrlFingers = [x for x in ctrlsArray if ("fingers" in x.lower())][0]
+        ctrlArrayFingers = [x for x in ctrlsArray if ("fingers" not in x.lower())]
+        ctrlThumb = [x for x in ctrlsArray if ("thumb" in x.lower())][0]
+        ctrlIndex = [x for x in ctrlsArray if ("index" in x.lower())][0]
+        ctrlMiddle = [x for x in ctrlsArray if ("middle" in x.lower())][0]
+        ctrlRing = [x for x in ctrlsArray if ("ring" in x.lower())][0]
+        ctrlPink = [x for x in ctrlsArray if ("pink" in x.lower())][0]
+
+        # TIMRP = Thumb, Index, Middle, Ring, Pinkie
+        autoTIMRP = [autoThumbs, autoIndex, autoMiddle, autoRing, autoPink]
+
+        ctrlTIMRP = [ctrlThumb, ctrlIndex, ctrlMiddle, ctrlRing, ctrlPink]
+
+        fingerAttr = ["curl", "scrunch", "spread"]
+        handAttr = list(fingerAttr)
+
+        handAttr.append("relax")
+        valsMinMaxDef = [-10, 10, 0]
+
+        # add the fingers control attributes
+        for i in range(len(handAttr)):
+            mc.addAttr(ctrlFingers, longName=handAttr[i], at="float", k=True, min=valsMinMaxDef[0],
+                       max=valsMinMaxDef[1], dv=valsMinMaxDef[2])
+
+        # add the fingers control attributes for the individual fingers
+        for i in range(len(fingerAttr)):
+            for j in range(len(ctrlTIMRP)):
+                mc.addAttr(ctrlTIMRP[j], longName=fingerAttr[i], at="float", k=True, min=valsMinMaxDef[0],
+                           max=valsMinMaxDef[1], dv=valsMinMaxDef[2])
+
+        # creating the Finger Curl
+        self.fingerCurlsSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
+
+        # creating the Finger scrunch
+        self.fingerScrunchSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
+        # creating the Finger spread
+        self.fingerSpreadSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
+        # creating the Finger relax
+
+        self.fingerRelaxSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
+
+        self.fingersCleanup(ctrlFingers, ctrlPalm, colourTU)
+
+    def fingersCleanup(self, ctrlFingers, ctrlPalm, colourTU, *args):
+
+        mc.parent(ctrlFingers, ctrlPalm)
+        mc.makeIdentity(ctrlFingers, apply=True, scale=True)
+
+        #get the non-shape values
+        lockValues = mc.listRelatives(ctrlFingers, c=True, s=False, type="transform")
+        lockValues.append(ctrlFingers)
+        print(lockValues)
+
+        for i in range(len(lockValues)):
+            self.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True)
+
+            mc.setAttr('{0}.overrideEnabled'.format(lockValues[i]), 1)
+            mc.setAttr("{0}.overrideColor".format(lockValues[i]), colourTU)
 
 
+    def fingerCurlsSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
 
-    def tgpSetDriverEnumWorldFollowLeg(self, driver, driverAttr, driven, *args):
+        # set at 0 for curl and rotateX, and the thumb values
+        driverVal = 0
+        self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0,
+                         thumbsAttrArrayDriven=0, )
 
-        # sets the leg enum to shift between world follow and knee follow
-        w0w1Attr = mc.listAttr(driven)[-1:]
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 0, 1)
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 1, 0)
+        #self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlArray=0, thumbsCurlArrayDriven=0)
+
+        # set at 10 for curl and rotateX, and the thumb values
+
+        thumbCurlsXP10 = [10, 45, 70]
+        thumbCurlsZP10 = [20, 0]
+
+        curlsFinger1XP10 = 5
+
+        indexCurlP10 = 70
+        indexCurlsP10 = [curlsFinger1XP10, indexCurlP10, indexCurlP10, indexCurlP10]
+
+        middleCurlP10 = 76
+        middleCurlsP10 = [curlsFinger1XP10, middleCurlP10, middleCurlP10, middleCurlP10]
+
+        ringCurlP10 = 67
+        ringCurlsP10 = [curlsFinger1XP10, ringCurlP10, ringCurlP10, ringCurlP10]
+
+        pinkCurlP10 = 67
+        pinkCurlsP10 = [curlsFinger1XP10, pinkCurlP10, pinkCurlP10, pinkCurlP10]
+        fingersCurlXP10 = [thumbCurlsXP10, indexCurlsP10, middleCurlsP10, ringCurlsP10, pinkCurlsP10]
+
+        driverVal = 10
+        self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersCurlXP10,
+                         thumbCurlsZP10, )
+        #self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlXP10, thumbCurlsZP10)
+
+        # set at -10 for curl and rotateX, and the thumb values
+
+        fingersCurlXN10 = []
+
+        thumbCurlsXN10 = [-10, -15, -10]
+        thumbCurlsZN10 = [-10, -10]
+
+        fingersCurlXN10.append(thumbCurlsXN10)
+        # index middle
+        curls_IMX1_N10 = -3
+        # ring pinkie
+        curls_RPX1_N10 = -4
+        curlsRestN10 = -25
+
+        indexCurlsN10 = [curls_IMX1_N10, curlsRestN10, curlsRestN10, curlsRestN10]
+
+        middleCurlsN10 = [curls_IMX1_N10, curlsRestN10, curlsRestN10, curlsRestN10]
+
+        ringCurlsN10 = [curls_RPX1_N10, curlsRestN10, curlsRestN10, curlsRestN10]
+
+        pinkCurlsN10 = [curls_RPX1_N10, curlsRestN10, curlsRestN10, curlsRestN10]
+        fingersCurlXN10 = [thumbCurlsXN10, indexCurlsN10, middleCurlsN10, ringCurlsN10, pinkCurlsN10]
+
+        driverVal = -10
+        self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersCurlXN10,
+                         thumbCurlsZN10, )
 
 
-    def makeFoot(self, ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU, *args):
+    def fingerCurls(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+        # sets the value for the finger curls, and the individual finger curls
+        fingerAttrVal = fingerAttr[0]
 
-        childrenFoot= mc.listRelatives(ctrlIKLeg, ad=True, type="ikHandle")
-        ikLeg = [x for x in childrenFoot if "leg" in x][0]
-        ikBall = [x for x in childrenFoot if "ball" in x][0]
-        ikToe = [x for x in childrenFoot if "toe" in x][0]
-        legLength = mc.getAttr("{0}.ty".format(jntLegs[1])) + mc.getAttr("{0}.ty".format(jntLegs[-1]))
+        for i in range(len(ctrlArrayFingers)):
+            for j in range(len(autoTIMRP[i])):
+                # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
+                # set all the x values in curl to 0
+                if isinstance(fingersAttrArray, int):
+                    valToUse = fingersAttrArray
 
-        '''
-        # this is just to determine if I've run the program. Delete this later
-        toDelete = mc.spaceLocator(p=(0, 0, 0))[0]
-        mc.setAttr('{0}.overrideEnabled'.format(toDelete), 1)
-        mc.setAttr("{0}.overrideColor".format(toDelete), 13)'''
+                else:
 
-        locToeFlap = [x for x in locArray if "toeFlap" in x][0]
-        mc.parent(ikBall, ikToe, locToeFlap)
-        locBall = [x for x in locArray if "ball" in x][0]
-        locToeEnd = [x for x in locArray if "toeEnd" in x][0]
-        locHeel = [x for x in locArray if "heel" in x][0]
-        locInner = [x for x in locArray if "Inner" in x][0]
-        locOuter = [x for x in locArray if "Outer" in x][0]
-        mc.parent(ikLeg, locBall)
-        mc.parent(offsetFoot, ctrlIKLeg)
+                    valToUse = fingersAttrArray[i][j]
+                self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                           valToUse)
+                self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                               driverVal, valToUse)
 
-        mc.addAttr(ctrlIKLeg, longName="break1", nn="_____", at="enum", k=True, en="_____:_____")
-        # Rotating the IK Foot
-        rotVals = ["rotX", "rotY", "rotZ"]
-        for i in range(len(rotVals)):
-            mc.addAttr(ctrlIKLeg, longName=rotVals[i], at="float", k=True)
-            #mc.connectAttr("{0}.{1}".format(ctrlIKLeg, rotVals[i]), locFootRoot + ".rotate{0}".format(rotVals[i][-1])) #To delete: need to replace this with an expression
-        if isLeft:
-            mult = 1;
+        if isinstance(thumbsAttrArrayDriven, int):
+            #if the value is an integer, we use the integer, if the value is a list, we use the list
+            valToUse = [thumbsAttrArrayDriven, thumbsAttrArrayDriven]
         else:
-            mult = -1;
+            valToUse = [thumbsAttrArrayDriven[0],thumbsAttrArrayDriven[1] ]
 
-        #Loc_ankle.rotate is connected to CTRL_IK_Leg.rotate
-        footExpr = "{0}.rotateX = {1}.rotX;\n" \
-               "{0}.rotateY= {1}.rotY*({2});\n" \
-               "{0}.rotateZ = {1}.rotZ*({2});".format(locFootRoot, ctrlIKLeg, mult)
-
-        xprName = "expr_" + leftRight + "footTwist"  # changes to account for the left or right
-
-        mc.expression(s=footExpr, n=xprName)
-
-        footRoll = "footRoll"
-        heelOffset = "heelOffset"
-        ballOffset = "ballOffset"
-        toePivotOffset = "toePivotOffset"
-        heelTwist = "heelTwist"
-        toeTwist = "toeTwist"
-        sideToSide = "sideToSide"
-        toeFlap = "toeFlap"
-        footAttributes = [[footRoll, -10, 10], [heelOffset, 0, 10], [ballOffset, 0, 10], [toePivotOffset, 0, 10],
-                          [heelTwist, -10, 10], [toeTwist, -10, 10], [sideToSide, -10, 10], [toeFlap, -10, 10], ]
-
-        mc.addAttr(ctrlIKLeg, longName="break2", nn="_____", at="enum", k=True, en="_____:_____")
-        for i in range(len(footAttributes)):
-            mc.addAttr(ctrlIKLeg, longName=footAttributes[i][0], at="float", k=True, minValue=footAttributes[i][1],
-                       maxValue=footAttributes[i][2])
-
-        # Foot Rolling
-        footRollValues = [0, -10, 5, 10]
-        footRollValuesHeel = [0, -50, 0, 0]
-        footRollValuesBall = [0, 0, 40, 0]
-        footRollValuesEnd = [0, 0, 0, 60]
-
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locHeel, footRollValuesHeel, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locBall, footRollValuesBall, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locToeEnd, footRollValuesEnd, "rotateX")
-
-        # individual values
-        footRollIndiVals = [0, 10]
-        footRollIndiValsHeel = [0, -50]
-        footRollIndiValsBall = [0, 40]
-        footRollIndiValsToeEnd = [0, 60]
-
-        self.setFootAttributeValues(ctrlIKLeg, heelOffset, footRollIndiVals, locHeel, footRollIndiValsHeel, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, ballOffset, footRollIndiVals, locBall, footRollIndiValsBall, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, toePivotOffset, footRollIndiVals, locToeEnd, footRollIndiValsToeEnd,
-                                    "rotateX")
-
-        # Heel and Toe Twist
-        # I can accidentally flip the direction of the locators, so I need to keep these values separate
-        twistValues = [0, -10, 10]
-        heelTwistValues = [0, -50, 50]
-        toeTwistValues = [0, 50, -50]
-
-        self.setFootAttributeValues(ctrlIKLeg, heelTwist, twistValues, locHeel, heelTwistValues, "rotateY", isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, toeTwist, twistValues, locToeEnd, toeTwistValues, "rotateY", isLeft)
-
-        # Adding Side To Side
-        sideToSideInnerValues = [0, 50, 0]
-        sideToSideOuterValues = [0, 0, -50]
-
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locInner, sideToSideInnerValues, "rotateZ", isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locOuter, sideToSideOuterValues, "rotateZ", isLeft)
-
-        # Adding the toeFlap
-        toeFlapValues = [0, 40, -40]
-        self.setFootAttributeValues(ctrlIKLeg, toeFlap, twistValues, locToeFlap, toeFlapValues, "rotateX")
-
-        # Adding Knee Controls
-        # I prefer creating new ones over using elbows
-        # createKnee(ikJntsDrive, leftRight, legLength, ikLeg0, isLeft):
-        kneeOffsetCtrl = self.createKnee(jntLegs, leftRight, legLength, ikLeg, isLeft)
-
-        # Auto Knee Follow
-        autoKneeName = "LOC_" + leftRight + "kneeFollow"
-
-        # Moves the knee follow locator into the proper place
-        locAutoKneeFollow = mc.spaceLocator(p=(0, 0, 0), name=autoKneeName)[0]
-        toDelete = mc.parentConstraint(locFootRoot, locAutoKneeFollow)
-        mc.delete(toDelete)
-
-        #constrains the locator to the foot in point and orient
-        kneeFollowPnt = mc.pointConstraint(locFootRoot, locAutoKneeFollow)[0]
-        kneeFollowOrntY = mc.orientConstraint(locFootRoot, locAutoKneeFollow, skip=["x", "z"])[0]
-
-        kneeFollowPrnt = mc.parentConstraint(locAutoKneeFollow, kneeOffsetCtrl[0], mo=True)
-        kneeFollow = "kneeFollow"
-        mc.addAttr(kneeOffsetCtrl[1], longName=kneeFollow, at="enum", k=True, en="foot:world")
-
-        # tgpSetDriverEnumWorldFollow(driver, driverAttr, driven, numNodes)
-        # sets the autoKneeControl parent values to on or off
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowPnt)
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowOrntY)
-
-        #Finishing the Leg, Leg IK Twist
-        # we are connecting the leg twist in the IK. We want the leg twist to aim inward in negative.
-        ikCtrlLegTwistNode = "{0}_LegTwist_MD".format(ctrlIKLeg)
-        mc.shadingNode("multiplyDivide", n=ikCtrlLegTwistNode, au=True)
-        # We want the
-        if isLeft:
-            mult = -1
-        else:
-            mult = 1
-        mc.setAttr("{0}.operation".format(ikCtrlLegTwistNode), 2)
-        mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), mult)
-        mc.connectAttr("{0}.{1}".format(ctrlIKLeg, "legTwist"), ikCtrlLegTwistNode + ".i1x")
-
-        mc.connectAttr("{0}.ox".format(ikCtrlLegTwistNode), ikLeg + ".twist")
+        self.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][0], "rotateZ", driverVal, valToUse[0])
+        self.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][1], "rotateZ", driverVal, valToUse[1])
 
 
-        # Cleaning Up
-        
-        self.footCleanUp(locAutoKneeFollow, leftRight,offsetFoot, kneeOffsetCtrl[0], colourTU)
+        self.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][0], "rotateZ", driverVal, valToUse[0])
+        self.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][1], "rotateZ", driverVal, valToUse[1])
+
+    def fingerScrunchSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
+
+        driverVal = 0
+
+        self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, 0, 0)
+
+        driverVal = 10
+        scrunchFinger_2XP10 = -50
+        scrunchFinger_3XP10 = 50
+        scrunchFinger_4XP10 = 50
+        scrunchFingers_234XP10 = [0, scrunchFinger_2XP10, scrunchFinger_3XP10, scrunchFinger_4XP10]
+
+        scrunchThumb_2XP10 = -30
+        scrunchThumb_3XP10 = 80
+        scrunchThumb_23XP10 = [0, scrunchThumb_2XP10, scrunchThumb_3XP10]
+
+        self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, scrunchFingers_234XP10, scrunchThumb_23XP10)
+
+        driverVal = -10
+        scrunchFinger_2XN10 = 15
+        scrunchFinger_3XN10 = -30
+        scrunchFinger_4XN10 = -40
+        scrunchFingers_234XN10 = [0, scrunchFinger_2XN10, scrunchFinger_3XN10, scrunchFinger_4XN10]
+
+        scrunchThumb_2XN10 = 20
+        scrunchThumb_3XN10 = -40
+        scrunchThumb_23XN10 = [0, scrunchThumb_2XN10, scrunchThumb_3XN10]
+        self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, scrunchFingers_234XN10,
+                           scrunchThumb_23XN10)
 
 
-    def footCleanUp(self, locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl0, colourTU, *args):
-        #rename the GRP_LOC_worldFollow to GRP_LOC_follow if not already
-        try:
-            grpFollowWorld = mc.ls("GRP_LOC_worldFollow")[0]
-        except:
-            try:
-                grpFollowWorld = mc.ls("GRP_LOC_follow")[0]
-            except:
-                mc.warning("Your follow locator is not properly named")
-                return
-            pass
-        # replace "GRP_LOC_worldFollow" with "GRP_LOC_follow"
-        grpFollowWorldRename = grpFollowWorld.replace("worldFollow", "follow")
-        try:
-            #rename if necessary
-            mc.rename(grpFollowWorld, grpFollowWorldRename)
-        except:
-            pass
+    def fingerScrunch(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+        # sets the value for the finger scrunch, and the individual finger scrunches
+        fingerAttrVal = fingerAttr[1]
 
-        #parents the follow control under the world follow group
-        mc.parent(locAutoKneeFollow, grpFollowWorldRename)
+        for i in range(len(ctrlArrayFingers)):
+            for j in range(len(autoTIMRP[i])):
+                # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
+                # set all the x values in curl to 0
+                if j != 0:
+                    if i == 0:
+                        #0 is the thumb version, if properly set up
 
-        #makes invisible the locator for the world follow and the locators under the foot
-        mc.setAttr("{0}.visibility".format(locAutoKneeFollow), False)
-        mc.setAttr("{0}.visibility".format(offsetFoot), False)
+                        if isinstance(thumbsAttrArrayDriven, int):
+                            valToUse = thumbsAttrArrayDriven
+                        else:
+                            valToUse = thumbsAttrArrayDriven[j]
+                        # sets the thumb as a fingers control
+                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                   valToUse)
+                        # sets the thumb individual control
+                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                   driverVal, valToUse)
+                    else:
+                        # the rest are the other fingers
+                        if isinstance(fingersAttrArray, int):
+                            valToUse = fingersAttrArray
+                        else:
+                            valToUse = fingersAttrArray[j]
+                        # sets the fingers as a whole
 
-        # groups the knee under the leg rig
-        grpRigLeg = "GRP_rig_" + leftRight + "leg"
-        mc.parent(kneeOffsetCtrl0, grpRigLeg)
+                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                   valToUse)
+                        # sets the fingers individually
+                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                   driverVal, valToUse)
+
+    def fingerSpreadSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
+
+        driverVal = 0
+
+        self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, 0, 0)
+
+        driverVal = 10
+
+        spreadX_P10_Thumb = [-12, -12]
+        spreadZ_P10_Thumb = [4, 4]
+        spread_P10Thumb = [spreadX_P10_Thumb, spreadZ_P10_Thumb]
+
+        spreadZ_P10_Index = [2, 15]
+        spreadZ_P10_Middle = [1, 7]
+        spreadZ_P10_Ring = [-1, -8]
+        spreadZ_P10_Pink = [-2, -15]
+        spreadZ_P10_Fingers = [0, spreadZ_P10_Index, spreadZ_P10_Middle, spreadZ_P10_Ring, spreadZ_P10_Pink]
 
 
-        # makes our colours the corresponding side values
-        mc.setAttr('{0}.overrideEnabled'.format(kneeOffsetCtrl0), 1)
-        mc.setAttr("{0}.overrideColor".format(kneeOffsetCtrl0), colourTU)
-
-        mc.setAttr('{0}.overrideEnabled'.format(offsetFoot), 1)
-        mc.setAttr("{0}.overrideColor".format(offsetFoot), colourTU)
+        self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, spreadZ_P10_Fingers, spread_P10Thumb)
 
 
+        driverVal = -10
+        spreadX_N10_Thumb = [12, 12]
+        spreadZ_N10_Thumb = [-14, -14]
+        spread_N10Thumb = [spreadX_N10_Thumb, spreadZ_N10_Thumb]
+
+        spreadZ_N10_Index = [-5, -15]
+        spreadZ_N10_Middle = [-2, -4]
+        spreadZ_N10_Ring = [2, 5]
+        spreadZ_N10_Pink = [5, 17]
+        spreadZ_N10_Fingers = [0, spreadZ_N10_Index, spreadZ_N10_Middle, spreadZ_N10_Ring, spreadZ_N10_Pink]
+        self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, spreadZ_N10_Fingers,
+                          spread_N10Thumb)
 
 
+    def fingerSpread(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+        # sets the value for the finger scrunch, and the individual finger scrunches
+        fingerAttrVal = fingerAttr[2]
+        for i in range(len(ctrlArrayFingers)):
+            for j in range(len(autoTIMRP[i])):
+                # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
+                # set all the x values in curl to 0
+                if j <2:
+                    # we only do this for the first two finger joints
+                    if i == 0:
+                        #0 is the thumb version, if properly set up
+
+                        if isinstance(thumbsAttrArrayDriven, int):
+                            valToUseX = thumbsAttrArrayDriven
+                            valToUseZ = thumbsAttrArrayDriven
+                        else:
+                            valToUseX = thumbsAttrArrayDriven[0][j]
+                            valToUseZ = thumbsAttrArrayDriven[1][j]
+                        # sets the thumb as a fingers control
+                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                   valToUseX)
+                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
+                                                   valToUseZ)
+
+                        # sets the thumb individual control
+                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                   driverVal, valToUseX)
+                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
+                                                   driverVal, valToUseZ)
+                    else:
 
 
+                        if isinstance(fingersAttrArray, int):
+                            valToUse = fingersAttrArray
+                        else:
+                            valToUse = fingersAttrArray[i][j]
+                        # sets the thumb as a fingers control
+                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
+                                                   valToUse)
+
+                        # sets the thumb individual control
+                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
+                                                   driverVal, valToUse)
+
+
+    def fingerRelaxSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
+
+        driverVal = 0
+
+        self.fingerRelax(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, 0, 0)
+
+        driverVal = 10
+
+        relaxX_P10_Index = [2, 10, 20, 25]
+        relaxX_P10_Middle = [4, 15, 25, 30]
+        relaxX_P10_Ring = [6, 20, 30, 35]
+        relaxX_P10_Pink = [8, 25, 35, 40]
+        relaxX_P10_Fingers = [0, relaxX_P10_Index, relaxX_P10_Middle, relaxX_P10_Ring, relaxX_P10_Pink]
+
+
+        self.fingerRelax(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, relaxX_P10_Fingers)
+
+
+        driverVal = -10
+
+        relaxX_N10_Index = [8, 30, 40, 45]
+        relaxX_N10_Middle = [6, 25, 35, 40]
+        relaxX_N10_Ring = [4, 15, 25, 30]
+        relaxX_N10_Pink = [2, 10, 20, 25]
+        relaxX_N10_Fingers = [0, relaxX_N10_Index, relaxX_N10_Middle, relaxX_N10_Ring, relaxX_N10_Pink]
+        self.fingerRelax(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, relaxX_N10_Fingers)
+
+
+    def fingerRelax(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, *args):
+        # sets the value for the finger scrunch, and the individual finger scrunches
+        fingerAttrVal = fingerAttr[3]
+        for i in range(len(ctrlArrayFingers)):
+            #skip the thumb
+            if i != 0:
+                for j in range(len(autoTIMRP[i])):
+                    # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
+                    # set all the x values in curl to 0
+                    # we skip the thumb
+                    if isinstance(fingersAttrArray, int):
+                        valToUse = fingersAttrArray
+                    else:
+                        valToUse = fingersAttrArray[i][j]
+                    # sets the fingers as a whole
+                    # we don't work with the fingers individually
+                    self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                   valToUse)
 
     def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
 
@@ -508,105 +621,61 @@ class pcCreateRigFoot(UI):
 
                 # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
 
-    def tgpCreateMirror(self, offsetFoot, leftRightReplace, leftRightReplaceMirror, jntLegs):
-        offsetFootStuffMirrorWork = mc.duplicate(offsetFoot, rc=True)
-        offsetFootMirrorWork = offsetFootStuffMirrorWork[0]
-        offsetFootMirror = offsetFootMirrorWork.replace(leftRightReplace, leftRightReplaceMirror)[:-1]
+    def tgpCreateMirror(self, ctrlFingers, leftRightReplace, leftRightReplaceMirror):
+        ctrlFingersMirrorWork = mc.duplicate(ctrlFingers, rc=True)
+
+        ctrlFingersMirror = []
 
 
-        offsetFootStuffMirror = []
-        for i in range(len(offsetFootStuffMirrorWork)):
+        offsetCtrlStuffMirror = []
+        for i in range(len(ctrlFingersMirrorWork)):
             # switch the l/r,
             print("--------")
-            print(offsetFootStuffMirrorWork[i])
-            toRename = offsetFootStuffMirrorWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
+            print(ctrlFingersMirrorWork[i])
+            toRename = ctrlFingersMirrorWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
             print(toRename)
-            mc.rename(offsetFootStuffMirrorWork[i], toRename)
-            offsetFootStuffMirror.append(toRename)
-        jntLegsMirror = []
-        # get the mirror legs for future reference too
-        for i in range(len(jntLegs)):
-            jntLegsMirror.append(jntLegs[i].replace(leftRightReplace, leftRightReplaceMirror))
-
+            mc.rename(ctrlFingersMirrorWork[i], toRename)
+            ctrlFingersMirror.append(toRename)
+        ctrlFingersMirrorTop = ctrlFingersMirror[0]
         # takes the initial offset value, duplicates it, flips the values around, then freezes the transformation
         # translates everything into place
-        mirrorXTrans = mc.getAttr("{0}.tx".format(offsetFootMirror)) * -1
-        mirrorYRot = mc.getAttr("{0}.ry".format(offsetFootMirror)) * -1
-        mirrorXScal = mc.getAttr("{0}.sx".format(offsetFootMirror)) * -1
-        mc.setAttr("{0}.tx".format(offsetFootMirror), mirrorXTrans)
-        mc.setAttr("{0}.ry".format(offsetFootMirror), mirrorYRot)
-        mc.setAttr("{0}.sx".format(offsetFootMirror), mirrorXScal)
-        mc.makeIdentity(offsetFootMirror, apply=True, scale=True)
+        mirrorTrans = mc.xform(ctrlFingersMirrorTop, q=True, ws=True, rotatePivot=True)
+        mirrorTransX = mirrorTrans[0]*-1
+        mirrorTransY = mirrorTrans[1]
+        mirrorTransZ = mirrorTrans[2]
+        mirrorXScal = mc.getAttr("{0}.sx".format(ctrlFingersMirrorTop)) * -1
+        print(mirrorTrans)
+        print(mirrorXScal)
 
-        return offsetFootStuffMirror, offsetFootMirror, jntLegsMirror
+        #mc.move(mirrorTrans[0], mirrorTrans[1], mirrorTrans[2], ctrlFingersMirrorTop, a=True)
+        mc.setAttr("{0}.tx".format(ctrlFingersMirrorTop), mirrorTransX)
+        mc.setAttr("{0}.sx".format(ctrlFingersMirrorTop), mirrorXScal)
+        mc.makeIdentity(ctrlFingersMirrorTop, apply=True, translate = True, scale=True)
 
-    def setFootAttributeValues(self, ctrlIKLeg, footAttribute, footAttributeValues, loc, footAttributeValuesLoc, setValue, isLeft=True):
-        # the values may need to be negative when the foot is switched, but some of the values work fine with both sides so we make it a default
-        if isLeft:
-            mult = 1
-        else:
-            mult = -1
-        for i in range(len(footAttributeValues)):
-            # def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue):
-            self.setDriverDrivenValues(ctrlIKLeg, footAttribute, loc, setValue, footAttributeValues[i],
-                                       footAttributeValuesLoc[i]*mult)
-    def createKnee(self, ikJntsDrive, leftRight, legLength, ikLeg0, isLeft, *args):
+        return ctrlFingersMirror, ctrlFingersMirrorTop
 
-        kneeName = "CTRL_" + leftRight + "knee"
-
-        kneeOffsetCtrl = []
-        kneeOffsetCtrl.append(mc.group(n="OFFSET_" + kneeName, w=True, em=True))
-        kneeOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=kneeName)[0])
-        kneeOffsetCtrl.append(mc.group(n="AUTO_" + kneeName, w=True, em=True))
-        print(kneeOffsetCtrl)
-
-        mc.parent(kneeOffsetCtrl[2], kneeOffsetCtrl[0])
-        mc.parent(kneeOffsetCtrl[1], kneeOffsetCtrl[2])
-
-        toDelete = mc.pointConstraint(ikJntsDrive, kneeOffsetCtrl[0])
-        toDelete2 = mc.aimConstraint(ikJntsDrive[1], kneeOffsetCtrl[0], aim=(0, 0, 1))
-
-        mc.delete(toDelete, toDelete2)
-        print(legLength)
-
-        if not isLeft:
-            legLength = -legLength
-
-
-        # moves along the Z axis, relative to its pre-move position, along the object space, using worldspace distance units
-        mc.move(0, 0, legLength / 2, kneeOffsetCtrl[0], r=True, os=True, wd=True)
-
-        mc.poleVectorConstraint(kneeOffsetCtrl[1], ikLeg0)
-
-        return kneeOffsetCtrl
 
     def tgpMakeBC(self, *args):
 
-        checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
-        mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
-        locNames = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
+        checkSelLeft = mc.radioButtonGrp("selFingersType_rbg", q=True, select=True)
+        mirrorSel = mc.radioButtonGrp("selFingersMirrorType_rbg", q=True, select=True)
+        ctrlFingerNames = mc.textFieldButtonGrp("ctrlFingersLoad_tfbg", q=True, text=True)
 
-        ctrlIKLeg = mc.textFieldButtonGrp("ctrlIKLegLoad_tf", q=True, text=True)
+        ctrlPalm = mc.textFieldButtonGrp("ctrlPalmLoad_tf", q=True, text=True)
 
-        jntRoot = mc.textFieldButtonGrp("jntLegLoad_tf", q=True, text=True)
-        if not jntRoot:
-            mc.warning("You need to select a root joint for the legs")
-            return
-        jntLegs = self.getLegJnts("jntLegLoad_tf", [jntRoot])
-        if not jntLegs:
-            mc.warning("You need to select leg joint")
-            return
 
         try:
-            locFootRoot = self.locArray[0]
+            fingerRoot = self.ctrlsArray[0]
 
         except:
             mc.warning("No locator selected!")
             return
-        offsetFoot = mc.listRelatives(locFootRoot, parent=True)[0]
-        locArray = self.locArray
 
-        print(mirrorSel)
+        ctrlsArray = self.ctrlsArray
+
+
+        print("-------")
+
         if mirrorSel == 1:
             mirrorRig = False
         else:
@@ -630,41 +699,37 @@ class pcCreateRigFoot(UI):
         leftRightReplaceMirror = "_" + leftRightMirror
 
         # make sure the selections are not empty
-        checkList = [locNames]
+        checkList = [ctrlFingerNames]
         # note: the isCopy is not applicable due to the differences between the leg and arm joint setup.
         # However, editing them out is too much hassle,  it's easier just to leave them both false
         if ((checkList[0] == "")):
             mc.warning("You are missing a selection!")
             return
         else:
+
+            '''toDelete = mc.spaceLocator(p=(0, 0, 0))[0]
+            mc.setAttr('{0}.overrideEnabled'.format(toDelete), 1)
+            mc.setAttr("{0}.overrideColor".format(toDelete), 13)'''
+
             if mirrorRig:
-                #we want to get the foot before we add anything to it. When doing this programmatically, it's easier
-                offsetFootStuffMirror, offsetFootMirror, jntLegsMirror = self.tgpCreateMirror(offsetFoot, leftRightReplace, leftRightReplaceMirror, jntLegs)
+                #we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
+                # make sure the children are not locked
+                ctrlsArrayMirror, ctrlFingerNames = self.tgpCreateMirror(ctrlFingerNames, leftRightReplace, leftRightReplaceMirror)
 
-            # makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft)
-            self.makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU)
-
+            self.makeFingers(ctrlPalm, ctrlsArray, leftRight, colourTU)
 
 
             print(mirrorRig)
-
-
             if mirrorRig:
 
                 print("I got here!")
-                toReplace = "_" + leftRight
-                toReplaceWith = "_" + leftRightMirror
-
 
                 isLeftMirror = not isLeft
 
-                ctrlIKLegMirror = ctrlIKLeg.replace(leftRightReplace, leftRightReplaceMirror)
-                locFootRootMirror = locFootRoot.replace(leftRightReplace, leftRightReplaceMirror)
-                locArrayMirror = []
-                print(locArray)
-                for i in range(len(locArray)):
+                ctrlPalmMirror = ctrlPalm.replace(leftRightReplace, leftRightReplaceMirror)
 
-                    locArrayMirror.append(locArray[i].replace(leftRightReplace, leftRightReplaceMirror))
 
-                self.makeFoot(ctrlIKLegMirror, offsetFootMirror, locFootRootMirror, jntLegsMirror, locArrayMirror, leftRightMirror, isLeftMirror, colourTUMirror)
+                print(ctrlsArray)
+
+                self.makeFingers(ctrlPalmMirror, ctrlsArrayMirror, leftRightMirror, colourTUMirror)
 
