@@ -67,6 +67,7 @@ class pcCreateRigUtilities:
         return offsetCtrl
 
     @staticmethod
+
     def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals = [], toHide = False, visible=False, toLock = True):
         myVals = list(theVals) #need to reset it every time
         if translate:

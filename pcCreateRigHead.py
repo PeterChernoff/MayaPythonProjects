@@ -200,54 +200,6 @@ class pcCreateRigHead(UI):
 
         return self.jointArray
 
-    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None):
-        selname = str(s)
-
-        ctrlName = selname.replace("JNT_", "CTRL_")
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=8)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        groupPC = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(groupPC, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-
-        offsetCtrl = [offset, ctrl]
-        return offsetCtrl
-
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-            mc.setAttr("{0}.tx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-            mc.setAttr("{0}.rx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-            mc.setAttr("{0}.sx".format(s), k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
-
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue):
-        # TO DELETE: I may need to come back to this
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute), cd='{0}.{1}'.format(driver, driverAttribute),
-                             dv=driverValue, v=drivenValue)
-
     def createNeckHeadCtrls(self, ctrlIKChest, grpJntSpine, checkboxSpine, *args):
         listCtrls = ["neck", "head", "jaw1"]
         headOffsetCtrls = []
@@ -494,7 +446,7 @@ class pcCreateRigHead(UI):
                 mc.warning("Make the first selection the root neck joint")
                 return
 
-            #CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             # create the IK base controls
             # Creating the Neck and Head Controls.
 
