@@ -7,16 +7,17 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import pcCreateRigUtilities
 from tgpBaseUI import BaseUI as UI
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 
+reload(pcCreateRigUtilities)
 '''
 import tgpBlendColors as bc
 reload(bc)
 bc.tgpBlendColors()
 
 '''
-
-
 class pcCreateRigSpine(UI):
     def __init__(self):
 
@@ -50,7 +51,7 @@ class pcCreateRigSpine(UI):
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Joints: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="IK Spine Joints: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.setParent("..")
@@ -120,126 +121,77 @@ class pcCreateRigSpine(UI):
 
         return self.jointArray
 
-    def createCTRLs(self, s, size=3, prnt = False, ornt = False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
-        selname = str(s)
+
+    def createSpineIK(self, jntEnd, jntEndSize, midValue, *args):
+
+        ikHip = mc.duplicate(jntEnd, n="JNT_IK_hip", renameChildren=True)
+        print(ikHip)
+        mc.parent(ikHip, w=True)
+        noUnicode = str(ikHip[0])
+        print(noUnicode)
+        mc.setAttr('{0}.radius'.format(noUnicode), jntEndSize * 3)
+        ikMidSpine = mc.duplicate(ikHip, n="JNT_IK_midSpine")
+        ikChest = mc.duplicate(ikHip, n="JNT_IK_chest")
+        spineIKs = [ikHip[0], ikMidSpine[0], ikChest[0]]
+
+        print(ikHip)
+
+        # moves the named IK joints into position using constraints, then deletes the constraints
+        todelete1 = mc.pointConstraint(self.jointArray[0], ikHip[0], mo=False)
+        todelete2 = mc.pointConstraint(self.jointArray[midValue], ikMidSpine, mo=False)
+
+        mc.delete(todelete1, todelete2)
 
 
-        ctrlName = selname.replace("JNT_", "CTRL_")
-        if sections:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=8)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
+        return ikHip[0], ikMidSpine, ikChest[0], spineIKs
 
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        groupPC = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(groupPC, n="OFFSET_" + ctrl)
 
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        if ornt:
-            mc.orientConstraint(ctrl, s, mo=0)
-        if pnt:
-            mc.pointConstraint(ctrl, s, mo=0)
+    def createIKSpline(self, jntEnd, *args):
 
-        offsetCtrl = [offset, ctrl]
-        return offsetCtrl
+        ikSpines = mc.ikHandle(n="IK_spine", sj=self.jointArray[0], ee=jntEnd, sol="ikSplineSolver", numSpans=2)
 
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
+        ikSpine = ikSpines[0]
+        effSpine = ikSpines[1]
+        crvSpine = ikSpines[2]
 
-            mc.setAttr("{0}.tx".format(s),k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
+        effSpine = mc.rename(effSpine, "EFF_spine")
+        crvSpine = mc.rename(crvSpine, "CRV_spine")
 
-            mc.setAttr("{0}.rx".format(s),k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
+        return ikSpine, effSpine, crvSpine
 
-            mc.setAttr("{0}.sx".format(s),k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
+    def createIKSpineCtrls(self, crvSpine,ikMidSpine, ikChest, ikHip, spineIKs, *args):
+        '''
+        Bind To: Selected Joints
+        Bind Method: Closest Distance
+        Skinning Method: Classic Linear
+        Normalize Weights: Interactive
+        '''
+        mc.select(crvSpine, ikMidSpine, ikChest, ikHip)
 
-    def tgpMakeBC(self, *args):
+        #mc.skinCluster (ikHip, ikMidSpine, ikChest, crvSpine, sm=0, nw = 1)
 
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        scls = mc.skinCluster(ikMidSpine, ikChest, ikHip, crvSpine, name='spine_skinCluster', toSelectedBones=True,
+                              bindMethod=0, skinMethod=0, normalizeWeights=1)[0]
 
-        self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        #self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
+        # create controls for IK Spines
+        spineIKCtrls = []
+        spineIKSizes = [[1, 26, 20], [1, 28, 20], [1, 15, 15]]
 
-        # make sure the selections are not empty
-        checkList = [self.jntNames]
+        for i in range(len(spineIKs)):
+            spineIKCtrls.append(CRU.createCTRLs(spineIKs[i], 19, prnt=True, colour=18,boxDimensionsLWH=spineIKSizes[i]))
 
-        if ((checkList[0] == "")):
-            mc.warning("You are missing a selection!")
-            return
-        else:
-            # create the IK base controls
-            jntEnd = self.jointArray[-1]
+        # make the neck area more appealing
+        '''cvsToMove = mc.select(spineIKCtrls[-1][1] + ".cv[:]")
+        mc.rotate(-20, cvsToMove, y=True)
+        mc.move(-2, cvsToMove, x=True, r=True, wd=True, ls=True)
+        mc.move(2, cvsToMove, z=True, r=True, wd=True, ls=True)'''
 
-            noUnicode = str(jntEnd)
-            print(noUnicode)
-            jntEndSize = mc.getAttr('{0}.radius'.format(noUnicode))
-            ikHip = mc.duplicate (jntEnd, n="JNT_IK_hip")
-            print(ikHip)
-            mc.parent(ikHip, w=True)
-            noUnicode = str(ikHip[0])
-            print(noUnicode)
-            mc.setAttr('{0}.radius'.format(noUnicode), jntEndSize*3)
-            ikMidSpine = mc.duplicate (ikHip, n="JNT_IK_midSpine")
-            ikChest = mc.duplicate(ikHip, n="JNT_IK_chest")
-            spineIKs = [ikHip[0], ikMidSpine[0], ikChest[0]]
+        return spineIKCtrls
 
-            # gets values for later use
-            jntSize = len(self.jointArray)
-            midValue = int(jntSize/2)
+    def addIkTwist(self, ikSpine, ikHip, ikChest, *args):
 
-            # moves the named IK joints into position using constraints, then deletes the constraints
-            todelete1 = mc.pointConstraint(self.jointArray[0], ikHip, mo=False)
-            todelete2 = mc.pointConstraint(self.jointArray[midValue], ikMidSpine, mo=False)
 
-            mc.delete(todelete1, todelete2)
-
-            try:
-                mc.parent("GEO_hip", ikHip)
-            except:
-                mc.warning("Hip geometry either does not exist or is not properly named")
-
-            # create the IK spline
-
-            ikSpines = mc.ikHandle(n = "IK_spine", sj=self.jointArray[0], ee=jntEnd, sol="ikSplineSolver",numSpans=2)
-
-            ikSpine = ikSpines[0]
-            effSpine = ikSpines[1]
-            crvSpine = ikSpines[2]
-
-            effSpine = mc.rename(effSpine, "EFF_spine")
-            crvSpine = mc.rename(crvSpine, "CRV_spine")
-
-            # bind the curve to the JNT IKs
             '''
-            Bind To: Selected Joints
-            Bind Method: Closest Distance
-            Skinning Method: Classic Linear
-            Normalize Weights: Interactive
-            '''
-            mc.select(crvSpine, ikMidSpine, ikChest, ikHip)
-
-            #mc.skinCluster (ikHip, ikMidSpine, ikChest, crvSpine, sm=0, nw = 1)
-
-            scls = mc.skinCluster(ikMidSpine, ikChest, ikHip, crvSpine, name='spine_skinCluster', toSelectedBones=True,
-                                  bindMethod=0, skinMethod=0, normalizeWeights=1)[0]
-
-            # create controls for IK Spines
-            spineIKCtrls = []
-            for sik in spineIKs:
-                spineIKCtrls.append(self.createCTRLs(sik, 19, prnt=True, colour=18))
-
-            '''	
             Set World Up Type to Object Rotation Up (Start/End)
             Set Up axis to Negative Z
             Set Up Vector and Up Vector 2 to 0, 0, -1 (Best works if all joints are facing the same direction)
@@ -260,147 +212,242 @@ class pcCreateRigSpine(UI):
             mc.setAttr('{0}.dWorldUpVectorEndY'.format(ikSpine), 0)
             mc.setAttr('{0}.dWorldUpVectorEndZ'.format(ikSpine), -1)
 
-            mc.connectAttr(ikHip[0] + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrix")
-            mc.connectAttr(ikChest[0] + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrixEnd")
-
-
-
-            print("-------")
+            mc.connectAttr(ikHip + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrix")
+            mc.connectAttr(ikChest + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrixEnd")
 
             mc.setAttr('{0}.dTwistValueType'.format(ikSpine), 1)
 
-            # adding stretch
-            curveInfo = mc.arclen(crvSpine, ch = True)
+    def addStretch(self, crvSpine, jntSize, *args):
+        curveInfo = mc.arclen(crvSpine, ch=True)
 
-            curveInfo = mc.rename(curveInfo, "spineInfo")
-            curveLen = mc.getAttr("{0}.arcLength".format(curveInfo))
-            mc.shadingNode("multiplyDivide", n="spine_md",au=True)
-            mc.setAttr("spine_md.i2x".format(curveInfo), curveLen)
-            mc.setAttr("spine_md.operation".format(curveInfo), 2)
+        curveInfo = mc.rename(curveInfo, "spineInfo")
+        curveLen = mc.getAttr("{0}.arcLength".format(curveInfo))
+        mc.shadingNode("multiplyDivide", n="spine_md", au=True)
 
+        mc.setAttr("spine_md.i2x".format(curveInfo), curveLen)
+        mc.setAttr("spine_md.operation".format(curveInfo), 2)
 
-            mc.connectAttr("{0}.arcLength".format(curveInfo), "spine_md.i1x")
+        mc.connectAttr("{0}.arcLength".format(curveInfo), "spine_md.i1x")
 
-            # get the scales to the spines
+        # get the scales to the spines
 
+        # to allow for the squash/stretch
+        # get square root of output
+        mc.shadingNode("multiplyDivide", n="spineSquashPow_md", au=True)
+        mc.setAttr("spineSquashPow_md.operation".format(curveInfo), 3)
+        mc.setAttr("spineSquashPow_md.i2x".format(curveInfo), 0.5)
+        mc.connectAttr("spine_md.ox", "spineSquashPow_md.i1x")
 
-            # get square root of output
-            mc.shadingNode("multiplyDivide", n="spineSquashPow_md", au=True)
-            mc.setAttr("spineSquashPow_md.operation".format(curveInfo), 3)
-            mc.setAttr("spineSquashPow_md.i2x".format(curveInfo), 0.5)
-            mc.connectAttr("spine_md.ox", "spineSquashPow_md.i1x")
+        # divide by the square root
+        mc.shadingNode("multiplyDivide", n="spineSquashDiv_md", au=True)
+        mc.setAttr("spineSquashDiv_md.operation".format(curveInfo), 2)
+        mc.setAttr("spineSquashDiv_md.i1x".format(curveInfo), 1)
+        mc.connectAttr("spineSquashPow_md.ox", "spineSquashDiv_md.i2x")
 
-            # divide by the square root
-            mc.shadingNode("multiplyDivide", n="spineSquashDiv_md", au=True)
-            mc.setAttr("spineSquashDiv_md.operation".format(curveInfo), 2)
-            mc.setAttr("spineSquashDiv_md.i1x".format(curveInfo), 1)
-            mc.connectAttr("spineSquashPow_md.ox", "spineSquashDiv_md.i2x")
+        for i in range(jntSize - 1):
+            # connects the spine joints to the joint scale to allow for squash and stretch
+            mc.connectAttr("spine_md.ox", "{0}.scaleX".format(self.jointArray[i]))
+            mc.connectAttr("spineSquashDiv_md.ox", "{0}.scaleY".format(self.jointArray[i]))
+            mc.connectAttr("spineSquashDiv_md.ox", "{0}.scaleZ".format(self.jointArray[i]))
 
+    def createFKJntAndCtrls(self, jntSize, jntEndSize, spineIKCtrls, *args):
 
-            for i in range(jntSize-1):
-                mc.connectAttr("spine_md.ox", "{0}.scaleX".format(self.jointArray[i]))
-                mc.connectAttr("spineSquashDiv_md.ox", "{0}.scaleY".format(self.jointArray[i]))
-                mc.connectAttr("spineSquashDiv_md.ox", "{0}.scaleZ".format(self.jointArray[i]))
+        # create FK joints, then orient them to world
+        fkJnts = []
+        for i in range(0, jntSize, 2):
+            if i == jntSize - 1:
+                lastTerm = "end"
+            else:
+                lastTerm = "{0}".format(i / 2 + 1)
 
+            pos = mc.xform(self.jointArray[i], query=True, translation=True, worldSpace=True)
+            print(pos)
+            fkJnts.append(mc.joint(name="JNT_FK_spine_{0}".format(lastTerm), p=pos, rad=jntEndSize * 2))
+            mc.joint("JNT_FK_spine_{0}".format(lastTerm), e=True, zso=True, oj="none")
 
-            #print(mc.getAttr("{0}.translate".format(self.jointArray[0])))
+        # create CTRLs, then parent them appropriately
+        offsetCtrlFKJnts = []  # keeps track of the offsets so we can parent them appropriately
+        for i in range(len(fkJnts[:-1])):
+            print(fkJnts[i])
+            # Putting into a list so the CTRL sees it properly
+            offsetCtrl = CRU.createCTRLs(fkJnts[i], 23, ornt=True, orientVal=(0, 1, 0), colour=17)
 
-            # create FK joints, then orient them to world
-            fkJnts = []
-            for i in range(0, jntSize,2):
-                if i == jntSize-1:
-                    lastTerm = "end"
-                else:
-                    lastTerm = "{0}".format(i/2 + 1)
+            print(offsetCtrl)
+            offsetCtrlFKJnts.append(offsetCtrl)
 
-                pos = mc.xform(self.jointArray[i], query=True, translation=True, worldSpace=True )
-                print(pos)
-                fkJnts.append(mc.joint(name="JNT_FK_spine_{0}".format(lastTerm),p=pos, rad=jntEndSize*2))
-                mc.joint("JNT_FK_spine_{0}".format(lastTerm), e=True, zso=True, oj="none")
+        cvsToMove = mc.select(offsetCtrlFKJnts[0][1] + ".cv[:]")
+        mc.move(5, cvsToMove, y=True, r=True, wd=True, ls=True)
 
+        cvsToMove = mc.select(offsetCtrlFKJnts[-1][1] + ".cv[:]")
+        mc.move(-5, cvsToMove, y=True, r=True, wd=True, ls=True)
 
-            # create CTRLs, then parent them appropriately
-            offsetCtrlFKJnts=[]  #keeps track of the offsets so we can parent them appropriately
-            for i in range(len(fkJnts[:-1])):
-                print(fkJnts[i])
-                # Putting into a list so the CTRL sees it properly
-                offsetCtrl = self.createCTRLs(fkJnts[i], 23, ornt=True, orientVal=(0,1,0), colour=17, sections=8)
+        # put the
+        # mc.parent is driven, driver
+        mc.parent(offsetCtrlFKJnts[1][0], offsetCtrlFKJnts[0][1])
+        mc.parent(offsetCtrlFKJnts[2][0], offsetCtrlFKJnts[1][1])
 
-                print(offsetCtrl)
-                offsetCtrlFKJnts.append(offsetCtrl)
-            # put the
-            # mc.parent is driven, driver
-            mc.parent(offsetCtrlFKJnts[1][0], offsetCtrlFKJnts[0][1])
-            mc.parent(offsetCtrlFKJnts[2][0], offsetCtrlFKJnts[1][1])
+        mc.parent(spineIKCtrls[1][0], offsetCtrlFKJnts[1][1])
+        mc.parent(spineIKCtrls[2][0], offsetCtrlFKJnts[2][1])
 
-            mc.parent(spineIKCtrls[1][0], offsetCtrlFKJnts[1][1])
-            mc.parent(spineIKCtrls[2][0], offsetCtrlFKJnts[2][1])
+        return fkJnts, offsetCtrlFKJnts
 
-            # create hip controls
-
-
-            fkHip = mc.duplicate (ikHip, n="JNT_FK_hip")
-            print(fkHip)
-            print("------")
-            # delete the children
-            fkHipChilds= mc.listRelatives(fkHip[0], ad=True, f=True)
-            mc.delete(fkHipChilds)
-            fkHip=fkHip[0]
-
-
-            fkHipEnd = mc.duplicate (fkHip, n="JNT_FK_hipEnd")
-            mc.move(-20, fkHipEnd, y=True, r=True)
-
-            mc.parent(fkHipEnd, fkHip)
-
-            fkHipOffsetCtrl = self.createCTRLs(fkHip, 27, prnt=True, colour=17, sections=8)
+    def createHipCtrl(self, ikHip, spineIKCtrls,  *args):
+        # create hip controls
 
 
-            mc.parent(fkHipOffsetCtrl[0], spineIKCtrls[0][0])
-            mc.parent(fkHip, ikHip) # TO DELETE: May need to edit this as I made a mistake when taking notes. fkHip needs to go under ikHip
+        fkHip = mc.duplicate(ikHip, n="JNT_FK_hip")
+        print(fkHip)
+        print("------")
+        # delete the children
+        fkHipChilds = mc.listRelatives(fkHip[0], ad=True, f=True)
+        mc.delete(fkHipChilds)
+        fkHip = fkHip[0]
 
-            # Create center of gravity
+        fkHipEnd = mc.duplicate(fkHip, n="JNT_FK_hipEnd")[0]
+        mc.move(-20, fkHipEnd, y=True, r=True)
+        valToMove = mc.getAttr("{0}.ty".format(fkHipEnd))
 
-            cogCTRL = mc.circle(nr=(1,0,0), r=35, n="CTRL_COG", degree=1, sections=6)[0]
+        mc.parent(fkHipEnd, fkHip)
 
-            mc.setAttr('{0}.overrideEnabled'.format(cogCTRL), 1)
-            mc.setAttr("{0}.overrideColor".format(cogCTRL), 13)
+        fkHipOffsetCtrl = CRU.createCTRLs(fkHip, 27, prnt=True, colour=17)
+        cvsToMove = mc.select(fkHipOffsetCtrl[1] + ".cv[:]")
+        print(valToMove)
+        mc.move(-10, cvsToMove, x=True, r=True, wd=True, ls=True)
 
-            cogCTRLGrp = mc.group(cogCTRL, n="AUTO_" + str(cogCTRL))
-            cogCTRLOffset = mc.group(cogCTRLGrp, n="OFFSET_" + str(cogCTRL))
+        mc.parent(fkHipOffsetCtrl[0], spineIKCtrls[0][
+            1])  # TO DELETE: May need to edit this as I made a mistake when taking notes. fkHip needs to go under ikHip
+        print(fkHip)
+        print(ikHip)
+        mc.parent(fkHip, ikHip)
 
-            mc.parent(cogCTRLOffset, spineIKCtrls[0][1],  relative=True)
-            mc.parent(cogCTRLOffset, w=True)
+        return fkHip, fkHipOffsetCtrl
 
-            mc.pointConstraint(offsetCtrlFKJnts[0][1], fkJnts[0])
-            # parent OFFSET_CTRL_spine_1 and OFFSET_CTRL_IK_hip under CTRL_COG
-            mc.parent(offsetCtrlFKJnts[0][0], spineIKCtrls[0][0], cogCTRL)
+    def createCOGCtrl(self, spineIKCtrls, offsetCtrlFKJnts, fkJnts, spineIKs, crvSpine, ikSpine, *args):
+        # Create center of gravity
 
-            # group NT_IK_spine_1, JNT_IK_hip, JNT_IK_midSpine, JNT_IK_chest, JNT_FK_spine_1, (and JNT_FK_hip)
-            # TO DELETE MAY NEED TO COME BACK TO AS GROUPING OBJECTS CREATES THE GROUP AT THE CENTER NOT THE ORIGIN
+        cogCtrl = mc.circle(nr=(1, 0, 0), r=45, n="CTRL_COG", degree=1, sections=3)[0]
+        cvsToMove = mc.select(cogCtrl + ".cv[:]")
+        mc.rotate(90, cvsToMove, x=True)
+        mc.move(10, cvsToMove, x=True, r=True, wd=True, ls=True)
 
-            #spineGrp = mc.group(self.jointArray[0], spineIKs, fkJnts[0], fkHip, n="Grp_JNT_spine")
-            spineGrp = mc.group(n="GRP_JNT_spine", em=True, w=True)
-            mc.parent(self.jointArray[0], spineIKs, fkJnts[0], spineGrp)
+        mc.setAttr('{0}.overrideEnabled'.format(cogCtrl), 1)
+        mc.setAttr("{0}.overrideColor".format(cogCtrl), 31)
 
-            ikGrpDNT = mc.group(n="GRP_doNotTouch_spine", em=True, w=True)
-            mc.parent(crvSpine,ikSpine, ikGrpDNT)
-            #ikGrpDNT = mc.group(crvSpine,ikSpine, n="GRP_doNotTouch_spine")
+        cogAuto = mc.group(cogCtrl, n="AUTO_" + str(cogCtrl))
+        cogOffset = mc.group(cogAuto, n="OFFSET_" + str(cogCtrl))
 
-            rigSpine = mc.group(n="GRP_rig_spine", em=True, w=True)
-            mc.parent(spineGrp, ikGrpDNT, rigSpine)
+        cogOffsetCtrl = []
+        cogOffsetCtrl.append(cogOffset)
+        cogOffsetCtrl.append(cogCtrl)
+        cogOffsetCtrl.append(cogAuto)
 
-            #rigSpine = mc.group(spineGrp, ikGrpDNT, n="Grp_rig_spine")
+        mc.parent(cogOffset, spineIKCtrls[0][1], relative=True)
+        mc.parent(cogOffset, w=True)
 
-            mc.setAttr("{0}.inheritsTransform".format(crvSpine), False)
+        mc.pointConstraint(offsetCtrlFKJnts[0][1], fkJnts[0])
+        # parent OFFSET_CTRL_spine_1 and OFFSET_CTRL_IK_hip under CTRL_COG
+        mc.parent(offsetCtrlFKJnts[0][0], spineIKCtrls[0][0], cogCtrl)
 
-            # lock attributes
-            print(fkHip)
-            self.lockHideCtrls(fkHipOffsetCtrl[1], translate=True, scale=True)
-            for i in range(len(offsetCtrlFKJnts)):
-                self.lockHideCtrls(offsetCtrlFKJnts[i][1], translate=True, scale=True)
+        # group JNT_IK_spine_1, JNT_IK_hip, JNT_IK_midSpine, JNT_IK_chest, JNT_FK_spine_1, (and JNT_FK_hip)
 
-            for i in range(len(spineIKs)):
-                self.lockHideCtrls(spineIKCtrls[i][1], scale=True)
+        # spineGrp = mc.group(self.jointArray[0], spineIKs, fkJnts[0], fkHip, n="Grp_JNT_spine")
+        spineGrp = mc.group(n="GRP_JNT_spine", em=True, w=True)
+        mc.parent(self.jointArray[0], spineIKs, fkJnts[0], spineGrp)
+
+        ikGrpDNT = mc.group(n="GRP_doNotTouch_spine", em=True, w=True)
+        mc.parent(crvSpine, ikSpine, ikGrpDNT)
+
+        mc.setAttr("{0}.inheritsTransform".format(crvSpine), False)
+
+        return cogOffsetCtrl
+
+    def spineCleanup(self, fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine, *args):
+        # lock attributes
+        CRU.lockHideCtrls(fkHipOffsetCtrl[1], translate=True, scale=True, visible=True)
+        print(offsetCtrlFKJnts)
+        for i in range(len(offsetCtrlFKJnts)):
+            CRU.lockHideCtrls(offsetCtrlFKJnts[i][1], translate=True, scale=True, visible=True)
+
+        for i in range(len(spineIKs)):
+            CRU.lockHideCtrls(spineIKCtrls[i][1], scale=True, visible=True)
+            print(spineIKCtrls[i][1])
+
+        CRU.lockHideCtrls(cogOffsetCtrl[1], scale=True, visible=True)
+
+        mc.setAttr('{0}.v'.format(crvSpine), False)
+        mc.setAttr('{0}.v'.format(ikSpine), False)
+
+        CRU.lockHideCtrls(crvSpine, visible=True)
+        CRU.lockHideCtrls(ikSpine, visible=True)
+
+    def tgpMakeBC(self, *args):
+
+        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+
+        self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
+        #self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
+
+        # make sure the selections are not empty
+        checkList = [self.jntNames]
+
+        if ((checkList[0] == "")):
+            mc.warning("You are missing a selection!")
+            return
+        else:
+            #print(m.ModClass.static_method())
+            CRU.createLocatorToDelete()
+            # create the IK base controls
+            jntEnd = self.jointArray[-1]
+
+            noUnicode = str(jntEnd)
+            print(noUnicode)
+            jntEndSize = mc.getAttr('{0}.radius'.format(noUnicode))
+
+            # gets values for later use
+            jntSize = len(self.jointArray)
+            midValue = int(jntSize / 2)
+
+            # Create the IK joints
+            ikHip, ikMidSpine, ikChest, spineIKs = self.createSpineIK(jntEnd, jntEndSize, midValue)
+
+            # Adding the Spline IK
+            ikSpine, effSpine, crvSpine = self.createIKSpline(jntEnd)
+
+            # Creating the IK Spine Controls:
+            # bind the curve to the JNT IKs,
+            spineIKCtrls = self.createIKSpineCtrls(crvSpine,ikMidSpine, ikChest, ikHip, spineIKs)
+
+            #Adding the IK twist
+            self.addIkTwist(ikSpine, ikHip, ikChest,)
+
+
+            # Adding Some Stretch
+            self.addStretch(crvSpine, jntSize, )
+
+            # FK Joints and Controls
+            fkJnts, offsetCtrlFKJnts = self.createFKJntAndCtrls(jntSize, jntEndSize, spineIKCtrls)
+
+            # Adding an extra hip control
+            fkHip, fkHipOffsetCtrl = self.createHipCtrl(ikHip, spineIKCtrls)
+
+            # Creating the COG control
+            cogOffsetCtrl = self.createCOGCtrl(spineIKCtrls, offsetCtrlFKJnts, fkJnts, spineIKs, crvSpine, ikSpine, )
+
+            #cleanup
+            self.spineCleanup(fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine,)
+
+
+            # make the last thing we do the geometry
+            if checkGeo:
+                print("2222222")
+                CRU.tgpSetGeo(self.jointArray, "JNT_IK_")
+            try:
+                CRU.tgpSetGeo([fkHip], "JNT_FK_")
+                #mc.parent("GEO_hip", ikHip)
+            except:
+                mc.warning("Hip geometry either does not exist or is not properly named")
+
+            #TO DELETE: You probably want to lock the scale of the COG Control as well.
+
 
 
