@@ -18,6 +18,8 @@ reload(bc)
 bc.tgpBlendColors()
 
 '''
+
+
 class pcCreateRigSpine(UI):
     def __init__(self):
 
@@ -26,7 +28,6 @@ class pcCreateRigSpine(UI):
         self.winSize = (500, 320)
 
         self.createUI()
-
 
     def createCustom(self, *args):
         '''
@@ -93,8 +94,6 @@ class pcCreateRigSpine(UI):
         self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
         print(self.jntSel)
 
-
-
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
         self.selLoad = []
@@ -121,7 +120,6 @@ class pcCreateRigSpine(UI):
 
         return self.jointArray
 
-
     def createSpineIK(self, jntEnd, jntEndSize, midValue, *args):
 
         ikHip = mc.duplicate(jntEnd, n="JNT_IK_hip", renameChildren=True)
@@ -142,9 +140,7 @@ class pcCreateRigSpine(UI):
 
         mc.delete(todelete1, todelete2)
 
-
         return ikHip[0], ikMidSpine, ikChest[0], spineIKs
-
 
     def createIKSpline(self, jntEnd, *args):
 
@@ -159,7 +155,7 @@ class pcCreateRigSpine(UI):
 
         return ikSpine, effSpine, crvSpine
 
-    def createIKSpineCtrls(self, crvSpine,ikMidSpine, ikChest, ikHip, spineIKs, *args):
+    def createIKSpineCtrls(self, crvSpine, ikMidSpine, ikChest, ikHip, spineIKs, *args):
         '''
         Bind To: Selected Joints
         Bind Method: Closest Distance
@@ -168,7 +164,7 @@ class pcCreateRigSpine(UI):
         '''
         mc.select(crvSpine, ikMidSpine, ikChest, ikHip)
 
-        #mc.skinCluster (ikHip, ikMidSpine, ikChest, crvSpine, sm=0, nw = 1)
+        # mc.skinCluster (ikHip, ikMidSpine, ikChest, crvSpine, sm=0, nw = 1)
 
         scls = mc.skinCluster(ikMidSpine, ikChest, ikHip, crvSpine, name='spine_skinCluster', toSelectedBones=True,
                               bindMethod=0, skinMethod=0, normalizeWeights=1)[0]
@@ -178,7 +174,8 @@ class pcCreateRigSpine(UI):
         spineIKSizes = [[1, 26, 20], [1, 28, 20], [1, 15, 15]]
 
         for i in range(len(spineIKs)):
-            spineIKCtrls.append(CRU.createCTRLs(spineIKs[i], 19, prnt=True, colour=18,boxDimensionsLWH=spineIKSizes[i]))
+            spineIKCtrls.append(
+                CRU.createCTRLs(spineIKs[i], 19, prnt=True, colour=18, boxDimensionsLWH=spineIKSizes[i]))
 
         # make the neck area more appealing
         '''cvsToMove = mc.select(spineIKCtrls[-1][1] + ".cv[:]")
@@ -190,32 +187,30 @@ class pcCreateRigSpine(UI):
 
     def addIkTwist(self, ikSpine, ikHip, ikChest, *args):
 
+        '''
+        Set World Up Type to Object Rotation Up (Start/End)
+        Set Up axis to Negative Z
+        Set Up Vector and Up Vector 2 to 0, 0, -1 (Best works if all joints are facing the same direction)
+        Set World Up Object to CTRL_IK_hip
+        Set World Up Object 2 to CTRL_IK_chest
+        Set Twist Value Type to Start/End.
+        '''
+        mc.setAttr('{0}.dTwistControlEnable'.format(ikSpine), True)
+        mc.setAttr('{0}.dWorldUpType'.format(ikSpine), 4)
+        mc.setAttr('{0}.dWorldUpAxis'.format(ikSpine), 4)
 
-            '''
-            Set World Up Type to Object Rotation Up (Start/End)
-            Set Up axis to Negative Z
-            Set Up Vector and Up Vector 2 to 0, 0, -1 (Best works if all joints are facing the same direction)
-            Set World Up Object to CTRL_IK_hip
-            Set World Up Object 2 to CTRL_IK_chest
-            Set Twist Value Type to Start/End.
-            '''
-            mc.setAttr('{0}.dTwistControlEnable'.format(ikSpine), True)
-            mc.setAttr('{0}.dWorldUpType'.format(ikSpine), 4)
-            mc.setAttr('{0}.dWorldUpAxis'.format(ikSpine), 4)
+        mc.setAttr('{0}.dWorldUpVectorX'.format(ikSpine), 0)
+        mc.setAttr('{0}.dWorldUpVectorY'.format(ikSpine), 0)
+        mc.setAttr('{0}.dWorldUpVectorZ'.format(ikSpine), -1)
 
+        mc.setAttr('{0}.dWorldUpVectorEndX'.format(ikSpine), 0)
+        mc.setAttr('{0}.dWorldUpVectorEndY'.format(ikSpine), 0)
+        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(ikSpine), -1)
 
-            mc.setAttr('{0}.dWorldUpVectorX'.format(ikSpine), 0)
-            mc.setAttr('{0}.dWorldUpVectorY'.format(ikSpine), 0)
-            mc.setAttr('{0}.dWorldUpVectorZ'.format(ikSpine), -1)
+        mc.connectAttr(ikHip + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrix")
+        mc.connectAttr(ikChest + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrixEnd")
 
-            mc.setAttr('{0}.dWorldUpVectorEndX'.format(ikSpine), 0)
-            mc.setAttr('{0}.dWorldUpVectorEndY'.format(ikSpine), 0)
-            mc.setAttr('{0}.dWorldUpVectorEndZ'.format(ikSpine), -1)
-
-            mc.connectAttr(ikHip + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrix")
-            mc.connectAttr(ikChest + ".worldMatrix[0]", ikSpine + ".dWorldUpMatrixEnd")
-
-            mc.setAttr('{0}.dTwistValueType'.format(ikSpine), 1)
+        mc.setAttr('{0}.dTwistValueType'.format(ikSpine), 1)
 
     def addStretch(self, crvSpine, jntSize, *args):
         curveInfo = mc.arclen(crvSpine, ch=True)
@@ -291,7 +286,7 @@ class pcCreateRigSpine(UI):
 
         return fkJnts, offsetCtrlFKJnts
 
-    def createHipCtrl(self, ikHip, spineIKCtrls,  *args):
+    def createHipCtrl(self, ikHip, spineIKCtrls, *args):
         # create hip controls
 
 
@@ -315,7 +310,7 @@ class pcCreateRigSpine(UI):
         mc.move(-10, cvsToMove, x=True, r=True, wd=True, ls=True)
 
         mc.parent(fkHipOffsetCtrl[0], spineIKCtrls[0][
-            1])  # TO DELETE: May need to edit this as I made a mistake when taking notes. fkHip needs to go under ikHip
+            1])
         print(fkHip)
         print(ikHip)
         mc.parent(fkHip, ikHip)
@@ -361,7 +356,8 @@ class pcCreateRigSpine(UI):
 
         return cogOffsetCtrl
 
-    def spineCleanup(self, fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine, *args):
+    def spineCleanup(self, fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine,
+                     *args):
         # lock attributes
         CRU.lockHideCtrls(fkHipOffsetCtrl[1], translate=True, scale=True, visible=True)
         print(offsetCtrlFKJnts)
@@ -385,7 +381,7 @@ class pcCreateRigSpine(UI):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        #self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
+        # self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
 
         # make sure the selections are not empty
         checkList = [self.jntNames]
@@ -394,7 +390,7 @@ class pcCreateRigSpine(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            #print(m.ModClass.static_method())
+            # print(m.ModClass.static_method())
             CRU.createLocatorToDelete()
             # create the IK base controls
             jntEnd = self.jointArray[-1]
@@ -415,11 +411,10 @@ class pcCreateRigSpine(UI):
 
             # Creating the IK Spine Controls:
             # bind the curve to the JNT IKs,
-            spineIKCtrls = self.createIKSpineCtrls(crvSpine,ikMidSpine, ikChest, ikHip, spineIKs)
+            spineIKCtrls = self.createIKSpineCtrls(crvSpine, ikMidSpine, ikChest, ikHip, spineIKs)
 
-            #Adding the IK twist
-            self.addIkTwist(ikSpine, ikHip, ikChest,)
-
+            # Adding the IK twist
+            self.addIkTwist(ikSpine, ikHip, ikChest, )
 
             # Adding Some Stretch
             self.addStretch(crvSpine, jntSize, )
@@ -433,9 +428,9 @@ class pcCreateRigSpine(UI):
             # Creating the COG control
             cogOffsetCtrl = self.createCOGCtrl(spineIKCtrls, offsetCtrlFKJnts, fkJnts, spineIKs, crvSpine, ikSpine, )
 
-            #cleanup
-            self.spineCleanup(fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine,)
-
+            # cleanup
+            self.spineCleanup(fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine,
+                              ikSpine, )
 
             # make the last thing we do the geometry
             if checkGeo:
@@ -443,11 +438,6 @@ class pcCreateRigSpine(UI):
                 CRU.tgpSetGeo(self.jointArray, "JNT_IK_")
             try:
                 CRU.tgpSetGeo([fkHip], "JNT_FK_")
-                #mc.parent("GEO_hip", ikHip)
+                # mc.parent("GEO_hip", ikHip)
             except:
                 mc.warning("Hip geometry either does not exist or is not properly named")
-
-            #TO DELETE: You probably want to lock the scale of the COG Control as well.
-
-
-
