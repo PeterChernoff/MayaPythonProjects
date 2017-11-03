@@ -550,17 +550,10 @@ class pcCreateRigArms(UI):
 
         return scapulaOffsetCtrl
 
-    def createArmIK(self, ikJnts, leftRight, colourTU, isCopy, isLeft, *args):
+    def createArmIK(self, ikJnts, leftRight, colourTU, isLeft, *args):
 
-        if isCopy:
-            # if we're using the copy, we just want to get the list
-            ikJntsDrive = []
-            for ikJ in ikJnts:
-                ikJntVal = ikJ + "Drive"
-                ikJntsDrive.append(ikJntVal)
-        else:
-            ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
-            ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
+        ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
+        ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
 
         ikSide = leftRight + "arm"
 
@@ -585,12 +578,10 @@ class pcCreateRigArms(UI):
 
     def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, jntSpine6, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK,
+                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
         # TO DELETE: come back to make the elbow invisible
-        if not isCopy:
-            # since these joints are already parented if it's a copy, we just skip
-            mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot)
+        mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot)
 
         if checkboxSpine:
             # TO DELETE: May switch out to  JNT_IK_spine_6 (or second to last spine). Need to have Maintain offset)
