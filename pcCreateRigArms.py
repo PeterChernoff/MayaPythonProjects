@@ -16,9 +16,9 @@ bc.tgpBlendColors()
 
 '''
 import pcCreateRigUtilities
+
 reload(pcCreateRigUtilities)
 from pcCreateRigUtilities import pcCreateRigUtilities as CRU
-
 
 
 class pcCreateRigArms(UI):
@@ -255,7 +255,7 @@ class pcCreateRigArms(UI):
         offsetCtrl = [offset, ctrl, auto]
         return offsetCtrl
 
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
+    '''def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
         if translate:
             mc.setAttr("{0}.tx".format(s), k=False, l=True)
             mc.setAttr("{0}.ty".format(s), k=False, l=True)
@@ -267,7 +267,7 @@ class pcCreateRigArms(UI):
         if scale:
             mc.setAttr("{0}.sx".format(s), k=False, l=True)
             mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
+            mc.setAttr("{0}.sz".format(s), k=False, l=True)'''
 
     def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
                               modifyInOut=None, modifyBoth=None):
