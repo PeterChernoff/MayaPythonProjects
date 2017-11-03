@@ -486,7 +486,7 @@ class pcCreateRigArms(UI):
             temp = fkJnts[i]
 
             # def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
-            fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+            fkJntOffsetCtrls.append(CRU.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
             armLength = mc.getAttr("{0}.ty".format(fkJnts[i + 1]))
             mc.select(fkJntOffsetCtrls[i][1] + ".cv[:]")
             mc.move(0, armLength * 0.5, 0, r=True, ls=True)
@@ -497,7 +497,7 @@ class pcCreateRigArms(UI):
         return armLength, fkJntOffsetCtrls
 
     def setupShoulder(self, jntShoulderRoot, bndJnts0, fkJntOffsetCtrls00, colourTU, *args):
-        shoulderOffsetCtrl = self.createCTRLs(jntShoulderRoot, size=5, ornt=True, colour=colourTU)
+        shoulderOffsetCtrl = CRU.createCTRLs(jntShoulderRoot, size=5, ornt=True, colour=colourTU)
         shoulderLength = mc.getAttr("{0}.ty".format(bndJnts0))
 
         mc.select(shoulderOffsetCtrl[1] + ".cv[:]")
@@ -511,7 +511,7 @@ class pcCreateRigArms(UI):
         jntClav = jointClavicle0
         childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
         clavLength = mc.getAttr("{0}.ty".format(childClavicle))
-        clavicleOffsetCtrl = self.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1))
+        clavicleOffsetCtrl = CRU.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1))
         mc.select(clavicleOffsetCtrl[1] + ".cv[:]")
         mc.move(clavLength * 0.5, clavLength * 0.5, 0, r=True, ls=True)
         autoAttrName = "autoClavicle"
@@ -532,8 +532,8 @@ class pcCreateRigArms(UI):
         jntScap = jointScapula0
         childScap = mc.listRelatives(jntScap, c=True, type="joint")[0]
         scapLength = mc.getAttr("{0}.ty".format(childScap))
-        scapulaOffsetCtrl = self.createCTRLs(jntScap, size=6, ornt=True, colour=colourTU, orientVal=(1, 0, 0),
-                                             sectionsTU=8)
+        scapulaOffsetCtrl = CRU.createCTRLs(jntScap, size=6, ornt=True, colour=colourTU, orientVal=(1, 0, 0),
+                                            sectionsTU=8)
 
         mc.select(scapulaOffsetCtrl[1] + ".cv[:]")
         mc.move(-scapLength * 0.5, scapLength * 0.5, 0, r=True, ls=True)
@@ -612,12 +612,12 @@ class pcCreateRigArms(UI):
         mc.parent(ikArms0, jntShoulderRoot, armRigGrp)
 
         # locking and hiding the IK controls
-        self.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
+        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
         for fkJntOC in fkJntOffsetCtrls:
-            self.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
-        self.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True)
-        self.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True)
-        self.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True)
+            CRU.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
+        CRU.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True)
+        CRU.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True)
+        CRU.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True)
 
         # linking JNT visibility to their respective parent
         mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikArms0))
