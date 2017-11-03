@@ -7,10 +7,10 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
-import pcCreateRigUtilities
 from tgpBaseUI import BaseUI as UI
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 
+import pcCreateRigUtilities
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 reload(pcCreateRigUtilities)
 '''
 import tgpBlendColors as bc
