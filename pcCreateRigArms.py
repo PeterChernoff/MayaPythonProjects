@@ -200,75 +200,6 @@ class pcCreateRigArms(UI):
 
         return self.jointArray
 
-    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                    addPrefix=False):
-        selname = str(s)
-        '''
-        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
-        5 dark blue, 6 blue, 7 dark green, 8 dark purple, 9 pink
-        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
-        darkish blue
-        white
-        yellow
-        cyan
-        greenish blue
-        light pink
-        peach
-        other yellow
-        turquoise
-        light brown
-        puke yellow
-        puke green
-        lightish green
-        light blue
-        darkish blue
-        purple
-        magenta
-        '''
-
-        if addPrefix:
-            ctrlName = "CTRL_" + selname
-        else:
-            ctrlName = selname.replace("JNT_", "CTRL_")
-
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        auto = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(auto, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-        # we normally don't include auto
-        offsetCtrl = [offset, ctrl, auto]
-        return offsetCtrl
-
-    '''def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-            mc.setAttr("{0}.tx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-            mc.setAttr("{0}.rx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-            mc.setAttr("{0}.sx".format(s), k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)'''
-
     def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
                               modifyInOut=None, modifyBoth=None):
         # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
@@ -359,17 +290,17 @@ class pcCreateRigArms(UI):
     def makeArm(self, isLeft, leftRight,
                 jntArmArray, jntClavicle, jntScapula,
                 geoJntArray, colourTU, jntShoulderRoot,
-                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, makeExpression, makeTwistJnts, isCopy,
-                checkboxSpine, toReplace="", toReplaceWith="", *args):
+                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, makeExpression, makeTwistJnts, checkboxSpine,
+                toReplace="", toReplaceWith="", *args):
 
         # Create the joint twists
         if checkboxTwists:
-            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray,
-                                                                         makeExpression, makeTwistJnts)
+            # xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts)
+            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray)
 
         # affect geo TO DELETE need to adjust this so it's when the geo is selected
 
-        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray[0], isCopy, toReplace, toReplaceWith)
+        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray[0], toReplace, toReplaceWith)
 
         fkLen = len(fkJnts)
         ikLen = len(ikJnts)
@@ -407,7 +338,7 @@ class pcCreateRigArms(UI):
 
 
         # create the IKs
-        ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isCopy, isLeft)
+        ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isLeft)
         # create the twists
         self.setupIkElblowArmTwist(ikOffsetCtrl[1], ikJnts[1], ikArms[0], isLeft)
 
@@ -423,9 +354,10 @@ class pcCreateRigArms(UI):
         self.armCleanUp(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot, checkboxSpine,
                         shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                         ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], jntSpine6,
-                        ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
+                        ikSide, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
 
-    def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
+    # def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
+    def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, *args):
         numTwistsPlus1 = numTwists + 1
         twists = numTwists
         twistJnts = []
@@ -434,74 +366,67 @@ class pcCreateRigArms(UI):
             twistJntsSubgroup = []
             val = str(jntArmArray[i])
             nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
-            if makeTwistJnts:
-                nextJntYVal = mc.getAttr("{0}.ty".format(nextJnt))
-                nextJntIncrement = nextJntYVal / (numTwistsPlus1)
-                twistJnt = mc.duplicate(val, po=True, n="ToDelete")
+            # if makeTwistJnts:
+            nextJntYVal = mc.getAttr("{0}.ty".format(nextJnt))
+            nextJntIncrement = nextJntYVal / (numTwistsPlus1)
+            twistJnt = mc.duplicate(val, po=True, n="ToDelete")
 
             # create the joint twists at the proper location
             for x in range(twists):
                 valx = x + 1
                 twistTempName = "{0}Twist{1}".format(val, valx)
-                if makeTwistJnts:
-                    twistTemp = mc.duplicate(twistJnt, n=twistTempName)
 
-                    mc.parent(twistTemp, self.jointArmArray[i])
-                    mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
-                    twistJntsSubgroup.append(twistTemp[0])
+                # if makeTwistJnts:
+                twistTemp = mc.duplicate(twistJnt, n=twistTempName)
+
+                mc.parent(twistTemp, jntArmArray[i])
+                mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
+                twistJntsSubgroup.append(twistTemp[0])
+
                 twistInverse = 1.0 / (numTwistsPlus1)
-                if makeExpression:
-                    twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
-                                                                                   valx * twistInverse)
+                # if makeExpression:
+                twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
+                                                                               valx * twistInverse)
                 geoJntArray.append(twistTempName)
-            if makeTwistJnts:
-                mc.delete(twistJnt)
-            twistJnts.append(twistJntsSubgroup)
-            if makeExpression:
-                twistExpression += "\n"
 
-                # change to account for the limb
+            # if makeTwistJnts:
+            mc.delete(twistJnt)
+
+            twistJnts.append(twistJntsSubgroup)
+
+            # if makeExpression:
+            twistExpression += "\n"
+
+            # change to account for the limb
         xprNameTwist = "expr_" + leftRight + "armTwist"  # changes to account for the left or right
 
-        if makeExpression:
-            mc.expression(s=twistExpression, n=xprNameTwist)
+        # if makeExpression:
+        mc.expression(s=twistExpression, n=xprNameTwist)
+
         return xprNameTwist, twistExpression, geoJntArray
 
-    def getBndFkIkJnts(self, jointArmArray0, isCopy=False, toReplace="", toReplaceWith="", *args):
+    def getBndFkIkJnts(self, jointArmArray0, toReplace="", toReplaceWith="", *args):
         bndJntsTemp = mc.listRelatives(jointArmArray0, type="joint", ad=True)
         bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
         bndJnts.append(jointArmArray0)
         bndJnts.reverse()
 
-        if isCopy:
-            ikJnts = []
-            for bndJ in bndJnts:
-                ikJntVal = bndJ.replace("JNT_", "JNT_IK_").replace(toReplace, toReplaceWith)
-                ikJnts.append(ikJntVal)
-        else:
-            ikJntsTemp = mc.duplicate(jointArmArray0, rc=True)
-            ikJntRoot = ikJntsTemp[0]
-            mc.parent(ikJntRoot, w=True)
+        ikJntsTemp = mc.duplicate(jointArmArray0, rc=True)
+        ikJntRoot = ikJntsTemp[0]
+        mc.parent(ikJntRoot, w=True)
 
-            # We already made unique
-            ikJntsTempDesc = mc.listRelatives(ikJntRoot, ad=True)
-            ikJntsTempDesc.append(ikJntRoot)
+        # We already made unique
+        ikJntsTempDesc = mc.listRelatives(ikJntRoot, ad=True)
+        ikJntsTempDesc.append(ikJntRoot)
 
-            # remove non-IK related joints
-            ikJnts = self.tgpCreateLimbFKIFList(ikJntsTempDesc, "JNT_", "JNT_IK_", 1)
+        # remove non-IK related joints
+        ikJnts = self.tgpCreateLimbFKIFList(ikJntsTempDesc, "JNT_", "JNT_IK_", 1)
 
-            ikJnts.reverse()
+        ikJnts.reverse()
 
         # create the FK Joints
-        if isCopy:
-            fkJnts = []
-            for bndJ in bndJnts:
-                fkJntVal = bndJ.replace("JNT_", "JNT_FK_").replace(toReplace, toReplaceWith)
-                fkJnts.append(fkJntVal)
-        else:
-
-            fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
-            fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
+        fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
+        fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
 
         return bndJnts, fkJnts, ikJnts
 
