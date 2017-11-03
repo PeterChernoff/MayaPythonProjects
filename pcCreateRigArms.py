@@ -16,8 +16,10 @@ bc.tgpBlendColors()
 
 '''
 import pcCreateRigUtilities
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 reload(pcCreateRigUtilities)
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+
+
 
 class pcCreateRigArms(UI):
     def __init__(self):
@@ -68,8 +70,8 @@ class pcCreateRigArms(UI):
         # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
 
         # To delete: May need to make this JNT_IK_spine_6
-        mc.text(bgc=(0.85, 0.65, 0.25), l="IK Chest CTRL: ")
-        mc.textFieldButtonGrp("ctrlIKChestLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_chest")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Top Spine Joint: ")
+        mc.textFieldButtonGrp("jntSpineTopLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_spine_6")
 
         mc.setParent("..")
 
@@ -86,7 +88,7 @@ class pcCreateRigArms(UI):
 
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadCtrlBtn)
-        mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
+        mc.textFieldButtonGrp("jntSpineTopLoad_tf", e=True, bc=self.loadSrc2Btn)
         # mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
         # mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
 
@@ -115,7 +117,7 @@ class pcCreateRigArms(UI):
         print(self.jntSel)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.tgpLoadIKCtrl("ctrlIKChestLoad_tf")
+        self.ctrlSel = self.tgpLoadJntSpine("jntSpineTopLoad_tf")
         print(self.ctrlSel)
 
     def loadSrc3Btn(self):
@@ -357,7 +359,7 @@ class pcCreateRigArms(UI):
     def makeArm(self, isLeft, leftRight,
                 jntArmArray, jntClavicle, jntScapula,
                 geoJntArray, colourTU, jntShoulderRoot,
-                ctrlFKIK, ctrlFKIKAttr, ctrlIKChest, checkboxTwists, makeExpression, makeTwistJnts, isCopy,
+                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, makeExpression, makeTwistJnts, isCopy,
                 checkboxSpine, toReplace="", toReplaceWith="", *args):
 
         # Create the joint twists
@@ -420,7 +422,7 @@ class pcCreateRigArms(UI):
         # Organize the rig
         self.armCleanUp(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot, checkboxSpine,
                         shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                        ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], ctrlIKChest,
+                        ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], jntSpine6,
                         ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
 
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
@@ -658,7 +660,7 @@ class pcCreateRigArms(UI):
 
     def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, ctrlIKChest, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK,
+                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, jntSpine6, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
         # TO DELETE: come back to make the elbow invisible
         if not isCopy:
@@ -668,7 +670,7 @@ class pcCreateRigArms(UI):
         if checkboxSpine:
             # TO DELETE: May switch out to  JNT_IK_spine_6 (or second to last spine). Need to have Maintain offset)
             # mc.parentConstrain(shoulderOffsetCtrl[0], JNT_IK_spine_6,  mo=True)
-            mc.parent(shoulderOffsetCtrl[0], ctrlIKChest)
+            mc.parentConstraint(jntSpine6, shoulderOffsetCtrl[0])
 
         mc.pointConstraint(shoulderOffsetCtrl[1], jntShoulderRoot)
 
@@ -754,11 +756,11 @@ class pcCreateRigArms(UI):
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         if checkboxSpine:
-            ctrlIKChest = mc.textFieldButtonGrp("ctrlIKChestLoad_tf", q=True, text=True)
+            jntSpine6 = mc.textFieldButtonGrp("jntSpineTopLoad_tf", q=True, text=True)
         else:
-            ctrlIKChest = None
+            jntSpine6 = None
 
-        print(ctrlIKChest)
+        print(jntSpine6)
 
         try:
             jntShoulderRoot = self.jointArray[0]
@@ -790,6 +792,9 @@ class pcCreateRigArms(UI):
             ctrlFKIKAttr = listCtrlFKIKAttr[1]
             ctrlFKIKAttrMirror = listCtrlFKIKAttr[0]
 
+        toReplace = "_" + leftRight
+        toReplaceWith = "_" + leftRightMirror
+
         if ctrlFKIK:
             for i in range(len(listCtrlFKIKAttr)):
                 try:
@@ -805,10 +810,15 @@ class pcCreateRigArms(UI):
             mc.warning("You are missing a selection!")
             return
         else:
+
+            if mirrorRig:
+                pass
+            
+            
             self.makeArm(isLeft, leftRight,
                          self.jointArmArray, self.jointClavicle, self.jointScapula,
                          geoJntArray, colourTU, jntShoulderRoot,
-                         ctrlFKIK, ctrlFKIKAttr, ctrlIKChest, checkboxTwists,
+                         ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
                          makeExpression=True, makeTwistJnts=True, isCopy=False,
                          checkboxSpine=checkboxSpine)
 
@@ -844,7 +854,7 @@ class pcCreateRigArms(UI):
                 self.makeArm(isLeftMirror, leftRightMirror,
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
                              geoJntArray, colourTUMirror, jntShoulderRootMirror,
-                             ctrlFKIK, ctrlFKIKAttrMirror, ctrlIKChest, checkboxTwists,
+                             ctrlFKIK, ctrlFKIKAttrMirror, jntSpine6, checkboxTwists,
                              makeExpression=True, makeTwistJnts=False, isCopy=True,
                              checkboxSpine=checkboxSpine, toReplace=toReplace, toReplaceWith=toReplaceWith)
 
