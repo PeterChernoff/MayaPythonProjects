@@ -265,14 +265,6 @@ class pcCreateRigArms(UI):
             str += "{0}.rotate{1} = {2}.rotate{1} * {3}.{4};\n".format(autoClav, ax, targetLimb, ctrlClav, autoClavVal)
         return str
 
-    def tgpAutoScapulaRotate(self, autoScap, targetLimb, ctrlScap, autoScapVal, *args):
-
-        # AUTO_CTRL_l_scapula.rotateX = JNT_l_shoulder.rotateZ * CTRL_l_scapula.autoScapula;
-
-        str = "{0}.rotateX = {1}.rotateZ * {2}.{3};\n".format(autoScap, targetLimb, ctrlScap, autoScapVal)
-
-        return str
-
     def tgpSetGeo(self, geoJntArray, *args):
         for i in range(len(geoJntArray)):
             try:
@@ -300,7 +292,7 @@ class pcCreateRigArms(UI):
 
         # affect geo TO DELETE need to adjust this so it's when the geo is selected
 
-        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray[0], toReplace, toReplaceWith)
+        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray)
 
         fkLen = len(fkJnts)
         ikLen = len(ikJnts)
@@ -330,12 +322,10 @@ class pcCreateRigArms(UI):
 
         # create the scapula
         if jntScapula:
-            scapulaOffsetCtrl = self.setupScapula(jntScapula[0], colourTU, leftRight, shoulderOffsetCtrl[1],
-                                                  jntShoulderRoot)
+            scapulaOffsetCtrl = self.setupScapula(jntScapula, colourTU, leftRight, shoulderOffsetCtrl, )
 
         # for testing purposes only, setting the IK to active:
-        # mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
-
+        mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
 
         # create the IKs
         ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isLeft)
@@ -405,13 +395,13 @@ class pcCreateRigArms(UI):
 
         return xprNameTwist, twistExpression, geoJntArray
 
-    def getBndFkIkJnts(self, jointArmArray0, toReplace="", toReplaceWith="", *args):
-        bndJntsTemp = mc.listRelatives(jointArmArray0, type="joint", ad=True)
+    def getBndFkIkJnts(self, jointArmArray, *args):
+        bndJntsTemp = mc.listRelatives(jointArmArray[0], type="joint", ad=True)
         bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
-        bndJnts.append(jointArmArray0)
+        bndJnts.append(jointArmArray[0])
         bndJnts.reverse()
 
-        ikJntsTemp = mc.duplicate(jointArmArray0, rc=True)
+        ikJntsTemp = mc.duplicate(jointArmArray[0], rc=True)
         ikJntRoot = ikJntsTemp[0]
         mc.parent(ikJntRoot, w=True)
 
@@ -528,8 +518,8 @@ class pcCreateRigArms(UI):
 
         return clavicleOffsetCtrl
 
-    def setupScapula(self, jointScapula0, colourTU, leftRight, shoulderOffsetCtrl1, jntShoulderRoot, *args):
-        jntScap = jointScapula0
+    def setupScapula(self, jointScapula, colourTU, leftRight, shoulderOffsetCtrl, *args):
+        jntScap = jointScapula[0]
         childScap = mc.listRelatives(jntScap, c=True, type="joint")[0]
         scapLength = mc.getAttr("{0}.ty".format(childScap))
         scapulaOffsetCtrl = CRU.createCTRLs(jntScap, size=6, ornt=True, colour=colourTU, orientVal=(1, 0, 0),
@@ -542,11 +532,12 @@ class pcCreateRigArms(UI):
         autoName = scapulaOffsetCtrl[2]
         xprNameScap = "expr_" + leftRight + "scapula"
 
-        # AUTO_CTRL_l_scapula.rotateX = JNT_l_shoulder.rotateZ * CTRL_l_scapula.autoScapula;
-        exprStringScap = self.tgpAutoScapulaRotate(autoName, jntShoulderRoot, scapulaOffsetCtrl[1], autoAttrName)
+        # AUTO_CTRL_l_scapula.rotateX = -1*CTRL_l_shoulder.rotateZ * CTRL_l_scapula.autoScapula;
+        exprStringScap = "{0}.rotateX = -1*{1}.rotateZ * {2}.{3};\n".format(autoName, shoulderOffsetCtrl[1],
+                                                                            scapulaOffsetCtrl[1], autoAttrName)
 
         mc.expression(s=exprStringScap, n=xprNameScap)
-        mc.parent(scapulaOffsetCtrl[0], shoulderOffsetCtrl1)
+        mc.parent(scapulaOffsetCtrl[0], shoulderOffsetCtrl[1])
 
         return scapulaOffsetCtrl
 
@@ -748,7 +739,7 @@ class pcCreateRigArms(UI):
             print(mirrorRig)
             if mirrorRig:
 
-                # TO DELETE: Consider changing things so that you duplicate the arm before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
+                # TO DELETE: In the process of making the changes so I mirror things afterwards
 
                 print("I got here!")
 
