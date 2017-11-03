@@ -43,6 +43,8 @@ class pcCreateRigUtilities:
             except:
                 ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
                 # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
+
+
         else:
             if sectionsTU:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
@@ -56,6 +58,7 @@ class pcCreateRigUtilities:
 
         mc.parentConstraint(s, offset, mo=0)
         mc.delete(mc.parentConstraint(s, offset))
+
         # parent and orient/point are not inclusive
         if prnt:
             mc.parentConstraint(ctrl, s, mo=0)
