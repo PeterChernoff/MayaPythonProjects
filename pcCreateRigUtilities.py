@@ -1,8 +1,10 @@
 import maya.cmds as mc
 
+
 class pcCreateRigUtilities:
     @staticmethod
-    def createCTRLs(s, size=3, prnt = False, ornt = False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None, addPrefix=False, boxDimensionsLWH=None):
+    def createCTRLs(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
+                    addPrefix=False, boxDimensionsLWH=None):
         selname = str(s)
         '''
         0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
@@ -37,10 +39,10 @@ class pcCreateRigUtilities:
                       (-x, -y, -z), (-x, y, -z), (-x, -y, -z), (x, -y, -z),
                       (x, y, -z), (x, -y, -z), (x, -y, z), ]
             try:
-                ctrl = mc.curve(ctrlName, r=True, d=1, p=toPass,)
+                ctrl = mc.curve(ctrlName, r=True, d=1, p=toPass, )
             except:
-                ctrl = mc.curve(name=ctrlName, d=1, p=toPass,)
-            #ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
+                ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
+                # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
         else:
             if sectionsTU:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
@@ -67,9 +69,9 @@ class pcCreateRigUtilities:
         return offsetCtrl
 
     @staticmethod
-
-    def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals = [], toHide = False, visible=False, toLock = True):
-        myVals = list(theVals) #need to reset it every time
+    def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals=[], toHide=False, visible=False,
+                      toLock=True):
+        myVals = list(theVals)  # need to reset it every time
         if translate:
             myVals.extend(["tx", "ty", "tz"])
         if rotate:
@@ -79,19 +81,15 @@ class pcCreateRigUtilities:
         if visible:
             myVals.extend(["v"])
 
-
         for i in range(len(myVals)):
-            mc.setAttr("{0}.{1}".format(s, myVals[i]),k=toHide, l=toLock)
+            mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
             # to delete this next part
             if "_IK_" in s:
                 print("{0}.{1}".format(s, myVals[i]))
 
-
-
-
-
     @staticmethod
-    def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None):
+    def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
+                              modifyInOut=None, modifyBoth=None):
         # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
         # modify tanget is determining if the tanget goes in or out
         if modifyInOut or modifyBoth:
@@ -104,14 +102,15 @@ class pcCreateRigUtilities:
                 modifyOut = modifyInOut[1]
             mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
                                  cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt = modifyIn, ott = modifyOut)
+                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
         else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute), cd='{0}.{1}'.format(driver, driverAttribute),
-                             dv=driverValue, v=drivenValue)
+            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
+                                 cd='{0}.{1}'.format(driver, driverAttribute),
+                                 dv=driverValue, v=drivenValue)
 
     @staticmethod
     def createLocatorToDelete(createLocator=True):
-        #This is little more than a signal to tell me I need to undo what I've done
+        # This is little more than a signal to tell me I need to undo what I've done
         if createLocator:
             toDelete = mc.spaceLocator(p=(0, 0, 0))[0]
             mc.setAttr('{0}.overrideEnabled'.format(toDelete), 1)
@@ -122,25 +121,52 @@ class pcCreateRigUtilities:
         print(geoJntArray)
         for i in range(len(geoJntArray)):
             try:
-                #print("------")
+                # print("------")
                 theParent = geoJntArray[i]
-                #print(theParent)
+                # print(theParent)
                 geoName = theParent.replace(setter, "GEO_")
-                #print(geoName)
+                # print(geoName)
                 mc.parent(geoName, theParent)
-                #print("parent successful")
+                # print("parent successful")
                 pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
-                #print("pivotTranslate Successful")
+                # print("pivotTranslate Successful")
                 mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
-                #print("make identity Successful")
+                # print("make identity Successful")
                 mc.xform(geoName, ws=True, pivots=pivotTranslate)
-                #print("xform Successful")
+                # print("xform Successful")
 
             except:
                 mc.warning("Geo for {0} properly named or available".format(geoJntArray[i]))
                 mc.warning("===========")
 
+    @staticmethod
+    def changeRotateOrder(rotateChangeList, getRotOrder, *args):
 
+        for rotateChange in rotateChangeList:
+            if (getRotOrder == "XYZ"):
+                mc.setAttr(rotateChange + ".rotateOrder", 0)
+            elif (getRotOrder == "YZX"):
+                mc.setAttr(rotateChange + ".rotateOrder", 1)
+            elif (getRotOrder == "ZXY"):
+                mc.setAttr(rotateChange + ".rotateOrder", 2)
+            elif (getRotOrder == "XZY"):
+                mc.setAttr(rotateChange + ".rotateOrder", 3)
+            elif (getRotOrder == "YXZ"):
+                mc.setAttr(rotateChange + ".rotateOrder", 4)
+            elif (getRotOrder == "ZYX"):
+                mc.setAttr(rotateChange + ".rotateOrder", 5)
 
+                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
 
+    @staticmethod
+    def checkLeftRight(isLeft, initVal, *args):
+        if isLeft:
+            leftRightCheck = "_l_"
+            leftRightText = "left"
+        else:
+            leftRightCheck = "_r_"
+            leftRightText = "right"
 
+        if leftRightCheck not in initVal:
+            mc.warning("Please select the {0} side".format(leftRightText))
+            return
