@@ -677,7 +677,7 @@ class pcCreateRigArms(UI):
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
 
-        geoJntArray = self.jointArray
+        geoJntArray = self.jointArray[:]
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         if checkboxSpine:
@@ -698,6 +698,10 @@ class pcCreateRigArms(UI):
             mirrorRig = False
         else:
             mirrorRig = True
+
+        jntArmArray = self.jointArmArray[:]
+        jntClavicle = self.jointClavicle[:]
+        jntScapula = self.jointScapula[:]
 
         listCtrlFKIKAttr = ["l_arm", "r_arm", "l_leg", "r_leg"]
         if checkSelLeft == 1:
@@ -736,15 +740,26 @@ class pcCreateRigArms(UI):
             return
         else:
 
+            CRU.createLocatorToDelete()
+
+            # checks if the starting joint is correct to the direction we want
+            CRU.checkLeftRight(isLeft, jntShoulderRoot)
+
             if mirrorRig:
-                pass
-            
-            
+                mirrorBase = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
+                                            searchReplace=[toReplace, toReplaceWith])
+                jntShoulderRootMirror = mirrorBase[0]
+                # mc.parent(jntShoulderRootMirror, w=True)
+                for mb in mirrorBase:
+                    # we should be before the duplication at this point
+                    if mc.objectType(mb) == "joint":
+                        geoJntArray.append(mb)
+
             self.makeArm(isLeft, leftRight,
-                         self.jointArmArray, self.jointClavicle, self.jointScapula,
+                         jntArmArray, jntClavicle, jntScapula,
                          geoJntArray, colourTU, jntShoulderRoot,
                          ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
-                         makeExpression=True, makeTwistJnts=True, isCopy=False,
+                         makeExpression=True, makeTwistJnts=True,
                          checkboxSpine=checkboxSpine)
 
             print(mirrorRig)
@@ -753,34 +768,24 @@ class pcCreateRigArms(UI):
                 # TO DELETE: Consider changing things so that you duplicate the arm before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
 
                 print("I got here!")
-                toReplace = "_" + leftRight
-                toReplaceWith = "_" + leftRightMirror
-                mirrorBase = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
-                                            searchReplace=[toReplace, toReplaceWith])
-                jntShoulderRootMirror = mirrorBase[0]
-                mc.parent(jntShoulderRootMirror, w=True)
-                for mb in mirrorBase:
-                    if mc.objectType(mb) != "joint":
-                        mc.delete(mb)
-                    else:
-                        geoJntArray.append(mb)
+
                 isLeftMirror = not isLeft
                 # we need to create mirror names for the arms
                 jntArmArrayMirror = []
-                for jntAA in self.jointArmArray:
+                for jntAA in jntArmArray:
                     jntArmArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
                 jntClavicleMirror = []
-                for clav in self.jointClavicle:
+                for clav in jntClavicle:
                     jntClavicleMirror.append(clav.replace(toReplace, toReplaceWith))
                 jntScapulaMirror = []
-                for scap in self.jointScapula:
+                for scap in jntScapula:
                     jntScapulaMirror.append(scap.replace(toReplace, toReplaceWith))
 
                 self.makeArm(isLeftMirror, leftRightMirror,
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
                              geoJntArray, colourTUMirror, jntShoulderRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, jntSpine6, checkboxTwists,
-                             makeExpression=True, makeTwistJnts=False, isCopy=True,
+                             makeExpression=True, makeTwistJnts=True,
                              checkboxSpine=checkboxSpine, toReplace=toReplace, toReplaceWith=toReplaceWith)
 
             if checkGeo:
