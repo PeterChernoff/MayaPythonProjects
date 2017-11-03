@@ -112,7 +112,6 @@ class pcCreateRigArms(UI):
         return
 
     def loadSrc1Btn(self):
-        '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
         print(self.jntSel)
 
@@ -200,26 +199,6 @@ class pcCreateRigArms(UI):
 
         return self.jointArray
 
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
-                              modifyInOut=None, modifyBoth=None):
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        # modify tanget is determining if the tanget goes in or out
-        if modifyInOut or modifyBoth:
-
-            if modifyBoth:
-                modifyIn = modifyBoth
-                modifyOut = modifyBoth
-            else:
-                modifyIn = modifyInOut[0]
-                modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
-        else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue)
-
     def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
                               renameThis=True, addToEnd="", *args):
         jntsReturn = []
@@ -248,14 +227,14 @@ class pcCreateRigArms(UI):
 
     def tgpSetDriverArmFKIKSwitch(self, driver, driverAttr, driven, *args):
         w0w1Attr = mc.listAttr(driven)[-2:]
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
-                                   modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
-                                   modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
-                                   modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
-                                   modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
+                                  modifyBoth="linear")
 
     def tgpAutoClavicleRotate(self, autoClav, targetLimb, ctrlClav, autoClavVal, *args):
         str = ""
@@ -282,12 +261,11 @@ class pcCreateRigArms(UI):
     def makeArm(self, isLeft, leftRight,
                 jntArmArray, jntClavicle, jntScapula,
                 geoJntArray, colourTU, jntShoulderRoot,
-                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, makeExpression, makeTwistJnts, checkboxSpine,
-                toReplace="", toReplaceWith="", *args):
+                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, checkboxSpine, *args):
 
         # Create the joint twists
         if checkboxTwists:
-            # xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts)
+            # xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray, makeExpression)
             xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray)
 
         # affect geo TO DELETE need to adjust this so it's when the geo is selected
@@ -346,7 +324,6 @@ class pcCreateRigArms(UI):
                         ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], jntSpine6,
                         ikSide, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
 
-    # def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, *args):
         numTwistsPlus1 = numTwists + 1
         twists = numTwists
@@ -356,7 +333,6 @@ class pcCreateRigArms(UI):
             twistJntsSubgroup = []
             val = str(jntArmArray[i])
             nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
-            # if makeTwistJnts:
             nextJntYVal = mc.getAttr("{0}.ty".format(nextJnt))
             nextJntIncrement = nextJntYVal / (numTwistsPlus1)
             twistJnt = mc.duplicate(val, po=True, n="ToDelete")
@@ -366,7 +342,6 @@ class pcCreateRigArms(UI):
                 valx = x + 1
                 twistTempName = "{0}Twist{1}".format(val, valx)
 
-                # if makeTwistJnts:
                 twistTemp = mc.duplicate(twistJnt, n=twistTempName)
 
                 mc.parent(twistTemp, jntArmArray[i])
@@ -374,23 +349,20 @@ class pcCreateRigArms(UI):
                 twistJntsSubgroup.append(twistTemp[0])
 
                 twistInverse = 1.0 / (numTwistsPlus1)
-                # if makeExpression:
+
                 twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
                                                                                valx * twistInverse)
                 geoJntArray.append(twistTempName)
 
-            # if makeTwistJnts:
             mc.delete(twistJnt)
 
             twistJnts.append(twistJntsSubgroup)
 
-            # if makeExpression:
             twistExpression += "\n"
 
             # change to account for the limb
         xprNameTwist = "expr_" + leftRight + "armTwist"  # changes to account for the left or right
 
-        # if makeExpression:
         mc.expression(s=twistExpression, n=xprNameTwist)
 
         return xprNameTwist, twistExpression, geoJntArray
@@ -605,21 +577,21 @@ class pcCreateRigArms(UI):
         tangentToUse = ["linear", "step"]
         visMin = 0.001
 
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                   driverValue=0, modifyInOut=tangentToUse)
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                   driverValue=1 - visMin, modifyInOut=tangentToUse)
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
-                                   driverValue=1, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                  driverValue=1 - visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
         tangentToUse = ["linear", "step"]
         # set the IK to visible when not ctrlFKIK not 0 for arm attribute
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
-                                   driverValue=0, modifyInOut=tangentToUse)
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
-                                   driverValue=visMin, modifyInOut=tangentToUse)
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
-                                   driverValue=1, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                  driverValue=visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
     def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
 
@@ -733,7 +705,6 @@ class pcCreateRigArms(UI):
                          jntArmArray, jntClavicle, jntScapula,
                          geoJntArray, colourTU, jntShoulderRoot,
                          ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
-                         makeExpression=True, makeTwistJnts=True,
                          checkboxSpine=checkboxSpine)
 
             print(mirrorRig)
@@ -759,8 +730,7 @@ class pcCreateRigArms(UI):
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
                              geoJntArray, colourTUMirror, jntShoulderRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, jntSpine6, checkboxTwists,
-                             makeExpression=True, makeTwistJnts=True,
-                             checkboxSpine=checkboxSpine, toReplace=toReplace, toReplaceWith=toReplaceWith)
+                             checkboxSpine=checkboxSpine)
 
             if checkGeo:
                 self.tgpSetGeo(geoJntArray)
