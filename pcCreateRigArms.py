@@ -9,14 +9,15 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
-
 '''
 import tgpBlendColors as bc
 reload(bc)
 bc.tgpBlendColors()
 
 '''
-
+import pcCreateRigUtilities
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRigUtilities)
 
 class pcCreateRigArms(UI):
     def __init__(self):
@@ -27,7 +28,6 @@ class pcCreateRigArms(UI):
 
         self.createUI()
 
-
     def createCustom(self, *args):
         '''
         #
@@ -37,20 +37,22 @@ class pcCreateRigArms(UI):
         #
         '''
         # selection type
-        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3], cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
 
         mc.text(l="Mirror Arm As Well?")
-        #mc.setParent("..")
-        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50],)
+        # mc.setParent("..")
+        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
         mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
-        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
-        mc.radioButtonGrp("selArmType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50],)
+        mc.radioButtonGrp("selArmType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
@@ -62,16 +64,14 @@ class pcCreateRigArms(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-
-        #mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
-        #mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
+        # mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
+        # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
 
         # To delete: May need to make this JNT_IK_spine_6
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Chest CTRL: ")
         mc.textFieldButtonGrp("ctrlIKChestLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_chest")
 
         mc.setParent("..")
-
 
         mc.separator(st="in", h=20, w=500)
 
@@ -81,16 +81,14 @@ class pcCreateRigArms(UI):
 
         mc.separator(st="in", h=20, w=500)
 
-
-
         # load buttons
         #
 
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadCtrlBtn)
         mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
-        #mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
-        #mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
+        # mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
+        # mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -120,7 +118,6 @@ class pcCreateRigArms(UI):
         self.ctrlSel = self.tgpLoadIKCtrl("ctrlIKChestLoad_tf")
         print(self.ctrlSel)
 
-
     def loadSrc3Btn(self):
         self.grpSel = self.tgpLoadRigBtn("jointRigSpine_tfbg")
         print(self.grpSel)
@@ -131,7 +128,7 @@ class pcCreateRigArms(UI):
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
+        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
@@ -142,10 +139,9 @@ class pcCreateRigArms(UI):
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             print(selName)
 
-
     def tgpLoadRigBtn(self, loadBtn):
         self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
+        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
@@ -157,7 +153,7 @@ class pcCreateRigArms(UI):
 
     def tgpLoadCOGBtn(self, loadBtn):
         self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
+        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
@@ -171,7 +167,6 @@ class pcCreateRigArms(UI):
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
-
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the root joint")
@@ -203,7 +198,8 @@ class pcCreateRigArms(UI):
 
         return self.jointArray
 
-    def createCTRLs(self, s, size=3, prnt = False, ornt = False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None, addPrefix=False):
+    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
+                    addPrefix=False):
         selname = str(s)
         '''
         0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
@@ -259,22 +255,20 @@ class pcCreateRigArms(UI):
 
     def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
         if translate:
-
-            mc.setAttr("{0}.tx".format(s),k=False, l=True)
+            mc.setAttr("{0}.tx".format(s), k=False, l=True)
             mc.setAttr("{0}.ty".format(s), k=False, l=True)
             mc.setAttr("{0}.tz".format(s), k=False, l=True)
         if rotate:
-
-            mc.setAttr("{0}.rx".format(s),k=False, l=True)
+            mc.setAttr("{0}.rx".format(s), k=False, l=True)
             mc.setAttr("{0}.ry".format(s), k=False, l=True)
             mc.setAttr("{0}.rz".format(s), k=False, l=True)
         if scale:
-
-            mc.setAttr("{0}.sx".format(s),k=False, l=True)
+            mc.setAttr("{0}.sx".format(s), k=False, l=True)
             mc.setAttr("{0}.sy".format(s), k=False, l=True)
             mc.setAttr("{0}.sz".format(s), k=False, l=True)
 
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None):
+    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
+                              modifyInOut=None, modifyBoth=None):
         # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
         # modify tanget is determining if the tanget goes in or out
         if modifyInOut or modifyBoth:
@@ -287,13 +281,14 @@ class pcCreateRigArms(UI):
                 modifyOut = modifyInOut[1]
             mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
                                  cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt = modifyIn, ott = modifyOut)
+                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
         else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute), cd='{0}.{1}'.format(driver, driverAttribute),
-                             dv=driverValue, v=drivenValue)
+            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
+                                 cd='{0}.{1}'.format(driver, driverAttribute),
+                                 dv=driverValue, v=drivenValue)
 
-
-    def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis = True, renameThis=True, addToEnd="", *args):
+    def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
+                              renameThis=True, addToEnd="", *args):
         jntsReturn = []
         # creates a set of values. Normally, we want to delete, but we can also create a list from the values that simply don't include problematic node
         stripLastVal1 = stripLastVal * (-1)
@@ -305,10 +300,10 @@ class pcCreateRigArms(UI):
                         mc.delete(toTest)
                 else:
                     if stripLastVal1 == 0:
-                        temp =toTest
+                        temp = toTest
                     else:
                         temp = toTest[:stripLastVal1]
-                    toRename = temp.replace(textToReplace, textReplacement) + addToEnd # strip off the last character
+                    toRename = temp.replace(textToReplace, textReplacement) + addToEnd  # strip off the last character
                     if renameThis:
                         mc.rename(toTest, toRename)
                     jntsReturn.append(toRename)
@@ -320,10 +315,14 @@ class pcCreateRigArms(UI):
 
     def tgpSetDriverArmFKIKSwitch(self, driver, driverAttr, driven, *args):
         w0w1Attr = mc.listAttr(driven)[-2:]
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1, modifyBoth="linear")
+        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
+                                   modifyBoth="linear")
+        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
+                                   modifyBoth="linear")
+        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
+                                   modifyBoth="linear")
+        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
+                                   modifyBoth="linear")
 
     def tgpAutoClavicleRotate(self, autoClav, targetLimb, ctrlClav, autoClavVal, *args):
         str = ""
@@ -363,7 +362,8 @@ class pcCreateRigArms(UI):
 
         # Create the joint twists
         if checkboxTwists:
-            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts)
+            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray,
+                                                                         makeExpression, makeTwistJnts)
 
         # affect geo TO DELETE need to adjust this so it's when the geo is selected
 
@@ -401,7 +401,7 @@ class pcCreateRigArms(UI):
                                                   jntShoulderRoot)
 
         # for testing purposes only, setting the IK to active:
-        #mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
+        # mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
 
 
         # create the IKs
@@ -419,11 +419,9 @@ class pcCreateRigArms(UI):
 
         # Organize the rig
         self.armCleanUp(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot, checkboxSpine,
-                     shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
+                        shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                         ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], ctrlIKChest,
                         ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
-
-
 
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, makeExpression, makeTwistJnts, *args):
         numTwistsPlus1 = numTwists + 1
@@ -435,9 +433,6 @@ class pcCreateRigArms(UI):
             val = str(jntArmArray[i])
             nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
             if makeTwistJnts:
-
-
-
                 nextJntYVal = mc.getAttr("{0}.ty".format(nextJnt))
                 nextJntIncrement = nextJntYVal / (numTwistsPlus1)
                 twistJnt = mc.duplicate(val, po=True, n="ToDelete")
@@ -455,7 +450,7 @@ class pcCreateRigArms(UI):
                 twistInverse = 1.0 / (numTwistsPlus1)
                 if makeExpression:
                     twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
-                                                                               valx * twistInverse)
+                                                                                   valx * twistInverse)
                 geoJntArray.append(twistTempName)
             if makeTwistJnts:
                 mc.delete(twistJnt)
@@ -463,7 +458,7 @@ class pcCreateRigArms(UI):
             if makeExpression:
                 twistExpression += "\n"
 
-            # change to account for the limb
+                # change to account for the limb
         xprNameTwist = "expr_" + leftRight + "armTwist"  # changes to account for the left or right
 
         if makeExpression:
@@ -506,10 +501,7 @@ class pcCreateRigArms(UI):
             fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
             fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
 
-
         return bndJnts, fkJnts, ikJnts
-
-
 
     def setupIkElblowArmTwist(self, ikOffsetCtrl1, ikJnts1, ikArms0, isLeft, *args):
         elbowTwistAttr = "elbowTwist"
@@ -529,7 +521,6 @@ class pcCreateRigArms(UI):
             mc.setAttr("{0}.i2x".format(ikCtrlArmTwistNode), 1)
         else:
             mc.setAttr("{0}.i2x".format(ikCtrlArmTwistNode), -1)
-
 
         mc.connectAttr("{0}.{1}".format(ikOffsetCtrl1, armTwistAttr), ikCtrlArmTwistNode + ".i1x")
         mc.connectAttr("{0}.ox".format(ikCtrlArmTwistNode), ikArms0 + ".twist")
@@ -555,8 +546,6 @@ class pcCreateRigArms(UI):
         if not isLeft:
             armLength = -armLength
 
-
-
         mc.move(armLength / 2, elbowOffsetCtrl[0], z=True, os=True)
 
         mc.poleVectorConstraint(elbowOffsetCtrl[1], ikArms0)
@@ -569,11 +558,11 @@ class pcCreateRigArms(UI):
         for i in range(len(fkJnts[:-1])):
             temp = fkJnts[i]
 
-            #def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
-            fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0,1,0)))
-            armLength = mc.getAttr("{0}.ty".format(fkJnts[i+1]))
+            # def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
+            fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+            armLength = mc.getAttr("{0}.ty".format(fkJnts[i + 1]))
             mc.select(fkJntOffsetCtrls[i][1] + ".cv[:]")
-            mc.move(0, armLength*0.5, 0, r=True, ls=True)
+            mc.move(0, armLength * 0.5, 0, r=True, ls=True)
 
         # parent the fk lower arm controls under the fk upper arm controls
         mc.parent(fkJntOffsetCtrls[1][0], fkJntOffsetCtrls[0][1])
@@ -595,16 +584,17 @@ class pcCreateRigArms(UI):
         jntClav = jointClavicle0
         childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
         clavLength = mc.getAttr("{0}.ty".format(childClavicle))
-        clavicleOffsetCtrl = self.createCTRLs(jntClav, size=6,ornt=True, colour=colourTU, orientVal=(0,0,1))
+        clavicleOffsetCtrl = self.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1))
         mc.select(clavicleOffsetCtrl[1] + ".cv[:]")
-        mc.move(clavLength*0.5, clavLength*0.5, 0, r=True, ls=True)
+        mc.move(clavLength * 0.5, clavLength * 0.5, 0, r=True, ls=True)
         autoAttrName = "autoClavicle"
-        mc.addAttr(clavicleOffsetCtrl, longName=autoAttrName , at="float", k=True, min=0, max=1, dv=0.05)
+        mc.addAttr(clavicleOffsetCtrl, longName=autoAttrName, at="float", k=True, min=0, max=1, dv=0.05)
         autoName = clavicleOffsetCtrl[2]
         xprNameClav = "expr_" + leftRight + "clavicle"
 
         # AUTO_CTRL_l_clavicle.rotateX = JNT_l_upperArm.rotateX * CTRL_l_clavicle.autoClavicle;
-        exprStringClav = self.tgpAutoClavicleRotate(autoName,self.jointArmArray[0], clavicleOffsetCtrl[1], autoAttrName)
+        exprStringClav = self.tgpAutoClavicleRotate(autoName, self.jointArmArray[0], clavicleOffsetCtrl[1],
+                                                    autoAttrName)
 
         mc.expression(s=exprStringClav, n=xprNameClav)
         mc.parent(clavicleOffsetCtrl[0], shoulderOffsetCtrl1)
@@ -639,7 +629,7 @@ class pcCreateRigArms(UI):
             # if we're using the copy, we just want to get the list
             ikJntsDrive = []
             for ikJ in ikJnts:
-                ikJntVal = ikJ+"Drive"
+                ikJntVal = ikJ + "Drive"
                 ikJntsDrive.append(ikJntVal)
         else:
             ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
@@ -650,9 +640,9 @@ class pcCreateRigArms(UI):
         ikArmName = "IK_" + ikSide
         effArmName = "EFF_" + ikSide
         ikArms = mc.ikHandle(n=ikArmName, sj=ikJntsDrive[0], ee=ikJntsDrive[-1], sol="ikRPsolver")
-        mc.rename(ikArms [1], effArmName)
+        mc.rename(ikArms[1], effArmName)
 
-        #fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+        # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
         ikOffsetCtrl = self.createCTRLs(ikArms[0], 5, pnt=True, colour=colourTU, sectionsTU=6, addPrefix=True)
 
         mc.select(ikOffsetCtrl[1] + ".cv[:]")
@@ -664,12 +654,13 @@ class pcCreateRigArms(UI):
         fkOrntUpperArm1 = mc.orientConstraint(ikJntsDrive[0], ikJnts[0])[0]
         fkOrntLowerArm1 = mc.orientConstraint(ikJntsDrive[1], ikJnts[1], skip="y")[0]
 
-        return ikOffsetCtrl, ikArms, ikJntsDrive,ikSide
+        return ikOffsetCtrl, ikArms, ikJntsDrive, ikSide
 
     def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                ikOffsetCtrl, elbowOffsetCtrl, ikArms0, ctrlIKChest, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr,  *args):
-        #TO DELETE: come back to make the elbow invisible
+                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, ctrlIKChest, ikSide, isCopy, fkJntOffsetCtrls, ctrlFKIK,
+                   ctrlFKIKAttr, *args):
+        # TO DELETE: come back to make the elbow invisible
         if not isCopy:
             # since these joints are already parented if it's a copy, we just skip
             mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot)
@@ -680,8 +671,6 @@ class pcCreateRigArms(UI):
             mc.parent(shoulderOffsetCtrl[0], ctrlIKChest)
 
         mc.pointConstraint(shoulderOffsetCtrl[1], jntShoulderRoot)
-
-
 
         # group OFFSET_CTRL_IK_l_arm, OFFSET_CTRL_l_elbow into GRP_CTRL_IK_l_arm
         ikGrpCtrlName = "GRP_CTRL_IK_" + ikSide
@@ -703,7 +692,6 @@ class pcCreateRigArms(UI):
         self.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True)
         self.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True)
 
-
         # linking JNT visibility to their respective parent
         mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikArms0))
         mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikJnts0))
@@ -711,33 +699,28 @@ class pcCreateRigArms(UI):
         mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(elbowOffsetCtrl[1]))
         mc.connectAttr("{0}.visibility".format(fkJntOffsetCtrls[0][1]), "{0}.visibility".format(fkJnts0))
 
-        #set the FK to visible when not ctrlFKIK not 1 for arm attribute
+        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
 
         tangentToUse = ["linear", "step"]
         visMin = 0.001
 
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True, driverValue=0, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True, driverValue=1-visMin, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False, driverValue=1, modifyInOut=tangentToUse )
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                   driverValue=0, modifyInOut=tangentToUse)
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                   driverValue=1 - visMin, modifyInOut=tangentToUse)
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
+                                   driverValue=1, modifyInOut=tangentToUse)
 
         tangentToUse = ["linear", "step"]
         # set the IK to visible when not ctrlFKIK not 0 for arm attribute
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False, driverValue=0, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True, driverValue=visMin, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True, driverValue=1, modifyInOut=tangentToUse )
-
-
-
-
-
-
-
-
-
-
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
+                                   driverValue=0, modifyInOut=tangentToUse)
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                   driverValue=visMin, modifyInOut=tangentToUse)
+        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                   driverValue=1, modifyInOut=tangentToUse)
 
     def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
-
 
         for rotateChange in rotateChangeList:
             if (getRotOrder == "XYZ"):
@@ -753,9 +736,7 @@ class pcCreateRigArms(UI):
             elif (getRotOrder == "ZYX"):
                 mc.setAttr(rotateChange + ".rotateOrder", 5)
 
-            # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
-
-
+                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
 
     def tgpMakeBC(self, *args):
 
@@ -766,7 +747,6 @@ class pcCreateRigArms(UI):
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
-
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
 
@@ -774,7 +754,7 @@ class pcCreateRigArms(UI):
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         if checkboxSpine:
-            ctrlIKChest =  mc.textFieldButtonGrp("ctrlIKChestLoad_tf", q=True, text=True)
+            ctrlIKChest = mc.textFieldButtonGrp("ctrlIKChestLoad_tf", q=True, text=True)
         else:
             ctrlIKChest = None
 
@@ -796,7 +776,7 @@ class pcCreateRigArms(UI):
         if checkSelLeft == 1:
             isLeft = True
             leftRight = "l_"
-            leftRightMirror="r_"
+            leftRightMirror = "r_"
             colourTU = 14
             colourTUMirror = 13
             ctrlFKIKAttr = listCtrlFKIKAttr[0]
@@ -816,7 +796,7 @@ class pcCreateRigArms(UI):
                     mc.addAttr(ctrlFKIK, longName=listCtrlFKIKAttr[i], at="float", k=True, min=0, max=1, dv=0)
                 except:
                     mc.warning("Error, attribute may already exist")
-        #self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
+        # self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
 
         # make sure the selections are not empty
         checkList = [self.jntNames]
@@ -840,8 +820,9 @@ class pcCreateRigArms(UI):
                 print("I got here!")
                 toReplace = "_" + leftRight
                 toReplaceWith = "_" + leftRightMirror
-                mirrorBase = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True, searchReplace=[toReplace, toReplaceWith])
-                jntShoulderRootMirror =mirrorBase[0]
+                mirrorBase = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
+                                            searchReplace=[toReplace, toReplaceWith])
+                jntShoulderRootMirror = mirrorBase[0]
                 mc.parent(jntShoulderRootMirror, w=True)
                 for mb in mirrorBase:
                     if mc.objectType(mb) != "joint":
@@ -865,32 +846,7 @@ class pcCreateRigArms(UI):
                              geoJntArray, colourTUMirror, jntShoulderRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, ctrlIKChest, checkboxTwists,
                              makeExpression=True, makeTwistJnts=False, isCopy=True,
-                             checkboxSpine = checkboxSpine, toReplace=toReplace, toReplaceWith=toReplaceWith)
-
-
+                             checkboxSpine=checkboxSpine, toReplace=toReplace, toReplaceWith=toReplaceWith)
 
             if checkGeo:
                 self.tgpSetGeo(geoJntArray)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
