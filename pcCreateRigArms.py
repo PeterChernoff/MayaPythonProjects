@@ -562,14 +562,8 @@ class pcCreateRigArms(UI):
         ikArms = mc.ikHandle(n=ikArmName, sj=ikJntsDrive[0], ee=ikJntsDrive[-1], sol="ikRPsolver")
         mc.rename(ikArms[1], effArmName)
 
-        # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-        ikOffsetCtrl = self.createCTRLs(ikArms[0], 5, pnt=True, colour=colourTU, sectionsTU=6, addPrefix=True)
-
-        mc.select(ikOffsetCtrl[1] + ".cv[:]")
-        if isLeft:
-            mc.rotate(0, "-25deg", "-25deg", r=True)
-        else:
-            mc.rotate(0, "25deg", "25deg", r=True)
+        # fkJntOffsetCtrls.append(CRU.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+        ikOffsetCtrl = CRU.createCTRLs(ikArms[0], pnt=True, colour=colourTU, addPrefix=True, boxDimensionsLWH=[5, 5, 5])
 
         fkOrntUpperArm1 = mc.orientConstraint(ikJntsDrive[0], ikJnts[0])[0]
         fkOrntLowerArm1 = mc.orientConstraint(ikJntsDrive[1], ikJnts[1], skip="y")[0]
@@ -584,9 +578,7 @@ class pcCreateRigArms(UI):
         mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot)
 
         if checkboxSpine:
-            # TO DELETE: May switch out to  JNT_IK_spine_6 (or second to last spine). Need to have Maintain offset)
-            # mc.parentConstrain(shoulderOffsetCtrl[0], JNT_IK_spine_6,  mo=True)
-            mc.parentConstraint(jntSpine6, shoulderOffsetCtrl[0])
+            mc.parentConstraint(jntSpine6, shoulderOffsetCtrl[0], mo=True)
 
         mc.pointConstraint(shoulderOffsetCtrl[1], jntShoulderRoot)
 
