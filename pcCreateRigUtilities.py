@@ -43,8 +43,6 @@ class pcCreateRigUtilities:
             except:
                 ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
                 # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
-
-
         else:
             if sectionsTU:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
