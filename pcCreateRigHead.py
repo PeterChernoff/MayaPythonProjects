@@ -13,14 +13,6 @@ import pcCreateRigUtilities
 from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 reload(pcCreateRigUtilities)
 
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
-
-'''
-
-
 class pcCreateRigHead(UI):
     def __init__(self):
 
@@ -42,9 +34,6 @@ class pcCreateRigHead(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
         mc.text(l="Select The Neck Root: ")
-        '''mc.radioButtonGrp("selType_rbg", la2=["Hierarchy", "Selected"], nrb=2, sl=1, cw2=[80, 80],
-                          onc=partial(self.tgpShowBtnOp, "1", "selType_rbg", "selGeo_cb"))
-                          '''
         mc.text(l="")
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
@@ -84,8 +73,6 @@ class pcCreateRigHead(UI):
 
 
         # load buttons
-        #
-        # TO DELETE: May need to edit so the buttons load things properly
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("jointJNTSpine_tfbg", e=True, bc=self.loadSrc3Btn)
@@ -115,7 +102,7 @@ class pcCreateRigHead(UI):
 
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
+        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg")
         print(self.jntSel)
 
     def loadSrc2Btn(self):
@@ -135,42 +122,49 @@ class pcCreateRigHead(UI):
 
     def tgpLoadIKCtrl(self, loadBtn):
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the IK Control")
             return
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The IK Chest Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             print(selName)
 
     def tgpLoadRigBtn(self, loadBtn):
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the rig Group")
             return
         else:
+
+            if CRU.checkObjectType(self.selLoad[0]) != "transform":
+                mc.warning("The Spine Rig Group should only be a transform")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
     def tgpLoadCOGBtn(self, loadBtn):
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the COG Control")
             return
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadTxBtn(self, loadBtn):
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
