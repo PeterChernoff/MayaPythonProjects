@@ -191,3 +191,14 @@ class pcCreateRigUtilities:
         # sets the layer to the state we want
 
         mc.setAttr("{0}.displayType".format(layerName), layerState)
+
+    @staticmethod
+    def checkObjectType(val, *args):
+        sels = mc.listRelatives(val, children=True, shapes=True)
+        if "transform" in mc.objectType(val) and sels != None:
+            # if there are children, it's not just a transform
+            return mc.objectType(sels[0])
+        else:
+            # has no shape children, so probably a transform or joint
+            return mc.objectType(val)
+
