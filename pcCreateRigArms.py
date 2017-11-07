@@ -9,12 +9,6 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
-
-'''
 import pcCreateRigUtilities
 
 reload(pcCreateRigUtilities)
@@ -31,13 +25,6 @@ class pcCreateRigArms(UI):
         self.createUI()
 
     def createCustom(self, *args):
-        '''
-        #
-        #
-        #
-        #
-        #
-        '''
         # selection type
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
@@ -66,9 +53,6 @@ class pcCreateRigArms(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-        # mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
-        # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
-
         mc.text(bgc=(0.85, 0.65, 0.25), l="Top Spine Joint: ")
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_spine_6")
 
@@ -83,13 +67,9 @@ class pcCreateRigArms(UI):
         mc.separator(st="in", h=20, w=500)
 
         # load buttons
-        #
-
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadCtrlBtn)
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", e=True, bc=self.loadSrc2Btn)
-        # mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
-        # mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -115,53 +95,47 @@ class pcCreateRigArms(UI):
         print(self.jntSel)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.tgpLoadJntSpine("jntSpineTopLoad_tf")
+        self.ctrlSel = self.tgpLoadJntSpine("jntSpineTopLoad_tf", "joint")
         print(self.ctrlSel)
 
     def loadSrc3Btn(self):
-        self.grpSel = self.tgpLoadRigBtn("jointRigSpine_tfbg")
+        print("hello")
+        self.grpSel = self.tgpLoadCtrl("ctrlLoad_tfbg")
         print(self.grpSel)
 
-    def loadSrc4Btn(self):
-        self.grpSel2 = self.tgpLoadCOGBtn("cog_tfbg")
-        print(self.grpSel2)
-
-    def loadCtrlBtn(self, loadBtn):
+    def tgpLoadCtrl(self, loadBtn):
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
+        self.selLoad = mc.ls(sl=True, fl=True)
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the Control")
             return
+
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             print(selName)
 
-    def tgpLoadRigBtn(self, loadBtn):
+    def tgpLoadJntSpine(self, loadBtn, myType):
+        # hierarchy
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
+        self.selLoad = mc.ls(sl=True, fl=True, type=myType)
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the rig Group")
+            mc.warning("Select only the root joint")
             return
         else:
+
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
-    def tgpLoadCOGBtn(self, loadBtn):
-        self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
+            # get the children joints
+            self.parent = self.selLoad[0]
 
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the COG Control")
-            return
-        else:
-            selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return self.jointArray
 
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
