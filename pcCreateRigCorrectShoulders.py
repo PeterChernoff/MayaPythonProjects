@@ -16,6 +16,9 @@ reload(bc)
 bc.tgpBlendColors()
 
 '''
+import pcCreateRigUtilities
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRigUtilities)
 
 
 class pcCorrectShoulders(UI):
@@ -266,13 +269,6 @@ class pcCorrectShoulders(UI):
             except:
                 mc.warning("Geo not properly named or available")
 
-    def makeArm(self, isLeft, leftRight,
-                jntArmArray, jntClavicle, jntScapula,
-                geoJntArray, colourTU, jntShoulderRoot,
-                ctrlFKIK, ctrlFKIKAttr, ctrlIKChest, checkboxTwists, makeExpression, makeTwistJnts, isCopy,
-                checkboxSpine, toReplace="", toReplaceWith="", *args):
-        pass
-
     def tgpMakeBC(self, *args):
 
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
@@ -325,9 +321,11 @@ class pcCorrectShoulders(UI):
             if isLeft:
                 if leftRight not in shoulderOffsetCtrlGrp:
                     mc.warning("Please select the left side")
+                    return
             else:
                 if leftRight not in shoulderOffsetCtrlGrp:
                     mc.warning("Please select the right side")
+                    return
             try:
                 mc.parent(shoulderOffsetCtrlGrp, w=True)
             except:
