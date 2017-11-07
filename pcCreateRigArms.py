@@ -69,7 +69,6 @@ class pcCreateRigArms(UI):
         # mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
         # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
 
-        # To delete: May need to make this JNT_IK_spine_6
         mc.text(bgc=(0.85, 0.65, 0.25), l="Top Spine Joint: ")
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_spine_6")
 
@@ -244,32 +243,20 @@ class pcCreateRigArms(UI):
             str += "{0}.rotate{1} = {2}.rotate{1} * {3}.{4};\n".format(autoClav, ax, targetLimb, ctrlClav, autoClavVal)
         return str
 
-    def tgpSetGeo(self, geoJntArray, *args):
-        for i in range(len(geoJntArray)):
-            try:
-
-                theParent = geoJntArray[i]
-                geoName = theParent.replace("JNT_", "GEO_")
-                mc.parent(geoName, theParent)
-                pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
-                mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
-                mc.xform(geoName, ws=True, pivots=pivotTranslate)
-
-            except:
-                mc.warning("Geo not properly named or available")
-
     def makeArm(self, isLeft, leftRight,
                 jntArmArray, jntClavicle, jntScapula,
-                geoJntArray, colourTU, jntShoulderRoot,
-                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists, checkboxSpine, *args):
+                colourTU, jntShoulderRoot,
+                ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
+                checkboxSpine, checkGeo, geoJntArray, *args):
 
-        # Create the joint twists
+        # Adding the twist joints
         if checkboxTwists:
             # xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray, makeExpression)
             xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntArmArray, geoJntArray)
 
-        # affect geo TO DELETE need to adjust this so it's when the geo is selected
+        # NOTE: I use a slightly different order than the originals, leaving the SetGeo section to the lat
 
+        # Creating FK and IK Joints
         bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray)
 
         fkLen = len(fkJnts)
@@ -305,7 +292,7 @@ class pcCreateRigArms(UI):
         # for testing purposes only, setting the IK to active:
         mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
 
-        # create the IKs
+        # Setting up the IK Arm
         ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isLeft)
         # create the twists
         self.setupIkElblowArmTwist(ikOffsetCtrl[1], ikJnts[1], ikArms[0], isLeft)
@@ -313,16 +300,19 @@ class pcCreateRigArms(UI):
         # change the rotation order
         rotationChange = [ikJnts[1], self.jointArmArray[1], fkJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
 
-        self.changeRotateOrder(rotationChange, "YZX")
+        CRU.changeRotateOrder(rotationChange, "YZX")
 
-        # create elbow control
+        # Adding the Elbow Control
         elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms[0], isLeft)
 
         # Organize the rig
-        self.armCleanUp(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot, checkboxSpine,
+        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, jntShoulderRoot, checkboxSpine,
                         shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                        ikOffsetCtrl, elbowOffsetCtrl, ikArms[0], jntSpine6,
+                        ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6,
                         ikSide, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
+
+        if checkGeo:
+            CRU.tgpSetGeo(geoJntArray)
 
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, *args):
         numTwistsPlus1 = numTwists + 1
@@ -430,7 +420,6 @@ class pcCreateRigArms(UI):
         toDelete2 = mc.aimConstraint(ikJntsDrive[1], elbowOffsetCtrl[0], aim=(0, 0, 1))
 
         mc.delete(toDelete, toDelete2)
-        print(armLength)
 
         if not isLeft:
             armLength = -armLength
@@ -524,6 +513,7 @@ class pcCreateRigArms(UI):
         effArmName = "EFF_" + ikSide
         ikArms = mc.ikHandle(n=ikArmName, sj=ikJntsDrive[0], ee=ikJntsDrive[-1], sol="ikRPsolver")
         mc.rename(ikArms[1], effArmName)
+        ikArms[1] = effArmName
 
         # fkJntOffsetCtrls.append(CRU.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
         ikOffsetCtrl = CRU.createCTRLs(ikArms[0], pnt=True, colour=colourTU, addPrefix=True, boxDimensionsLWH=[5, 5, 5])
@@ -533,12 +523,12 @@ class pcCreateRigArms(UI):
 
         return ikOffsetCtrl, ikArms, ikJntsDrive, ikSide
 
-    def armCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot, checkboxSpine,
+    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, jntShoulderRoot, checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                   ikOffsetCtrl, elbowOffsetCtrl, ikArms0, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
+                   ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
         # TO DELETE: come back to make the elbow invisible
-        mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, jntShoulderRoot)
+        mc.parent(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot)
 
         if checkboxSpine:
             mc.parentConstraint(jntSpine6, shoulderOffsetCtrl[0], mo=True)
@@ -551,65 +541,58 @@ class pcCreateRigArms(UI):
 
         mc.parent(ikOffsetCtrl[0], elbowOffsetCtrl[0], ikGrpCtrl)
 
-        # group IK_l_arm, JNT_l_shouder into GRP_rig_l_arm
-        armGrpRigName = "GRP_rig_" + ikSide
+        # group IK_l_arm, JNT_l_shouder into GRP_jnt_l_arm
+        armGrpRigName = "GRP_jnt_" + ikSide
         armRigGrp = mc.group(n=armGrpRigName, w=True, em=True)
 
-        mc.parent(ikArms0, jntShoulderRoot, armRigGrp)
+        mc.parent(ikArms[0], jntShoulderRoot, armRigGrp)
 
-        # locking and hiding the IK controls
-        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
-        for fkJntOC in fkJntOffsetCtrls:
-            CRU.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
-        CRU.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True)
-        CRU.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True)
-        CRU.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True)
-
-        # linking JNT visibility to their respective parent
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikArms0))
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikJnts0))
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikJntsDrive0))
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(elbowOffsetCtrl[1]))
-        mc.connectAttr("{0}.visibility".format(fkJntOffsetCtrls[0][1]), "{0}.visibility".format(fkJnts0))
-
-        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
-
+        # creating lists to set invisible
+        fksToVisible = [fkJntOffsetCtrls[0][1], fkJnts[0]]
+        iksToVisible = [ikOffsetCtrl[1], ikJnts[0], ikJntsDrive[0], elbowOffsetCtrl[1]]
         tangentToUse = ["linear", "step"]
         visMin = 0.001
 
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                  driverValue=0, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                  driverValue=1 - visMin, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
-                                  driverValue=1, modifyInOut=tangentToUse)
+        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
+        for i in range(len(fksToVisible)):
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=True,
+                                      driverValue=0, modifyInOut=tangentToUse)
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=True,
+                                      driverValue=1 - visMin, modifyInOut=tangentToUse)
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=False,
+                                      driverValue=1, modifyInOut=tangentToUse)
 
         tangentToUse = ["linear", "step"]
         # set the IK to visible when not ctrlFKIK not 0 for arm attribute
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
-                                  driverValue=0, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
-                                  driverValue=visMin, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
-                                  driverValue=1, modifyInOut=tangentToUse)
+        for i in range(len(iksToVisible)):
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=False,
+                                      driverValue=0, modifyInOut=tangentToUse)
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=True,
+                                      driverValue=visMin, modifyInOut=tangentToUse)
+            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=True,
+                                      driverValue=1, modifyInOut=tangentToUse)
 
-    def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
+        # locking and hiding the IK controls
+        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
+        for fkJntOC in fkJntOffsetCtrls:
+            CRU.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
+            CRU.lockHideCtrls(fkJntOC[1], visible=True, toLock=False)
+        CRU.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(elbowOffsetCtrl[1], rotate=True, scale=True, visible=True)
 
-        for rotateChange in rotateChangeList:
-            if (getRotOrder == "XYZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 0)
-            elif (getRotOrder == "YZX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 1)
-            elif (getRotOrder == "ZXY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 2)
-            elif (getRotOrder == "XZY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 3)
-            elif (getRotOrder == "YXZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 4)
-            elif (getRotOrder == "ZYX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 5)
+        # hiding the visibility for the FK
 
-                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
+        # locking and hiding the effectors and IK
+        # to delete: May need to not have this hidden
+        mc.setAttr("{0}.visibility".format(ikArms[0]), False)
+        CRU.lockHideCtrls(ikArms[0], visible=True)
+        CRU.lockHideCtrls(ikArms[1], visible=True)
+
+        CRU.layerEdit(ikJnts, ikLayer=True)
+        CRU.layerEdit(fkJnts, fkLayer=True)
+        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True)
 
     def tgpMakeBC(self, *args):
 
@@ -686,31 +669,27 @@ class pcCreateRigArms(UI):
             return
         else:
 
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
 
             # checks if the starting joint is correct to the direction we want
-            CRU.checkLeftRight(isLeft, jntShoulderRoot)
+            if not (CRU.checkLeftRight(isLeft, jntShoulderRoot)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side")
+                return
 
             if mirrorRig:
                 mirrorBase = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
                                             searchReplace=[toReplace, toReplaceWith])
                 jntShoulderRootMirror = mirrorBase[0]
                 # mc.parent(jntShoulderRootMirror, w=True)
-                for mb in mirrorBase:
-                    # we should be before the duplication at this point
-                    if mc.objectType(mb) == "joint":
-                        geoJntArray.append(mb)
-
             self.makeArm(isLeft, leftRight,
                          jntArmArray, jntClavicle, jntScapula,
-                         geoJntArray, colourTU, jntShoulderRoot,
+                         colourTU, jntShoulderRoot,
                          ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
-                         checkboxSpine=checkboxSpine)
+                         checkboxSpine, checkGeo, geoJntArray)
 
             print(mirrorRig)
             if mirrorRig:
-
-                # TO DELETE: In the process of making the changes so I mirror things afterwards
 
                 print("I got here!")
 
@@ -725,12 +704,14 @@ class pcCreateRigArms(UI):
                 jntScapulaMirror = []
                 for scap in jntScapula:
                     jntScapulaMirror.append(scap.replace(toReplace, toReplaceWith))
+                geoJntArrayMirror = []
+                for mb in mirrorBase:
 
+                    if mc.objectType(mb) == "joint" and "End" not in mb:
+                        geoJntArrayMirror.append(mb)
+                # print("geoJntArrayMirror is {0}".format(geoJntArrayMirror))
                 self.makeArm(isLeftMirror, leftRightMirror,
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
-                             geoJntArray, colourTUMirror, jntShoulderRootMirror,
+                             colourTUMirror, jntShoulderRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, jntSpine6, checkboxTwists,
-                             checkboxSpine=checkboxSpine)
-
-            if checkGeo:
-                self.tgpSetGeo(geoJntArray)
+                             checkboxSpine, checkGeo, geoJntArrayMirror)
