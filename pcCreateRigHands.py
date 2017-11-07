@@ -9,14 +9,10 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
+import pcCreateRigUtilities
 
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
-
-'''
-
+reload(pcCreateRigUtilities)
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 
 class pcCreateRigHands(UI):
     def __init__(self):
@@ -27,28 +23,22 @@ class pcCreateRigHands(UI):
 
         self.createUI()
 
-
     def createCustom(self, *args):
-        '''
-        #
-        #
-        #
-        #
-        #
-        '''
         # selection type
-        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3], cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
 
         mc.text(l="Mirror Arm As Well?")
-        #mc.setParent("..")
-        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50],)
+        # mc.setParent("..")
+        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
-        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
-        mc.radioButtonGrp("selArmType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50],)
+        mc.radioButtonGrp("selArmType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
@@ -63,15 +53,9 @@ class pcCreateRigHands(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-        #mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
-        #mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
-
-
         mc.setParent("..")
 
-
         mc.separator(st="in", h=20, w=500)
-
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
@@ -79,17 +63,15 @@ class pcCreateRigHands(UI):
 
         mc.separator(st="in", h=20, w=500)
 
-
-
         # load buttons
         #
         # TO DELETE: May need to edit so the buttons load things properly
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("armLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
-        #mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
-        #mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
-        #mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
+        # mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
+        # mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
+        # mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -113,19 +95,19 @@ class pcCreateRigHands(UI):
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.jntHandSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
-        #print(self.jntHandSel)
+        # print(self.jntHandSel)
 
     def loadSrc2Btn(self):
         self.jntArmSel = self.tgpLoadArm("armLoad_tfbg")
-        #print(self.jntArmSel)
+        # print(self.jntArmSel)
 
     def loadSrc3Btn(self):
         self.jntCtrl = self.tgpLoadCtrl("ctrlLoad_tfbg")
-        #print(self.jntCtrl)
+        # print(self.jntCtrl)
 
     def tgpLoadCtrl(self, loadBtn):
         self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
+        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
@@ -158,20 +140,16 @@ class pcCreateRigHands(UI):
                 # add to the current list
                 self.jointArray.extend(self.child)
 
-
-
             self.jointArmEndArray = [x for x in self.jointArray if "End" in x[-3:]]
 
             mc.textFieldButtonGrp(loadBtn, e=True, tx=self.jointArmEndArray[0])
 
             return self.jointArray
 
-
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
-
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the root joint")
@@ -196,7 +174,8 @@ class pcCreateRigHands(UI):
 
         return self.jointArrayHand
 
-    def createCTRLs(self, s, size=3, prnt = False, ornt = False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None, addPrefix=False):
+    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
+                    addPrefix=False):
         selname = str(s)
         '''
         0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
@@ -244,22 +223,20 @@ class pcCreateRigHands(UI):
 
     def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
         if translate:
-
-            mc.setAttr("{0}.tx".format(s),k=False, l=True)
+            mc.setAttr("{0}.tx".format(s), k=False, l=True)
             mc.setAttr("{0}.ty".format(s), k=False, l=True)
             mc.setAttr("{0}.tz".format(s), k=False, l=True)
         if rotate:
-
-            mc.setAttr("{0}.rx".format(s),k=False, l=True)
+            mc.setAttr("{0}.rx".format(s), k=False, l=True)
             mc.setAttr("{0}.ry".format(s), k=False, l=True)
             mc.setAttr("{0}.rz".format(s), k=False, l=True)
         if scale:
-
-            mc.setAttr("{0}.sx".format(s),k=False, l=True)
+            mc.setAttr("{0}.sx".format(s), k=False, l=True)
             mc.setAttr("{0}.sy".format(s), k=False, l=True)
             mc.setAttr("{0}.sz".format(s), k=False, l=True)
 
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None):
+    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
+                              modifyInOut=None, modifyBoth=None):
         # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
         # modify tanget is determining if the tanget goes in or out
         if modifyInOut or modifyBoth:
@@ -272,10 +249,11 @@ class pcCreateRigHands(UI):
                 modifyOut = modifyInOut[1]
             mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
                                  cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt = modifyIn, ott = modifyOut)
+                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
         else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute), cd='{0}.{1}'.format(driver, driverAttribute),
-                             dv=driverValue, v=drivenValue)
+            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
+                                 cd='{0}.{1}'.format(driver, driverAttribute),
+                                 dv=driverValue, v=drivenValue)
 
     def tgpSetGeo(self, geoJntArray, *args):
         for i in range(len(geoJntArray)):
@@ -334,24 +312,20 @@ class pcCreateRigHands(UI):
             fkJntOffsetCtrls.append(fkFingerOffsetCtrls)
 
         # parents the fingers fks under each other
-        #print(fkJntOffsetCtrls)
+        # print(fkJntOffsetCtrls)
         for i in range(len(fkJntOffsetCtrls)):
-            for j in range(len(fkJntOffsetCtrls[i])-1):
-
-                mc.parent(fkJntOffsetCtrls[i][j+1][0], fkJntOffsetCtrls[i][j][1] )
-
-
-
-
+            for j in range(len(fkJntOffsetCtrls[i]) - 1):
+                mc.parent(fkJntOffsetCtrls[i][j + 1][0], fkJntOffsetCtrls[i][j][1])
 
         return fkJntOffsetCtrls
 
-    def makeHand(self, leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr, isLeft, *args):
+    def makeHand(self, leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr,
+                 isLeft, checkGeo, geoJntArray, *args):
         jntPalmBase = jntPalm[0]
 
         jntFingers = self.getFingers(jntsHand)
         # create the CTRL, then move it
-        handOffsetCtrl = self.createCTRLs(jntPalmBase, 5, ornt=True, pnt=True, colour=colourTU, orientVal=(1, 0, 0))
+        handOffsetCtrl = CRU.createCTRLs(jntPalmBase, 5, ornt=True, pnt=True, colour=colourTU, orientVal=(1, 0, 0))
         handLength = mc.getAttr("{0}.ty".format(jntPalm[1]))
         mc.select(handOffsetCtrl[1] + ".cv[:]")
         if isLeft:
@@ -363,7 +337,7 @@ class pcCreateRigHands(UI):
         # get the expression (this is a bit unique to me) then edit it
         armExprName = "expr" + leftRight + "armTwist"
         armExpr = mc.expression(armExprName, q=True, s=True)
-
+        # to delete: may need to replace JNT_armEnd with CTRL_palm
         armExpr = armExpr.replace("armEnd", "palm")
         # print(armExprName)
         # print(armExpr)
@@ -408,9 +382,9 @@ class pcCreateRigHands(UI):
         mc.parent(conLocFKOffsetCtrl[0], w=True)
         mc.parent(conLocIKOffsetCtrl[0], w=True)
 
-        # print(self.jointArmEndArray)
         # attach to the hands
-        handOffsetCtrlParentConstraint = mc.parentConstraint(conLocFKOffsetCtrl[1], conLocIKOffsetCtrl[1], handOffsetCtrl[0])[0]
+        handOffsetCtrlParentConstraint = \
+            mc.parentConstraint(conLocFKOffsetCtrl[1], conLocIKOffsetCtrl[1], handOffsetCtrl[0])[0]
         mc.pointConstraint(jntArmEnd, conLocFKOffsetCtrl[1])
         mc.orientConstraint(jntArmEnd, conLocFKOffsetCtrl[1])
 
@@ -473,15 +447,12 @@ class pcCreateRigHands(UI):
         allFingers = []
         palmLess = [x for x in jntsHand if "palm" not in x]
 
-        indexOfFingers = ["index","middle","ring","pinky","thumb"]
+        indexOfFingers = ["index", "middle", "ring", "pinky", "thumb"]
 
         for finger in indexOfFingers:
             allFingers.append([x for x in palmLess if finger in x])
 
         return allFingers
-
-
-
 
     def tgpMakeBC(self, *args):
 
@@ -494,14 +465,11 @@ class pcCreateRigHands(UI):
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
 
-
         try:
             jntHandRoot = self.jointArrayHand[0]
         except:
             mc.warning("No joint selected!")
             return
-
-
 
         try:
             jntArmEnd = self.jointArmEndArray[0]
@@ -522,7 +490,7 @@ class pcCreateRigHands(UI):
         if checkSelLeft == 1:
             isLeft = True
             leftRight = strLeft
-            leftRightMirror=strRight
+            leftRightMirror = strRight
             colourTU = 14
             ikColour = 19
             fkColour = 23
@@ -543,7 +511,6 @@ class pcCreateRigHands(UI):
             fkColourMirror = 23
             ctrlFKIKAttr = listCtrlFKIKAttr[1]
             ctrlFKIKAttrMirror = listCtrlFKIKAttr[0]
-
 
         # make sure the selections are not empty
         checkList = [self.jntNames]
