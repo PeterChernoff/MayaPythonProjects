@@ -11,13 +11,8 @@ from tgpBaseUI import BaseUI as UI
 
 import pcCreateRigUtilities
 from pcCreateRigUtilities import pcCreateRigUtilities as CRU
-reload(pcCreateRigUtilities)
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
 
-'''
+reload(pcCreateRigUtilities)
 
 
 class pcCreateRigSpine(UI):
@@ -41,9 +36,6 @@ class pcCreateRigSpine(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
         mc.text(l="Select The Root: ")
-        '''mc.radioButtonGrp("selType_rbg", la2=["Hierarchy", "Selected"], nrb=2, sl=1, cw2=[80, 80],
-                          onc=partial(self.tgpShowBtnOp, "1", "selType_rbg", "selGeo_cb"))
-                          '''
         mc.text(l="")
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
@@ -59,18 +51,8 @@ class pcCreateRigSpine(UI):
 
         mc.separator(st="in", h=20, w=500)
 
-        # Attributes
-
-
         # load buttons
-        #
-        # TO DELETE: May need to edit so the buttons load things properly
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-
-        #
-        #
-
-        #
 
         mc.showWindow(self.window)
 
