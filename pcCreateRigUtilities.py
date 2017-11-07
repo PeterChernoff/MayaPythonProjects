@@ -84,9 +84,6 @@ class pcCreateRigUtilities:
 
         for i in range(len(myVals)):
             mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
-            # to delete this next part
-            if "_IK_" in s:
-                print("{0}.{1}".format(s, myVals[i]))
 
     @staticmethod
     def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
@@ -170,4 +167,27 @@ class pcCreateRigUtilities:
 
         if leftRightCheck not in initVal:
             mc.warning("Please select the {0} side".format(leftRightText))
-            return
+            return False
+        return True
+
+    @staticmethod
+    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, layerVis=True, layerState=2, *args):
+        # layerState
+        # 0 = normal
+        # 1 = template
+        # 2 = reference
+        if ikLayer:
+            layerName = "jnt_IK_LYR"
+        elif fkLayer:
+            layerName = "jnt_FK_LYR"
+        elif ikdriveLayer:
+            layerName = "jnt_IKDrive_LYR"
+
+        # creates the layer if it doesn't already exist
+        if not mc.objExists(layerName):
+            mc.createDisplayLayer(n=layerName, e=True)
+        # adds the objects to the layer
+        mc.editDisplayLayerMembers(layerName, objectsToLoad)
+        # sets the layer to the state we want
+
+        mc.setAttr("{0}.displayType".format(layerName), layerState)
