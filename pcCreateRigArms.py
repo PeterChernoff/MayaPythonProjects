@@ -61,7 +61,7 @@ class pcCreateRigArms(UI):
         mc.separator(st="in", h=20, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
 
         mc.separator(st="in", h=20, w=500)
@@ -253,11 +253,11 @@ class pcCreateRigArms(UI):
         armLength, fkJntOffsetCtrls = self.createArmFKs(fkJnts, colourTU)
 
         # create the shoulder control
-        shoulderOffsetCtrl = self.setupShoulder(jntShoulderRoot, bndJnts[0], fkJntOffsetCtrls[0][0], colourTU)
+        shoulderOffsetCtrl = self.setupShoulder(jntShoulderRoot, bndJnts, fkJntOffsetCtrls, colourTU)
 
         # create the clavicle
         if jntClavicle:
-            clavicleOffsetCtrl = self.setupClavicle(jntClavicle[0], colourTU, leftRight, shoulderOffsetCtrl[1])
+            clavicleOffsetCtrl = self.setupClavicle(jntClavicle, colourTU, leftRight, shoulderOffsetCtrl)
 
         # create the scapula
         if jntScapula:
@@ -269,7 +269,7 @@ class pcCreateRigArms(UI):
         # Setting up the IK Arm
         ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isLeft)
         # create the twists
-        self.setupIkElblowArmTwist(ikOffsetCtrl[1], ikJnts[1], ikArms[0], isLeft)
+        self.setupIkElblowArmTwist(ikOffsetCtrl, ikJnts, ikArms, isLeft)
 
         # change the rotation order
         rotationChange = [ikJnts[1], self.jointArmArray[1], fkJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
@@ -277,7 +277,7 @@ class pcCreateRigArms(UI):
         CRU.changeRotateOrder(rotationChange, "YZX")
 
         # Adding the Elbow Control
-        elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms[0], isLeft)
+        elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft)
 
         # Organize the rig
         self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, jntShoulderRoot, checkboxSpine,
@@ -356,16 +356,16 @@ class pcCreateRigArms(UI):
 
         return bndJnts, fkJnts, ikJnts
 
-    def setupIkElblowArmTwist(self, ikOffsetCtrl1, ikJnts1, ikArms0, isLeft, *args):
+    def setupIkElblowArmTwist(self, ikOffsetCtrl, ikJnts, ikArms, isLeft, *args):
         elbowTwistAttr = "elbowTwist"
-        mc.addAttr(ikOffsetCtrl1, longName=elbowTwistAttr, at="float", k=True)
+        mc.addAttr(ikOffsetCtrl[1], longName=elbowTwistAttr, at="float", k=True)
 
-        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl1, elbowTwistAttr), ikJnts1 + ".rotateY")
+        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl[1], elbowTwistAttr), ikJnts[1] + ".rotateY")
 
         armTwistAttr = "armTwist"
-        mc.addAttr(ikOffsetCtrl1, longName=armTwistAttr, at="float", k=True)
+        mc.addAttr(ikOffsetCtrl[1], longName=armTwistAttr, at="float", k=True)
 
-        ikCtrlArmTwistNode = "{0}_{1}_md".format(ikOffsetCtrl1, armTwistAttr)
+        ikCtrlArmTwistNode = "{0}_{1}_md".format(ikOffsetCtrl[1], armTwistAttr)
         mc.shadingNode("multiplyDivide", n=ikCtrlArmTwistNode, au=True)
 
         # creates nodes that will affect whether or not the twist will go one way or another
@@ -375,10 +375,10 @@ class pcCreateRigArms(UI):
         else:
             mc.setAttr("{0}.i2x".format(ikCtrlArmTwistNode), -1)
 
-        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl1, armTwistAttr), ikCtrlArmTwistNode + ".i1x")
-        mc.connectAttr("{0}.ox".format(ikCtrlArmTwistNode), ikArms0 + ".twist")
+        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl[1], armTwistAttr), ikCtrlArmTwistNode + ".i1x")
+        mc.connectAttr("{0}.ox".format(ikCtrlArmTwistNode), ikArms[0] + ".twist")
 
-    def createElbow(self, ikJntsDrive, leftRight, armLength, ikArms0, isLeft, *args):
+    def createElbow(self, ikJntsDrive, leftRight, armLength, ikArms, isLeft, *args):
 
         elbowName = "CTRL_" + leftRight + "elbow"
 
@@ -400,7 +400,7 @@ class pcCreateRigArms(UI):
 
         mc.move(armLength / 2, elbowOffsetCtrl[0], z=True, os=True)
 
-        mc.poleVectorConstraint(elbowOffsetCtrl[1], ikArms0)
+        mc.poleVectorConstraint(elbowOffsetCtrl[1], ikArms[0])
 
         return elbowOffsetCtrl
 
@@ -421,19 +421,19 @@ class pcCreateRigArms(UI):
 
         return armLength, fkJntOffsetCtrls
 
-    def setupShoulder(self, jntShoulderRoot, bndJnts0, fkJntOffsetCtrls00, colourTU, *args):
+    def setupShoulder(self, jntShoulderRoot, bndJnts, fkJntOffsetCtrls, colourTU, *args):
         shoulderOffsetCtrl = CRU.createCTRLs(jntShoulderRoot, size=5, ornt=True, colour=colourTU)
-        shoulderLength = mc.getAttr("{0}.ty".format(bndJnts0))
+        shoulderLength = mc.getAttr("{0}.ty".format(bndJnts[0]))
 
         mc.select(shoulderOffsetCtrl[1] + ".cv[:]")
         mc.move(-shoulderLength * 0.65, shoulderLength * 0.8, 0, r=True, ls=True)
 
-        mc.parent(fkJntOffsetCtrls00, shoulderOffsetCtrl[1])
+        mc.parent(fkJntOffsetCtrls[0][0], shoulderOffsetCtrl[1])
 
         return shoulderOffsetCtrl
 
-    def setupClavicle(self, jointClavicle0, colourTU, leftRight, shoulderOffsetCtrl1, *args):
-        jntClav = jointClavicle0
+    def setupClavicle(self, jointClavicle, colourTU, leftRight, shoulderOffsetCtrl, *args):
+        jntClav = jointClavicle[0]
         childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
         clavLength = mc.getAttr("{0}.ty".format(childClavicle))
         clavicleOffsetCtrl = CRU.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1))
@@ -449,7 +449,7 @@ class pcCreateRigArms(UI):
                                                     autoAttrName)
 
         mc.expression(s=exprStringClav, n=xprNameClav)
-        mc.parent(clavicleOffsetCtrl[0], shoulderOffsetCtrl1)
+        mc.parent(clavicleOffsetCtrl[0], shoulderOffsetCtrl[1])
 
         return clavicleOffsetCtrl
 
