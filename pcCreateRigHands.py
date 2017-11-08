@@ -308,7 +308,7 @@ class pcCreateRigHands(UI):
         mc.pointConstraint(jntArmEnd, conLocIKOffsetCtrl[1])
 
         # set the driven keys
-        # def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None):
+        # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None)
         self.tgpSetDriverArmFKIKSwitch(ctrlFKIK, ctrlFKIKAttr, handOffsetCtrlParentConstraint)
 
         # at this point, the cleanup for CON_IK/FK_l_arms would take place in my notes, but why not just name it to begin with? So I did
@@ -327,7 +327,9 @@ class pcCreateRigHands(UI):
         handOffsetCtrl = self.createPalmCtrls(jntPalmBase, leftRight, colourTU, jntPalm, isLeft)
 
         # Attaching the hand to the arm
-        grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl = self.attachHandToArm(leftRight, fkColour, ikColour, handOffsetCtrl, jntArmEnd, ctrlFKIK, ctrlFKIKAttr,)
+        grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl = self.attachHandToArm(leftRight, fkColour, ikColour,
+                                                                                  handOffsetCtrl, jntArmEnd, ctrlFKIK,
+                                                                                  ctrlFKIKAttr, )
 
         # Create the finger controls.
         # parent the finger offsets under the hands controls. We don't need to do so for the joints since we already assume it to be the case.
@@ -335,13 +337,15 @@ class pcCreateRigHands(UI):
         for i in range(len(fkFingerOffsetCtrls)):
             mc.parent(fkFingerOffsetCtrls[i][0][0], handOffsetCtrl[1])
         # clean up the outliner
-        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl)
+        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl,
+                         conLocIKOffsetCtrl)
 
         if checkGeo:
             print(geoJntArray)
             CRU.tgpSetGeo(geoJntArray)
 
-    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl, *args):
+    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl,
+                    conLocIKOffsetCtrl, *args):
 
         grpRigArm = mc.group(n="GRP_rig{0}arm".format(leftRight), w=True, em=True)
         # For the sake of not having a bazillion entries for the input text, I'm hardcoding things here
@@ -460,7 +464,6 @@ class pcCreateRigHands(UI):
                     jntsHandMirror.append(jntsHand[i].replace(leftRight, leftRightMirror))
 
                 jntPalmMirror = self.getPalm(jntsHandMirror)
-                jntPalmBaseMirror = jntPalmMirror[0]
 
                 jntArmEndMirror = jntArmEnd.replace(leftRight, leftRightMirror)
                 isLeftMirror = not isLeft
@@ -472,4 +475,4 @@ class pcCreateRigHands(UI):
             if mirrorRig:
                 self.makeHand(leftRightMirror, jntsHandMirror, jntArmEndMirror, jntPalmMirror, colourTUMirror,
                               fkColourMirror, ikColourMirror, ctrlFKIK, ctrlFKIKAttrMirror, isLeftMirror, checkGeo,
-                              geoJntArray)
+                              geoJntArrayMirror)
