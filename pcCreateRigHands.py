@@ -14,6 +14,7 @@ import pcCreateRigUtilities
 reload(pcCreateRigUtilities)
 from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 
+
 class pcCreateRigHands(UI):
     def __init__(self):
 
@@ -48,7 +49,7 @@ class pcCreateRigHands(UI):
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm: ")
-        mc.textFieldButtonGrp("armLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="")
+        mc.textFieldButtonGrp("armLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_l_armEnd")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
@@ -69,9 +70,6 @@ class pcCreateRigHands(UI):
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("armLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
-        # mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc2Btn)
-        # mc.textFieldButtonGrp("jointRigSpine_tfbg", e=True, bc=self.loadSrc3Btn)
-        # mc.textFieldButtonGrp("cog_tfbg", e=True, bc=self.loadSrc4Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -94,7 +92,7 @@ class pcCreateRigHands(UI):
 
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntHandSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
+        self.jntHandSel = self.tgpLoadTxBtn("jointLoad_tfbg")
         # print(self.jntHandSel)
 
     def loadSrc2Btn(self):
@@ -146,7 +144,7 @@ class pcCreateRigHands(UI):
 
             return self.jointArray
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadTxBtn(self, loadBtn):
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
@@ -174,115 +172,17 @@ class pcCreateRigHands(UI):
 
         return self.jointArrayHand
 
-    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                    addPrefix=False):
-        selname = str(s)
-        '''
-        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
-        5 dark blue, 6 blue, 7 dark green, 8 dark purple, 9 pink
-        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
-        15 darkish blue, 16 white, 17 yellow, 18 cyan, 19 greenish blue
-        20 light pink, 21 peach, 22 other yellow, 23 turquoise, 24 light brown
-        puke yellow
-        puke green
-        lightish green
-        light blue
-        darkish blue
-        purple
-        magenta
-        '''
-
-        if addPrefix:
-            ctrlName = "CTRL_" + selname
-        else:
-            ctrlName = selname.replace("JNT_", "CTRL_")
-
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        auto = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(auto, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-        # we normally don't include auto
-        offsetCtrl = [offset, ctrl, auto]
-        return offsetCtrl
-
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-            mc.setAttr("{0}.tx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-            mc.setAttr("{0}.rx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-            mc.setAttr("{0}.sx".format(s), k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
-
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
-                              modifyInOut=None, modifyBoth=None):
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        # modify tanget is determining if the tanget goes in or out
-        if modifyInOut or modifyBoth:
-
-            if modifyBoth:
-                modifyIn = modifyBoth
-                modifyOut = modifyBoth
-            else:
-                modifyIn = modifyInOut[0]
-                modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
-        else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue)
-
-    def tgpSetGeo(self, geoJntArray, *args):
-        for i in range(len(geoJntArray)):
-            try:
-                print("------")
-                theParent = geoJntArray[i]
-                print(theParent)
-                geoName = theParent.replace("JNT_", "GEO_")
-                print(geoName)
-                mc.parent(geoName, theParent)
-                print("parent successful")
-                pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
-                print("pivotTranslate Successful")
-                mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
-                print("make identity Successful")
-                mc.xform(geoName, ws=True, pivots=pivotTranslate)
-                print("xform Successful")
-
-            except:
-                mc.warning("Geo not properly named or available")
-                mc.warning("===========")
-
     def tgpSetDriverArmFKIKSwitch(self, driver, driverAttr, driven, *args):
         w0w1Attr = mc.listAttr(driven)[-2:]
-        #print(w0w1Attr)
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1, modifyBoth="linear")
+        # print(w0w1Attr)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
+                                  modifyBoth="linear")
 
     def createFingerFKs(self, fkJnts, colourTU, isLeft, *args):
 
@@ -298,7 +198,8 @@ class pcCreateRigHands(UI):
                     theSize = 2
                 else:
                     theSize = 1.5
-                fkFingerOffsetCtrls.append(self.createCTRLs(temp, size=theSize, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+                fkFingerOffsetCtrls.append(
+                    CRU.createCTRLs(temp, size=theSize, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
                 fingerLength = mc.getAttr("{0}.ty".format(fkJnt[i + 1]))
                 mc.select(fkFingerOffsetCtrls[i][1] + ".cv[:]")
                 if isLeft:
@@ -349,7 +250,7 @@ class pcCreateRigHands(UI):
         # change the rotation order
         toRotateChange = [handOffsetCtrl[1], jntPalmBase]
         # print(toRotateChange)
-        self.changeRotateOrder(toRotateChange, "YZX")
+        CRU.changeRotateOrder(toRotateChange, "YZX")
 
         # create locators, groups that contain said locators, then position them at the hand controls
         conFKName = "CON_FK{0}palm".format(leftRight)
@@ -404,42 +305,23 @@ class pcCreateRigHands(UI):
         for i in range(len(fkFingerOffsetCtrls)):
             mc.parent(fkFingerOffsetCtrls[i][0][0], handOffsetCtrl[1])
 
-
-
         self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm)
 
+        if checkGeo:
+            print(geoJntArray)
+            CRU.tgpSetGeo(geoJntArray)
 
     def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, *args):
 
-        # I opted to name this armTop because I didn't want the hassle of competing with the old GRP_rig_l_arm
-        grpRigArm = mc.group(n="GRP_rig{0}armTop".format(leftRight), w=True, em=True)
-        # For the sake of not having a bazillion entries for the input text, I'm just doing this here.
-        mc.parent("GRP_CTRL_IK{0}arm".format(leftRight), "GRP_rig{0}arm".format(leftRight),
+        grpRigArm = mc.group(n="GRP_rig{0}arm".format(leftRight), w=True, em=True)
+        # For the sake of not having a bazillion entries for the input text, I'm hardcoding things here
+        mc.parent("GRP_CTRL_IK{0}arm".format(leftRight), "GRP_jnt{0}arm".format(leftRight),
                   "OFFSET_CTRL{0}shoulder".format(leftRight), jntPalmBase, handOffsetCtrl[0], grpConPalm, grpRigArm)
-        self.lockHideCtrls(handOffsetCtrl[1], translate=True, scale=True)
+        CRU.lockHideCtrls(handOffsetCtrl[1], translate=True, scale=True)
         for i in range(len(fkFingerOffsetCtrls)):
             for j in range(len(fkFingerOffsetCtrls[i])):
-                self.lockHideCtrls(fkFingerOffsetCtrls[i][j][1])
+                CRU.lockHideCtrls(fkFingerOffsetCtrls[i][j][1], scale=True, rotate=True, visible=True)
 
-
-    def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
-
-
-        for rotateChange in rotateChangeList:
-            if (getRotOrder == "XYZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 0)
-            elif (getRotOrder == "YZX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 1)
-            elif (getRotOrder == "ZXY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 2)
-            elif (getRotOrder == "XZY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 3)
-            elif (getRotOrder == "YXZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 4)
-            elif (getRotOrder == "ZYX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 5)
-
-            # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
     def getPalm(self, jntsHand, *args):
         return ([x for x in jntsHand if "palm" in x])
 
