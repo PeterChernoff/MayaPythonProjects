@@ -242,29 +242,32 @@ class pcCreateRigLegs(UI):
         ikJntsDrive = self.createLegIKDrive(ikJnts)
 
         ikJntsToUse = [ikJnts[0], ikJnts[2]]
-        ikJntsDriveToUse =  [ikJntsDrive[0], ikJntsDrive[2]]
+        ikJntsDriveToUse = [ikJntsDrive[0], ikJntsDrive[2]]
         # The first is a Rotate Plane solver, the rest are Single Chain solvers
-        #createLegIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl):
-        ikLegs, ikLegSide, ikOffsetCtrl = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "leg", True, "ikRPsolver")
+        # createLegIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl):
+        ikLegs, ikLegSide, ikOffsetCtrl = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "leg",
+                                                           True, "ikRPsolver")
 
         ikJntsToUse = [ikJnts[-4], ikJnts[-2]]
         ikJntsDriveToUse = [ikJntsDrive[-4], ikJntsDrive[-2]]
-        ikBall, ikBallSide = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "ball", False, "ikSCsolver")
+        ikBall, ikBallSide = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "ball", False,
+                                              "ikSCsolver")
 
         ikJntsToUse = [ikJnts[-2], ikJnts[-1]]
         ikJntsDriveToUse = [ikJntsDrive[-2], ikJntsDrive[-1]]
-        ikToe, ikToeSide = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "toe", False, "ikSCsolver")
+        ikToe, ikToeSide = self.createLegIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "toe", False,
+                                            "ikSCsolver")
 
         mc.parent(ikLegs[0], ikBall[0], ikToe[0], ikOffsetCtrl[1])
-        #[0, 1, -4, -2]
+        # [0, 1, -4, -2]
 
-        #IK Leg Control Part 2
+        # IK Leg Control Part 2
         self.orientConstrainSkipY(ikJnts, ikJntsDrive, [0, 1, -4, -2], [1])
 
         # change the rotation order
         rotationChange = [bndJnts[1], fkJnts[1], ikJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
 
-        self.changeRotateOrder(rotationChange, "YZX")
+        CRU.changeRotateOrder(rotationChange, "YZX")
 
         # Attaching the Leg to the Hip
         # Constraining the bind joints to the fk and ik
@@ -285,18 +288,20 @@ class pcCreateRigLegs(UI):
                         ikOffsetCtrl, fkJntOffsetCtrls, hipOffsetCtrl, ctrlFKHip,
                         leftRight, ctrlFKIK, ctrlFKIKAttr, checkboxHip)
 
+        if checkGeo:
+            CRU.tgpSetGeo(geoJntArray)
 
     def createHip(self, leftRight, ikJnts, ikJntsDrive, *args):
         # create a locator
-        hipName = "CTRL_" + leftRight + "hip"
+        hipName = "CTRL_IK_" + leftRight + "hip"  # to delete: need to make sure this is in the right place
         hipOffsetCtrl = []
         hipOffsetCtrl.append(mc.group(n="OFFSET_" + hipName, w=True, em=True))
         hipOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=hipName)[0])
         hipOffsetCtrl.append(mc.group(n="AUTO_" + hipName, w=True, em=True))
         setSize = 20
-        mc.setAttr("{0}.localScaleX".format(hipOffsetCtrl[1]), setSize )
-        mc.setAttr("{0}.localScaleY".format(hipOffsetCtrl[1]), setSize )
-        mc.setAttr("{0}.localScaleZ".format(hipOffsetCtrl[1]), setSize )
+        mc.setAttr("{0}.localScaleX".format(hipOffsetCtrl[1]), setSize)
+        mc.setAttr("{0}.localScaleY".format(hipOffsetCtrl[1]), setSize)
+        mc.setAttr("{0}.localScaleZ".format(hipOffsetCtrl[1]), setSize)
 
         mc.parent(hipOffsetCtrl[2], hipOffsetCtrl[0])
         mc.parent(hipOffsetCtrl[1], hipOffsetCtrl[2])
@@ -348,78 +353,62 @@ class pcCreateRigLegs(UI):
 
                 valx = x + 1
                 twistTempName = "{0}Twist{1}".format(val, valx)
-                if makeTwistJnts:
-                    twistTemp = mc.duplicate(twistJnt, n=twistTempName)
 
-                    mc.parent(twistTemp, self.jointLegArray[i])
-                    mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
-                    twistJntsSubgroup.append(twistTemp[0])
+                twistTemp = mc.duplicate(twistJnt, n=twistTempName)
+
+                mc.parent(twistTemp, jntLegArray[i])
+                mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
+                twistJntsSubgroup.append(twistTemp[0])
+
                 if i == 0:
                     twistInverse = 1.0 / (numTwistsPlus1)
                 else:
                     twistInverse = -1.0 / (numTwistsPlus1)
 
-                if makeExpression:
-                    twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
+                twistExpression += "{0}.rotateY = {1}.rotateY * {2};\n".format(twistTempName, nextJnt,
                                                                                valx * twistInverse)
                 geoJntArray.append(twistTempName)
-            if makeTwistJnts:
-                mc.delete(twistJnt)
+
+            mc.delete(twistJnt)
+
             twistJnts.append(twistJntsSubgroup)
-            if makeExpression:
-                twistExpression += "\n"
+
+            twistExpression += "\n"
 
             # change to account for the limb
         xprNameTwist = "expr_" + leftRight + "legTwist"  # changes to account for the left or right
 
-        if makeExpression:
-            mc.expression(s=twistExpression, n=xprNameTwist)
+        mc.expression(s=twistExpression, n=xprNameTwist)
         return xprNameTwist, twistExpression, geoJntArray
 
-
-    def getBndFkIkJnts(self, jointLegArray0, isCopy=False, toReplace="", toReplaceWith="", *args):
-        bndJntsTemp = mc.listRelatives(jointLegArray0, type="joint", ad=True)
+    def getBndFkIkJnts(self, jntLegArray, *args):
+        bndJntsTemp = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
         bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
-        bndJnts.append(jointLegArray0)
+        bndJnts.append(jntLegArray[0])
         bndJnts.reverse()
 
-        if isCopy:
-            ikJnts = []
-            for bndJ in bndJnts:
-                ikJntVal = bndJ.replace("JNT_", "JNT_IK_").replace(toReplace, toReplaceWith)
-                ikJnts.append(ikJntVal)
-        else:
-            ikJntsTemp = mc.duplicate(jointLegArray0, rc=True)
-            ikJntRoot = ikJntsTemp[0]
+        ikJntsTemp = mc.duplicate(jntLegArray[0], rc=True)
+        ikJntRoot = ikJntsTemp[0]
 
-            # We already made unique
-            ikJntsTempDesc = mc.listRelatives(ikJntRoot, ad=True)
-            ikJntsTempDesc.append(ikJntRoot)
+        # We already made unique
+        ikJntsTempDesc = mc.listRelatives(ikJntRoot, ad=True)
+        ikJntsTempDesc.append(ikJntRoot)
 
-            # remove non-IK related joints
-            ikJnts = self.tgpCreateLimbFKIFList(ikJntsTempDesc, "JNT_", "JNT_IK_", 1)
+        # remove non-IK related joints
+        ikJnts = self.tgpCreateLimbFKIFList(ikJntsTempDesc, "JNT_", "JNT_IK_", 1)
 
-            ikJnts.reverse()
+        ikJnts.reverse()
 
         # create the FK Joints
-        if isCopy:
-            fkJnts = []
-            for bndJ in bndJnts:
-                fkJntVal = bndJ.replace("JNT_", "JNT_FK_").replace(toReplace, toReplaceWith)
-                fkJnts.append(fkJntVal)
-        else:
 
-            fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
+        fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
 
-            fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
-
-
+        fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
 
         return bndJnts, fkJnts, ikJnts
 
-
     def setupIkKneeLegTwist(self, ikOffsetCtrl1, ikJnts1, *args):
-    #def setupIkKneeLegTwist(self, ikOffsetCtrl1, ikJnts1, '''ikLegs0, isLeft,''' * args):
+        # def setupIkKneeLegTwist(self, ikOffsetCtrl1, ikJnts1, '''ikLegs0, isLeft,''' * args):
         kneeTwistAttr = "kneeTwist"
         mc.addAttr(ikOffsetCtrl1, longName=kneeTwistAttr, at="float", k=True)
 
@@ -454,54 +443,46 @@ class pcCreateRigLegs(UI):
             try:
                 sizeToUse = sizeVals[i]
             except:
-                sizeToUse=10
-            #def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
-            fkJntOffsetCtrls.append(self.createCTRLs(temp, size=sizeToUse, ornt=True, colour=colourTU, orientVal=(1,0,0)))
-            #legLength = mc.getAttr("{0}.ty".format(fkJnts[i+1]))
-            #mc.select(fkJntOffsetCtrls[i][1] + ".cv[:]")
-            #mc.move(0, legLength*0.5, 0, r=True, ls=True)
+                sizeToUse = 10
+            # createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
+            fkJntOffsetCtrls.append(
+                CRU.createCTRLs(temp, size=sizeToUse, ornt=True, colour=colourTU, orientVal=(1, 0, 0)))
+            # legLength = mc.getAttr("{0}.ty".format(fkJnts[i+1]))
+            # mc.select(fkJntOffsetCtrls[i][1] + ".cv[:]")
+            # mc.move(0, legLength*0.5, 0, r=True, ls=True)
 
         # parent the fk lower leg controls under the fk upper leg controls
         for i in range(len(fkJntOffsetCtrls[:-1])):
-            mc.parent(fkJntOffsetCtrls[i+1][0], fkJntOffsetCtrls[i][1])
+            mc.parent(fkJntOffsetCtrls[i + 1][0], fkJntOffsetCtrls[i][1])
 
         return fkJntOffsetCtrls
 
+    def createLegIKDrive(self, ikJnts, *args):
 
-    def createLegIKDrive(self, ikJnts, isCopy, *args):
-
-        if isCopy:
-            # if we're using the copy, we just want to get the list
-            ikJntsDrive = []
-            for ikJ in ikJnts:
-                ikJntVal = ikJ+"Drive"
-                ikJntsDrive.append(ikJntVal)
-        else:
-            ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
-            ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
+        ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
+        ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
 
         return ikJntsDrive
 
-
-    def createLegIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl, ikSolver,  *args):
+    def createLegIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl, ikSolver, *args):
         ikSide = leftRight + ikSuffix
 
         ikLegName = "IK_" + ikSide
         effLegName = "EFF_" + ikSide
         ikLegs = mc.ikHandle(n=ikLegName, sj=ikJntsDriveToUse[0], ee=ikJntsDriveToUse[-1], sol=ikSolver)
-        mc.rename(ikLegs [1], effLegName)
+        mc.rename(ikLegs[1], effLegName)
 
-        #fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-        ikOffsetCtrl=None
+        # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
+        ikOffsetCtrl = None
         if createCtrl:
             # We just want to create a control at the location, we'll be parenting it.
-            ikOffsetCtrl = self.createCTRLs(ikLegs[0], 9, pnt=False, ornt=False, prnt=False, colour=colourTU, sectionsTU=6, addPrefix=True, orientVal=(0,1,0))
+            ikOffsetCtrl = CRU.createCTRLs(ikLegs[0], 9, pnt=False, ornt=False, prnt=False, colour=colourTU,
+                                           addPrefix=True, orientVal=(0, 1, 0), boxDimensionsLWH=[7, 7, 7])
             return ikLegs, ikSide, ikOffsetCtrl
 
         '''fkOrntUpperLeg1 = mc.orientConstraint(ikJntsDriveToUse[0], ikJntsToUse[0])[0]
         fkOrntLowerLeg1 = mc.orientConstraint(ikJntsDriveToUse[1], ikJntsToUse[1], skip="y")[0]'''
         return ikLegs, ikSide
-
 
     def orientConstrainSkipY(self, ikJnts, ikJntsDrive, listVals, skipYVals):
         for i in listVals:
@@ -617,6 +598,8 @@ class pcCreateRigLegs(UI):
             ctrlFKIKAttr = listCtrlFKIKAttr[3]
             ctrlFKIKAttrMirror = listCtrlFKIKAttr[2]
 
+        jntLegArray = self.jntLegArray
+
         '''if ctrlFKIK:
             for i in range(len(listCtrlFKIKAttr)):
                 try:
@@ -626,17 +609,37 @@ class pcCreateRigLegs(UI):
 
         # make sure the selections are not empty
         checkList = [self.jntNames]
-        # note: the isCopy is not applicable due to the differences between the leg and arm joint setup.
         # However, editing them out is too much hassle,  it's easier just to leave them both false
         if ((checkList[0] == "")):
             mc.warning("You are missing a selection!")
             return
         else:
+            CRU.createLocatorToDelete()
+
+            if mirrorRig:
+                toReplace = "_" + leftRight
+                toReplaceWith = "_" + leftRightMirror
+                geoJntArrayMirror = []
+                mirrorBase = mc.mirrorJoint(jntLegRoot, mirrorYZ=True, mirrorBehavior=True,
+                                            searchReplace=[toReplace, toReplaceWith])
+                jntLegRootMirror = mirrorBase[0]
+                try:
+                    mc.parent(jntLegRootMirror, w=True)
+                except:
+                    pass
+                for mb in mirrorBase:
+                    if mc.objectType(mb) == "joint":
+                        geoJntArrayMirror.append(mb)
+                isLeftMirror = not isLeft
+                # we need to create mirror names for the legs
+                jntLegArrayMirror = []
+                for jntAA in jntLegArray:
+                    jntLegArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
+
             self.makeLeg(isLeft, leftRight,
-                         self.jointLegArray,
-                         geoJntArray, colourTU, jntLegRoot,
+                         jntLegArray,
+                         checkGeo, geoJntArray, colourTU, jntLegRoot,
                          ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists,
-                         makeExpression=True, makeTwistJnts=True, isCopy=False,
                          checkboxHip=checkboxHip)
 
             print(mirrorRig)
@@ -644,35 +647,9 @@ class pcCreateRigLegs(UI):
                 # TO DELETE: Consider changing things so that you duplicate the arm before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
 
                 print("I got here!")
-                toReplace = "_" + leftRight
-                toReplaceWith = "_" + leftRightMirror
-                mirrorBase = mc.mirrorJoint(jntLegRoot, mirrorYZ=True, mirrorBehavior=True, searchReplace=[toReplace, toReplaceWith])
-                jntLegRootMirror =mirrorBase[0]
-                mc.parent(jntLegRootMirror, w=True)
-                for mb in mirrorBase:
-                    if mc.objectType(mb) != "joint":
-                        mc.delete(mb)
-                    else:
-                        geoJntArray.append(mb)
-                isLeftMirror = not isLeft
-                # we need to create mirror names for the legs
-                jntLegArrayMirror = []
-                for jntAA in self.jointLegArray:
-                    jntLegArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
 
                 self.makeLeg(isLeftMirror, leftRightMirror,
                              jntLegArrayMirror,
-                             geoJntArray, colourTUMirror, jntLegRootMirror,
+                             checkGeo, geoJntArrayMirror, colourTUMirror, jntLegRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, ctrlFKHip, checkboxTwists,
-                             makeExpression=True, makeTwistJnts=False, isCopy=False,
-                             checkboxHip = checkboxHip, toReplace=toReplace, toReplaceWith=toReplaceWith)
-
-
-
-            if checkGeo:
-                self.tgpSetGeo(geoJntArray)
-
-
-
-
-
+                             checkboxHip=checkboxHip)
