@@ -184,6 +184,53 @@ class pcCreateRigHands(UI):
         CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
                                   modifyBoth="linear")
 
+    def createPalmCtrls(self, jntPalmBase, leftRight, colourTU, jntPalm, isLeft, *args):
+
+        # create the CTRL, then move it
+        handOffsetCtrl = CRU.createCTRLs(jntPalmBase, 5, ornt=True, pnt=True, colour=colourTU, orientVal=(1, 0, 0))
+        handLength = mc.getAttr("{0}.ty".format(jntPalm[1]))
+        mc.select(handOffsetCtrl[1] + ".cv[:]")
+        moveX = - handLength / 2
+        mc.move(moveX, handLength * 0.5, 0, r=True, ls=True)
+
+        # add the twist limits for the wrists:
+        lowerTwistVal = "lowerArmTwist"
+        upperTwistVal = "upperArmTwist"
+        mc.addAttr(handOffsetCtrl[1], longName=lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
+        mc.addAttr(handOffsetCtrl[1], longName=upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
+
+        # get the expression (this is a bit unique to me) then edit it
+        armExprName = "expr" + leftRight + "armTwist"
+        armExpr = mc.expression(armExprName, q=True, s=True)
+
+        ctrlPalmName = "CTRL" + leftRight + "palm"
+        armExpr = armExpr.replace("armEnd", "palm")
+        armExpr = armExpr.replace("JNT" + leftRight + "palm", ctrlPalmName)
+        editExpr = armExpr.splitlines()
+        for i in range(len(editExpr)):
+            if "lowerArm.rotate" in editExpr[i]:
+                # if we're rotating the upper arm twists with the lower arm
+                replaceTwistVal = upperTwistVal
+            elif "palm.rotate" in editExpr[i]:
+                # if we're rotating the lower arm twists with the palm
+                replaceTwistVal = lowerTwistVal
+
+            editExpr[i] = editExpr[i].replace(";", " * {0}.{1};\n".format(ctrlPalmName, replaceTwistVal))
+            print(editExpr[i])
+
+        armExprReplace = "".join(editExpr)
+        print(armExprReplace)
+        mc.delete(armExprName)
+
+        mc.expression(s=armExprReplace, n=armExprName)
+
+        # change the rotation order
+        toRotateChange = [handOffsetCtrl[1], jntPalmBase]
+        # print(toRotateChange)
+        CRU.changeRotateOrder(toRotateChange, "YZX")
+
+        return handOffsetCtrl
+
     def createFingerFKs(self, fkJnts, colourTU, isLeft, *args):
 
         fkJntOffsetCtrls = []
@@ -220,38 +267,7 @@ class pcCreateRigHands(UI):
 
         return fkJntOffsetCtrls
 
-    def makeHand(self, leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr,
-                 isLeft, checkGeo, geoJntArray, *args):
-        jntPalmBase = jntPalm[0]
-
-        jntFingers = self.getFingers(jntsHand)
-        # create the CTRL, then move it
-        handOffsetCtrl = CRU.createCTRLs(jntPalmBase, 5, ornt=True, pnt=True, colour=colourTU, orientVal=(1, 0, 0))
-        handLength = mc.getAttr("{0}.ty".format(jntPalm[1]))
-        mc.select(handOffsetCtrl[1] + ".cv[:]")
-        if isLeft:
-            moveX = -5
-        else:
-            moveX = 5
-        mc.move(moveX, handLength * 0.5, 0, r=True, ls=True)
-
-        # get the expression (this is a bit unique to me) then edit it
-        armExprName = "expr" + leftRight + "armTwist"
-        armExpr = mc.expression(armExprName, q=True, s=True)
-        # to delete: may need to replace JNT_armEnd with CTRL_palm
-        armExpr = armExpr.replace("armEnd", "palm")
-        # print(armExprName)
-        # print(armExpr)
-
-        mc.delete(armExprName)
-
-        mc.expression(s=armExpr, n=armExprName)
-
-        # change the rotation order
-        toRotateChange = [handOffsetCtrl[1], jntPalmBase]
-        # print(toRotateChange)
-        CRU.changeRotateOrder(toRotateChange, "YZX")
-
+    def attachHandToArm(self, leftRight, fkColour, ikColour, handOffsetCtrl, jntArmEnd, ctrlFKIK, ctrlFKIKAttr, *args):
         # create locators, groups that contain said locators, then position them at the hand controls
         conFKName = "CON_FK{0}palm".format(leftRight)
         conLocFKOffsetCtrl = []
@@ -300,27 +316,44 @@ class pcCreateRigHands(UI):
         grpConPalm = mc.group(n="GRP_CON{0}palm".format(leftRight), w=True, em=True)
         mc.parent(conLocFKOffsetCtrl[0], conLocIKOffsetCtrl[0], grpConPalm)
 
+        return grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl
+
+    def makeHand(self, leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr,
+                 isLeft, checkGeo, geoJntArray, *args):
+        # Creating the Palm Control
+        jntPalmBase = jntPalm[0]
+        jntFingers = self.getFingers(jntsHand)
+
+        handOffsetCtrl = self.createPalmCtrls(jntPalmBase, leftRight, colourTU, jntPalm, isLeft)
+
+        # Attaching the hand to the arm
+        grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl = self.attachHandToArm(leftRight, fkColour, ikColour, handOffsetCtrl, jntArmEnd, ctrlFKIK, ctrlFKIKAttr,)
+
+        # Create the finger controls.
         # parent the finger offsets under the hands controls. We don't need to do so for the joints since we already assume it to be the case.
         fkFingerOffsetCtrls = self.createFingerFKs(jntFingers, colourTU, isLeft)
         for i in range(len(fkFingerOffsetCtrls)):
             mc.parent(fkFingerOffsetCtrls[i][0][0], handOffsetCtrl[1])
-
-        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm)
+        # clean up the outliner
+        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl)
 
         if checkGeo:
             print(geoJntArray)
             CRU.tgpSetGeo(geoJntArray)
 
-    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, *args):
+    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl, *args):
 
         grpRigArm = mc.group(n="GRP_rig{0}arm".format(leftRight), w=True, em=True)
         # For the sake of not having a bazillion entries for the input text, I'm hardcoding things here
         mc.parent("GRP_CTRL_IK{0}arm".format(leftRight), "GRP_jnt{0}arm".format(leftRight),
                   "OFFSET_CTRL{0}shoulder".format(leftRight), jntPalmBase, handOffsetCtrl[0], grpConPalm, grpRigArm)
-        CRU.lockHideCtrls(handOffsetCtrl[1], translate=True, scale=True)
+        CRU.lockHideCtrls(handOffsetCtrl[1], translate=True, scale=True, visible=True)
         for i in range(len(fkFingerOffsetCtrls)):
             for j in range(len(fkFingerOffsetCtrls[i])):
-                CRU.lockHideCtrls(fkFingerOffsetCtrls[i][j][1], scale=True, rotate=True, visible=True)
+                CRU.lockHideCtrls(fkFingerOffsetCtrls[i][j][1], scale=True, translate=True, visible=True)
+
+        mc.setAttr("{0}.visibility".format(conLocFKOffsetCtrl[1]), False)
+        mc.setAttr("{0}.visibility".format(conLocIKOffsetCtrl[1]), False)
 
     def getPalm(self, jntsHand, *args):
         return ([x for x in jntsHand if "palm" in x])
