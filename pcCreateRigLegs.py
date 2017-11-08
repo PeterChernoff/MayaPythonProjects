@@ -25,13 +25,6 @@ class pcCreateRigLegs(UI):
         self.createUI()
 
     def createCustom(self, *args):
-        '''
-        #
-        #
-        #
-        #
-        #
-        '''
         # selection type
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
@@ -60,9 +53,6 @@ class pcCreateRigLegs(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-        # mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
-        # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
-
         # To delete: May need to make this JNT_IK_spine_6
         mc.text(bgc=(0.85, 0.65, 0.25), l="FK Hip CTRL: ")
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_FK_hip")
@@ -72,7 +62,7 @@ class pcCreateRigLegs(UI):
         mc.separator(st="in", h=20, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
 
         mc.separator(st="in", h=20, w=500)
