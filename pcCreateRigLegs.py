@@ -125,35 +125,14 @@ class pcCreateRigLegs(UI):
             mc.warning("Select only the Control")
             return
         else:
+
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             print(selName)
             return selName
-
-
-    def tgpLoadRigBtn(self, loadBtn):
-        self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the rig Group")
-            return
-        else:
-            selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-    def tgpLoadCOGBtn(self, loadBtn):
-        self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the COG Control")
-            return
-        else:
-            selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
@@ -187,97 +166,8 @@ class pcCreateRigLegs(UI):
 
         return self.jointArray
 
-    def createCTRLs(self, s, size=3, prnt = False, ornt = False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None, addPrefix=False):
-        selname = str(s)
-        '''
-        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
-        5 dark blue, 6 blue, 7 dark green, 8 dark purple, 9 pink
-        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
-        darkish blue
-        white
-        yellow
-        cyan
-        greenish blue
-        light pink
-        peach
-        other yellow
-        turquoise
-        light brown
-        puke yellow
-        puke green
-        lightish green
-        light blue
-        darkish blue
-        purple
-        magenta
-        '''
-
-        if addPrefix:
-            ctrlName = "CTRL_" + selname
-        else:
-            ctrlName = selname.replace("JNT_", "CTRL_")
-
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        auto = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(auto, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-        # we normally don't include auto
-        offsetCtrl = [offset, ctrl, auto]
-        return offsetCtrl
-
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-
-            mc.setAttr("{0}.tx".format(s),k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-
-            mc.setAttr("{0}.rx".format(s),k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-
-            mc.setAttr("{0}.sx".format(s),k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
-
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue, modifyInOut=None, modifyBoth=None):
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        # modify tanget is determining if the tanget goes in or out
-        if modifyInOut or modifyBoth:
-
-            if modifyBoth:
-                modifyIn = modifyBoth
-                modifyOut = modifyBoth
-            else:
-                modifyIn = modifyInOut[0]
-                modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt = modifyIn, ott = modifyOut)
-        else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute), cd='{0}.{1}'.format(driver, driverAttribute),
-                             dv=driverValue, v=drivenValue)
-
-
-    def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis = True, renameThis=True, addToEnd="", *args):
+    def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
+                              renameThis=True, addToEnd="", *args):
         jntsReturn = []
         # creates a set of values. Normally, we want to delete, but we can also create a list from the values that simply don't include problematic node
         stripLastVal1 = stripLastVal * (-1)
@@ -303,25 +193,14 @@ class pcCreateRigLegs(UI):
 
     def tgpSetDriverLegFKIKSwitch(self, driver, driverAttr, driven, *args):
         w0w1Attr = mc.listAttr(driven)[-2:]
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0, modifyBoth="linear")
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1, modifyBoth="linear")
-
-
-    def tgpSetGeo(self, geoJntArray, *args):
-        for i in range(len(geoJntArray)):
-            try:
-
-                theParent = geoJntArray[i]
-                geoName = theParent.replace("JNT_", "GEO_")
-                mc.parent(geoName, theParent)
-                pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
-                mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
-                mc.xform(geoName, ws=True, pivots=pivotTranslate)
-
-            except:
-                mc.warning("Geo not properly named or available")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
+                                  modifyBoth="linear")
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
+                                  modifyBoth="linear")
 
     def makeLeg(self, isLeft, leftRight,
                 jntLegArray,
@@ -697,25 +576,6 @@ class pcCreateRigLegs(UI):
                                   driverValue=1, modifyInOut=tangentToUse)
         # To delete: remember to connect CTRL_IK_leg.visible to the CTRL_knee.visibilty
 
-    def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
-
-        print(rotateChangeList)
-        for rotateChange in rotateChangeList:
-            if (getRotOrder == "XYZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 0)
-            elif (getRotOrder == "YZX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 1)
-            elif (getRotOrder == "ZXY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 2)
-            elif (getRotOrder == "XZY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 3)
-            elif (getRotOrder == "YXZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 4)
-            elif (getRotOrder == "ZYX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 5)
-
-                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
-
     def tgpMakeBC(self, *args):
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
@@ -822,24 +682,6 @@ class pcCreateRigLegs(UI):
 
             if checkGeo:
                 self.tgpSetGeo(geoJntArray)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
