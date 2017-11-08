@@ -9,13 +9,10 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
+import pcCreateRigUtilities
 
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
-
-'''
+reload(pcCreateRigUtilities)
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
 
 
 class pcCreateRigLegs(UI):
@@ -27,7 +24,6 @@ class pcCreateRigLegs(UI):
 
         self.createUI()
 
-
     def createCustom(self, *args):
         '''
         #
@@ -37,20 +33,22 @@ class pcCreateRigLegs(UI):
         #
         '''
         # selection type
-        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3], cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
 
         mc.text(l="Mirror Leg As Well?")
-        #mc.setParent("..")
-        mc.radioButtonGrp("selLegMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50],)
+        # mc.setParent("..")
+        mc.radioButtonGrp("selLegMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
         mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Hip", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
-        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],cal=([1,"left"],[2,"left"],[3,"left"],))
+        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
-        mc.radioButtonGrp("selLegType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50],)
+        mc.radioButtonGrp("selLegType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
         mc.separator(st="in", h=20, w=500)
 
@@ -62,16 +60,14 @@ class pcCreateRigLegs(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-
-        #mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
-        #mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
+        # mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
+        # mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
 
         # To delete: May need to make this JNT_IK_spine_6
         mc.text(bgc=(0.85, 0.65, 0.25), l="FK Hip CTRL: ")
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_FK_hip")
 
         mc.setParent("..")
-
 
         mc.separator(st="in", h=20, w=500)
 
@@ -122,7 +118,7 @@ class pcCreateRigLegs(UI):
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
-        #self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
+        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
@@ -164,7 +160,6 @@ class pcCreateRigLegs(UI):
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
 
-
         if (len(self.selLoad) != 1):
             mc.warning("Select only the root joint")
             return
@@ -187,7 +182,7 @@ class pcCreateRigLegs(UI):
             # removes if the last joint is End
             # checks if the last three letters are "End"
             self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
-            self.jointLegArray = [x for x in self.jointArray if "Leg" in x[-3:]]
+            self.jntLegArray = [x for x in self.jointArray if "Leg" in x[-3:]]
             self.jointRoot = self.selLoad[0]
 
         return self.jointArray
@@ -294,10 +289,10 @@ class pcCreateRigLegs(UI):
                         mc.delete(toTest)
                 else:
                     if stripLastVal1 == 0:
-                        temp =toTest
+                        temp = toTest
                     else:
                         temp = toTest[:stripLastVal1]
-                    toRename = temp.replace(textToReplace, textReplacement) + addToEnd # strip off the last character
+                    toRename = temp.replace(textToReplace, textReplacement) + addToEnd  # strip off the last character
                     if renameThis:
                         mc.rename(toTest, toRename)
                     jntsReturn.append(toRename)
@@ -566,6 +561,7 @@ class pcCreateRigLegs(UI):
         legTwistAttr = "legTwist"
         mc.addAttr(ikOffsetCtrl1, longName=legTwistAttr, at="float", k=True)
 
+        # To delete: I might consider just making this the connection for the leg
         '''ikCtrlLegTwistNode = "{0}_{1}_md".format(ikOffsetCtrl1, legTwistAttr)
         mc.shadingNode("multiplyDivide", n=ikCtrlLegTwistNode, au=True)
         
@@ -579,7 +575,6 @@ class pcCreateRigLegs(UI):
         
         mc.connectAttr("{0}.{1}".format(ikOffsetCtrl1, legTwistAttr), ikCtrlLegTwistNode + ".i1x")
         mc.connectAttr("{0}.ox".format(ikCtrlLegTwistNode), ikLegs0 + ".twist")'''
-
 
     def createLegFKs(self, fkJnts, colourTU, sizeVals=None, *args):
         # we want to create FK controls for the limbs except the end
@@ -647,17 +642,16 @@ class pcCreateRigLegs(UI):
             else:
                 mc.orientConstraint(ikJntsDrive[i], ikJnts[i])
 
-
     def legCleanUp(self, fkJnts0, ikJnts0, ikJntsDrive0, bndJnts0,
                    ikOffsetCtrl, fkJntOffsetCtrls, hipOffsetCtrl, ctrlFKHip,
-                   leftRight, ctrlFKIK, ctrlFKIKAttr,  checkboxHip, *args):
+                   leftRight, ctrlFKIK, ctrlFKIKAttr, checkboxHip, *args):
 
-        #group the root leg joints and the IK control
+        # group the root leg joints and the IK control
         grpLegRigName = "GRP_rig_" + leftRight + "leg"
         grpLegJntName = "GRP_JNT_" + leftRight + "leg"
 
-        grpLegRig = mc.group(n=grpLegRigName , w=True, em=True)
-        grpLegJnt = mc.group(n=grpLegJntName , w=True, em=True)
+        grpLegRig = mc.group(n=grpLegRigName, w=True, em=True)
+        grpLegJnt = mc.group(n=grpLegJntName, w=True, em=True)
 
         mc.parent(fkJnts0, ikJnts0, ikJntsDrive0, bndJnts0, grpLegJnt)
         mc.parent(grpLegJnt, ikOffsetCtrl[0], grpLegRig)
@@ -669,29 +663,39 @@ class pcCreateRigLegs(UI):
             mc.parent(fkJntOffsetCtrls[0][0], hipOffsetCtrl[0], ctrlFKHip)
 
         # locking and hiding the IK controls
-        self.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
+        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True)
         for fkOC in fkJntOffsetCtrls:
-            self.lockHideCtrls(fkOC[1], translate=True, scale=True)
+            CRU.lockHideCtrls(fkOC[1], translate=True, scale=True)
 
         # linking JNT visibility to their respective parent
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikJnts0))
-        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(ikJntsDrive0))
-        mc.connectAttr("{0}.visibility".format(fkJntOffsetCtrls[0][1]), "{0}.visibility".format(fkJnts0))
+        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(
+            ikJnts0))  # to delete, we don't want these to be connected, we want them invisible all the time
+        mc.connectAttr("{0}.visibility".format(ikOffsetCtrl[1]), "{0}.visibility".format(
+            ikJntsDrive0))  # to delete, we don't want these to be connected, we want them invisible all the time
+        mc.connectAttr("{0}.visibility".format(fkJntOffsetCtrls[0][1]), "{0}.visibility".format(
+            fkJnts0))  # to delete, we don't want these to be connected, we want them invisible all the time
 
-        #set the FK to visible when not ctrlFKIK not 1 for leg attribute
+        # set the FK to visible when not ctrlFKIK not 1 for leg attribute
 
         tangentToUse = ["linear", "step"]
         visMin = 0.001
 
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True, driverValue=0, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True, driverValue=1-visMin, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False, driverValue=1, modifyInOut=tangentToUse )
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
+                                  driverValue=1 - visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
         tangentToUse = ["linear", "step"]
         # set the IK to visible when not ctrlFKIK not 0 for leg attribute
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False, driverValue=0, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True, driverValue=visMin, modifyInOut=tangentToUse )
-        self.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True, driverValue=1, modifyInOut=tangentToUse )
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                  driverValue=visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+                                  driverValue=1, modifyInOut=tangentToUse)
+        # To delete: remember to connect CTRL_IK_leg.visible to the CTRL_knee.visibilty
 
     def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
 
@@ -710,9 +714,7 @@ class pcCreateRigLegs(UI):
             elif (getRotOrder == "ZYX"):
                 mc.setAttr(rotateChange + ".rotateOrder", 5)
 
-            # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
-
-
+                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
 
     def tgpMakeBC(self, *args):
 
@@ -723,7 +725,6 @@ class pcCreateRigLegs(UI):
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
-
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
 
@@ -731,7 +732,7 @@ class pcCreateRigLegs(UI):
         checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         if checkboxHip:
-            ctrlFKHip =  mc.textFieldButtonGrp("ctrlFKHipLoad_tf", q=True, text=True)
+            ctrlFKHip = mc.textFieldButtonGrp("ctrlFKHipLoad_tf", q=True, text=True)
         else:
             ctrlFKHip = None
 
@@ -753,7 +754,7 @@ class pcCreateRigLegs(UI):
         if checkSelLeft == 1:
             isLeft = True
             leftRight = "l_"
-            leftRightMirror="r_"
+            leftRightMirror = "r_"
             colourTU = 14
             colourTUMirror = 13
             ctrlFKIKAttr = listCtrlFKIKAttr[2]
