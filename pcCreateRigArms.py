@@ -501,7 +501,7 @@ class pcCreateRigArms(UI):
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                    ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
-        # TO DELETE: come back to make the elbow invisible
+
         mc.parent(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot)
 
         if checkboxSpine:

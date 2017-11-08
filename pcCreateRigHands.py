@@ -66,7 +66,6 @@ class pcCreateRigHands(UI):
 
         # load buttons
         #
-        # TO DELETE: May need to edit so the buttons load things properly
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("armLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
@@ -438,7 +437,7 @@ class pcCreateRigHands(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
 
             # get the fingers and palm
             jntsHand = self.jntHandSel
@@ -455,9 +454,8 @@ class pcCreateRigHands(UI):
                 for i in range(len(geoJntArrayMirror)):
                     geoJntArrayMirror[i] = geoJntArrayMirror[i].replace(leftRight, leftRightMirror)
 
-                # TO DELETE: Consider changing things so that you duplicate the hand before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
-                mirrorBase = mc.mirrorJoint(jntPalmBase, mirrorYZ=True, mirrorBehavior=True,
-                                            searchReplace=[leftRight, leftRightMirror])
+                mc.mirrorJoint(jntPalmBase, mirrorYZ=True, mirrorBehavior=True,
+                               searchReplace=[leftRight, leftRightMirror])
                 # adds the joints that interact with geometry
                 jntsHandMirror = []
                 for i in range(len(jntsHand)):
