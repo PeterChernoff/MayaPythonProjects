@@ -194,19 +194,19 @@ class pcCreateRigLegs(UI):
 
     def makeLeg(self, isLeft, leftRight,
                 jntLegArray,
-                geoJntArray, colourTU, jntLegRoot,
-                ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists, makeExpression, makeTwistJnts, isCopy,
-                checkboxHip, toReplace="", toReplaceWith="", *args):
+                checkGeo, geoJntArray, colourTU, jntLegRoot,
+                ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists,
+                checkboxHip, *args):
 
         # Create the joint twists
         # Twist Joints and low-res Mesh
         if checkboxTwists:
-            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntLegArray, geoJntArray, makeExpression, makeTwistJnts)
+            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntLegArray, geoJntArray)
 
         # affect geo TO DELETE need to adjust this so it's when the geo is selected
 
         # Adding the IK and FK and creating the FK Controls
-        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntLegArray[0], isCopy, toReplace, toReplaceWith)
+        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntLegArray)
 
         fkLen = len(fkJnts)
         ikLen = len(ikJnts)
@@ -239,7 +239,7 @@ class pcCreateRigLegs(UI):
 
         # IK Leg Control Part 1
         # create the IKs
-        ikJntsDrive = self.createLegIKDrive(ikJnts, isCopy)
+        ikJntsDrive = self.createLegIKDrive(ikJnts)
 
         ikJntsToUse = [ikJnts[0], ikJnts[2]]
         ikJntsDriveToUse =  [ikJntsDrive[0], ikJntsDrive[2]]
@@ -310,8 +310,7 @@ class pcCreateRigLegs(UI):
 
         return hipOffsetCtrl
 
-
-    def makeTwists(self, numTwists, leftRight, jntLegArray, geoJntArray, makeExpression, makeTwistJnts, *args):
+    def makeTwists(self, numTwists, leftRight, jntLegArray, geoJntArray, *args):
         numTwistsPlus1 = numTwists + 1
         twists = numTwists
         twistJnts = []
@@ -330,10 +329,10 @@ class pcCreateRigLegs(UI):
                 nextJntVal = nextJnts[-1]
                 print(nextJnts)
                 print(nextJnt)
-            if makeTwistJnts:
-                nextJntYVal = mc.getAttr("{0}.ty".format(nextJntVal))
-                nextJntIncrement = nextJntYVal / (numTwistsPlus1)
-                twistJnt = mc.duplicate(val, po=True, n="ToDelete")
+
+            nextJntYVal = mc.getAttr("{0}.ty".format(nextJntVal))
+            nextJntIncrement = nextJntYVal / (numTwistsPlus1)
+            twistJnt = mc.duplicate(val, po=True, n="ToDelete")
 
             # create the joint twists at the proper location
 
