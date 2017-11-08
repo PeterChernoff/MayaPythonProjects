@@ -354,7 +354,7 @@ class pcCreateRigHands(UI):
             return
 
         try:
-            jntArmEnd = self.jointArmEndArray[0]
+            jntArmEnd = mc.textFieldButtonGrp("armLoad_tfbg", q=True, text=True)
         except:
             mc.warning("No joint selected!")
             return
@@ -401,6 +401,7 @@ class pcCreateRigHands(UI):
             mc.warning("You are missing a selection!")
             return
         else:
+            CRU.createLocatorToDelete()
 
             # get the fingers and palm
             jntsHand = self.jntHandSel
@@ -411,65 +412,31 @@ class pcCreateRigHands(UI):
             jntPalm = self.getPalm(jntsHand)
             jntPalmBase = jntPalm[0]
 
-            # makeHand(self, leftRight, jntsHand, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr, *args):
-            self.makeHand(leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr, isLeft)
-
-
-
-
-
-
-
-
             if mirrorRig:
                 # create a mirror rig for the hand
-                mirrorBase = mc.mirrorJoint(jntPalmBase, mirrorYZ=True, mirrorBehavior=True, searchReplace=[leftRight, leftRightMirror])
+                geoJntArrayMirror = geoJntArray[:]
+                for i in range(len(geoJntArrayMirror)):
+                    geoJntArrayMirror[i] = geoJntArrayMirror[i].replace(leftRight, leftRightMirror)
+
+                # TO DELETE: Consider changing things so that you duplicate the hand before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
+                mirrorBase = mc.mirrorJoint(jntPalmBase, mirrorYZ=True, mirrorBehavior=True,
+                                            searchReplace=[leftRight, leftRightMirror])
                 # adds the joints that interact with geometry
                 jntsHandMirror = []
-                for mb in mirrorBase:
-                    if mc.objectType(mb) != "joint":
-                        mc.delete(mb)
-                    else:
-                        if "End" not in mb[-3:]:
-                            geoJntArray.append(mb)
-                        jntsHandMirror.append(mb)
-
-                #print(geoJntArray)
+                for i in range(len(jntsHand)):
+                    jntsHandMirror.append(jntsHand[i].replace(leftRight, leftRightMirror))
 
                 jntPalmMirror = self.getPalm(jntsHandMirror)
-                jntPalmBasMirror = jntPalmMirror[0]
-
+                jntPalmBaseMirror = jntPalmMirror[0]
 
                 jntArmEndMirror = jntArmEnd.replace(leftRight, leftRightMirror)
                 isLeftMirror = not isLeft
 
+            # makeHand(self, leftRight, jntsHand, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr, *args):
+            self.makeHand(leftRight, jntsHand, jntArmEnd, jntPalm, colourTU, fkColour, ikColour, ctrlFKIK, ctrlFKIKAttr,
+                          isLeft, checkGeo, geoJntArray)
 
-                self.makeHand(leftRightMirror, jntsHandMirror, jntArmEndMirror, jntPalmMirror, colourTUMirror, fkColourMirror, ikColourMirror, ctrlFKIK, ctrlFKIKAttrMirror,isLeftMirror)
-
-            if checkGeo:
-                print(geoJntArray)
-                self.tgpSetGeo(geoJntArray)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            if mirrorRig:
+                self.makeHand(leftRightMirror, jntsHandMirror, jntArmEndMirror, jntPalmMirror, colourTUMirror,
+                              fkColourMirror, ikColourMirror, ctrlFKIK, ctrlFKIKAttrMirror, isLeftMirror, checkGeo,
+                              geoJntArray)
