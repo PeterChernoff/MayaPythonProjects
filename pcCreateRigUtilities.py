@@ -201,4 +201,3 @@ class pcCreateRigUtilities:
         else:
             # has no shape children, so probably a transform or joint
             return mc.objectType(val)
-

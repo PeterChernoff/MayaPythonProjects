@@ -25,13 +25,6 @@ class pcCreateRigSpine(UI):
         self.createUI()
 
     def createCustom(self, *args):
-        '''
-        #
-        #
-        #
-        #
-        #
-        '''
         # selection type
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
