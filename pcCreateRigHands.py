@@ -111,6 +111,9 @@ class pcCreateRigHands(UI):
             mc.warning("Select only the FKIK Control")
             return
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
@@ -154,14 +157,20 @@ class pcCreateRigHands(UI):
         else:
 
             selName = ', '.join(self.selLoad)
+            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
+
+            if self.child is None:
+                mc.warning("You have the wrong joint selected")
+                return
+
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
             self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
             # collect the joints in an array
             self.jointArrayHand = [self.parent]
-            # reverse the order of the children joints
+            # reverse the order of the children joints, skip if not properly selected
+            #
             self.child.reverse()
 
             # add to the current list
