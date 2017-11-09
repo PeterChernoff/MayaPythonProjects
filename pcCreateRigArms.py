@@ -665,7 +665,7 @@ class pcCreateRigArms(UI):
             print(mirrorRig)
             if mirrorRig:
 
-                print("I got here!")
+                print("Mirroring")
 
                 isLeftMirror = not isLeft
                 # we need to create mirror names for the arms

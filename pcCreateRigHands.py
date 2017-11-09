@@ -458,6 +458,8 @@ class pcCreateRigHands(UI):
             jntPalmBase = jntPalm[0]
 
             if mirrorRig:
+                print("Mirroring")
+
                 # create a mirror rig for the hand
                 geoJntArrayMirror = geoJntArray[:]
                 for i in range(len(geoJntArrayMirror)):
