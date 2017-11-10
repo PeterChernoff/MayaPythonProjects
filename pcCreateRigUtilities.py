@@ -171,7 +171,11 @@ class pcCreateRigUtilities:
         return True
 
     @staticmethod
-    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, layerVis=True, layerState=2, *args):
+    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, layerVis=True, layerState=2, noRecurse=False, *args):
+        if layerVis:
+            visVal = 1
+        else:
+            visVal = 0
         # layerState
         # 0 = normal
         # 1 = template
@@ -187,10 +191,11 @@ class pcCreateRigUtilities:
         if not mc.objExists(layerName):
             mc.createDisplayLayer(n=layerName, e=True)
         # adds the objects to the layer
-        mc.editDisplayLayerMembers(layerName, objectsToLoad)
+        mc.editDisplayLayerMembers(layerName, objectsToLoad, nr=noRecurse)
         # sets the layer to the state we want
 
         mc.setAttr("{0}.displayType".format(layerName), layerState)
+        mc.setAttr("{0}.visibility".format(layerName), visVal)
 
     @staticmethod
     def checkObjectType(val, *args):
@@ -201,3 +206,52 @@ class pcCreateRigUtilities:
         else:
             # has no shape children, so probably a transform or joint
             return mc.objectType(val)
+
+    @staticmethod
+    def createNail(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, *args):
+        selname = str(s)
+        # creates a nail at the location
+        '''
+        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
+        5 dark blue, 6 blue, 7 dark green, 8 darker purple, 9 pink
+        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
+        15 darkish blue, 16 white, 17 yellow, 18 cyan, 19 pale green
+        20 light pink, 21 peach, 22 other yellow, 23 turquoise, 24 light brown/orange
+        25 puke yellow, 26 puke green. 27 lightish green, 28 light blue, 29 darkish blue
+        30 dark purple, 31 magenta
+
+        0 gray, 1 black, 2 dark grey, 3 light gray, 16 white, 
+        4 red, 12 brownish red, 13 light red, 
+        5 dark blue, 6 blue, 15 darkish blue, 18 cyan, 28 light blue, 29 darkish blue
+        7 dark green, 14 green, 19 pale green, 23 turquoise, 26 puke green. 27 lightish green,
+        8 darker purple, 30 dark purple, 
+        9 pink, 20 light pink, 21 peach, 31 magenta
+        10 brown, 11 dark brown, 24 light brown/orange
+        17 yellow, 22 other yellow, 25 puke yellow,
+        '''
+        ctrlName = "CTRL_" + name
+        if not isLeft:
+            bodySize = bodySize * -1
+            headSize = headSize * -1
+        toPass = [(0, 0, 0), (0, 0, bodySize), (0, headSize, bodySize + headSize), (0, 0, bodySize + 2 * headSize),
+                  (0, -headSize, bodySize + headSize), (0, 0, bodySize)]
+        try:
+            ctrl = mc.curve(ctrlName, r=True, d=1, p=toPass, )
+        except:
+            ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
+            # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
+
+        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
+        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+
+        auto = mc.group(ctrl, n="AUTO_" + ctrl)
+        offset = mc.group(auto, n="OFFSET_" + ctrl)
+
+        mc.parentConstraint(s, offset, mo=0)
+        mc.delete(mc.parentConstraint(s, offset))
+
+        # parent the nail to the bone
+        mc.parentConstraint(selname, ctrl, mo=0)
+
+        offsetCtrl = [offset, ctrl, auto]
+        return offsetCtrl
