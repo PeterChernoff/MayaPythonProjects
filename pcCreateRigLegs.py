@@ -53,7 +53,6 @@ class pcCreateRigLegs(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
         mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
-        # To delete: May need to make this JNT_IK_spine_6
         mc.text(bgc=(0.85, 0.65, 0.25), l="FK Hip CTRL: ")
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_FK_hip")
 
@@ -156,7 +155,6 @@ class pcCreateRigLegs(UI):
 
         return self.jointArray
 
-
     def makeTwists(self, numTwists, leftRight, jntLegArray, geoJntArray, footOffsetCtrl, *args):
         # colourTU and isLeft is for a special part of the code which lets us create a foot control
         numTwistsPlus1 = numTwists + 1
@@ -237,7 +235,7 @@ class pcCreateRigLegs(UI):
     def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
                               renameThis=True, addToEnd="", *args):
         jntsReturn = []
-        # creates a set of values. Normally, we want to delete, but we can also create a list from the values that simply don't include problematic node
+        # creates a set of values. Normally, we want this deleted, but we can also create a list from the values that simply don't include problematic node
         stripLastVal1 = stripLastVal * (-1)
         for i in range(len(jntsTemp)):
             toTest = jntsTemp[i]
@@ -297,7 +295,7 @@ class pcCreateRigLegs(UI):
 
         # creates the control next to ankleTwist
         footCtrlsOffsetCtrl = CRU.createNail(ankleTwist, isLeft, leftRight + "footCtrls", bodySize=12, headSize=2,
-                                        colour=colourTU)
+                                             colour=colourTU)
         mc.addAttr(footCtrlsOffsetCtrl[1], longName=self.lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
         mc.addAttr(footCtrlsOffsetCtrl[1], longName=self.upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
 
@@ -338,18 +336,19 @@ class pcCreateRigLegs(UI):
         ikJntsDriveToUse = [ikJntsDrive[0], ikJntsDrive[2]]
         # The first is a Rotate Plane solver, the rest are Single Chain solvers
         # createLegOrFootIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl):
-        ikLegs, ikLegSide, ikOffsetCtrl = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "leg",
-                                                           True, "ikRPsolver")
+        ikLegs, ikLegSide, ikOffsetCtrl = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU,
+                                                                 "leg",
+                                                                 True, "ikRPsolver")
 
         ikJntsToUse = [ikJnts[-4], ikJnts[-2]]
         ikJntsDriveToUse = [ikJntsDrive[-4], ikJntsDrive[-2]]
         ikBall, ikBallSide = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "ball", False,
-                                              "ikSCsolver")
+                                                    "ikSCsolver")
 
         ikJntsToUse = [ikJnts[-2], ikJnts[-1]]
         ikJntsDriveToUse = [ikJntsDrive[-2], ikJntsDrive[-1]]
         ikToe, ikToeSide = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "toe", False,
-                                            "ikSCsolver")
+                                                  "ikSCsolver")
 
         mc.parent(ikLegs[0], ikBall[0], ikToe[0], ikOffsetCtrl[1])
         # [0, 1, -4, -2]
@@ -366,11 +365,9 @@ class pcCreateRigLegs(UI):
 
         CRU.changeRotateOrder(rotationChange, "YZX")
 
-
-
     def createHip(self, leftRight, ikJnts, ikJntsDrive, *args):
         # create a locator
-        hipName = "CTRL_IK_" + leftRight + "hip"  # to delete: need to make sure this is in the right place
+        hipName = "CTRL_IK_" + leftRight + "hip"
         hipIKOffsetCtrl = []
         hipIKOffsetCtrl.append(mc.group(n="OFFSET_" + hipName, w=True, em=True))
         hipIKOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=hipName)[0])
@@ -391,8 +388,6 @@ class pcCreateRigLegs(UI):
         # we parent the hip locators in our clean up
 
         return hipIKOffsetCtrl
-
-
 
     def getBndFkIkJnts(self, jntLegArray, *args):
         bndJntsTemp = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
@@ -498,7 +493,8 @@ class pcCreateRigLegs(UI):
 
         return ikJntsDrive
 
-    def createLegOrFootIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl, ikSolver, *args):
+    def createLegOrFootIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl, ikSolver,
+                          *args):
         ikSide = leftRight + ikSuffix
 
         ikLegName = "IK_" + ikSide
@@ -560,7 +556,6 @@ class pcCreateRigLegs(UI):
         # locking and hiding the CTRL_IK_l_hip
         CRU.lockHideCtrls(hipIKOffsetCtrl[1], scale=True, visible=True)
 
-
         # set the FK to visible when not ctrlFKIK not 1 for leg attribute
 
         tangentToUse = ["linear", "step"]
@@ -581,7 +576,6 @@ class pcCreateRigLegs(UI):
                                   driverValue=visMin, modifyInOut=tangentToUse)
         CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
                                   driverValue=1, modifyInOut=tangentToUse)
-        # To delete: remember to connect CTRL_IK_leg.visible to the CTRL_knee.visibilty
 
         CRU.layerEdit(fkJnts, fkLayer=True, layerVis=False, noRecurse=True)
         CRU.layerEdit(ikJnts, ikLayer=True, layerVis=False, noRecurse=True)
@@ -611,11 +605,10 @@ class pcCreateRigLegs(UI):
                                                                                                  isLeft)
 
         # IK Leg Control Part 1
-        ikJntsDrive, ikOffsetCtrl,ikLegs = self.createIKCtrlsAndDrive(ikJnts, leftRight, colourTU)
+        ikJntsDrive, ikOffsetCtrl, ikLegs = self.createIKCtrlsAndDrive(ikJnts, leftRight, colourTU)
 
         # IK Leg Control Part 2
         self.orientConstrainThenRotateOrder(ikJnts, ikJntsDrive, bndJnts, fkJnts, fkJntOffsetCtrls)
-
 
         # FK IK Switching
         # Adding the IK and FK and creating the FK Controls
@@ -624,7 +617,7 @@ class pcCreateRigLegs(UI):
 
         # Attaching the Leg to the Hip
         hipIKOffsetCtrl = self.attachLegToHip(fkJnts, ikJnts, bndJnts, ctrlFKIK, ctrlFKIKAttr, ikJntsDrive,
-                                            fkJntOffsetCtrls, leftRight)
+                                              fkJntOffsetCtrls, leftRight)
 
         # create the ik twist
         self.setupIkKneeLegTwist(ikOffsetCtrl, ikJnts, ikLegs, isLeft)
@@ -698,7 +691,7 @@ class pcCreateRigLegs(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            #CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, jntLegRoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side")
@@ -732,8 +725,6 @@ class pcCreateRigLegs(UI):
 
             # print(mirrorRig)
             if mirrorRig:
-                # TO DELETE: Consider changing things so that you duplicate the arm before creating the rest of the rig, so we don't have to constantly check to see if we've already made it before
-
                 print("Mirroring")
 
                 self.makeLeg(isLeftMirror, leftRightMirror,
@@ -741,5 +732,3 @@ class pcCreateRigLegs(UI):
                              checkGeo, geoJntArrayMirror, colourTUMirror, jntLegRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, ctrlFKHip, checkboxTwists,
                              checkboxHip=checkboxHip)
-
-
