@@ -103,7 +103,7 @@ class pcCreateRigLegs(UI):
 
     def loadSrc3Btn(self):
         self.grpSel = self.loadCtrlBtn("ctrlLoad_tfbg")
-        print(self.ctrlSel)
+        print(self.grpSel)
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
