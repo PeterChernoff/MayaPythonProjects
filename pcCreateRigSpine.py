@@ -351,6 +351,11 @@ class pcCreateRigSpine(UI):
         CRU.lockHideCtrls(crvSpine, visible=True)
         CRU.lockHideCtrls(ikSpine, visible=True)
 
+        '''
+        #TO DELETE: come back and adjust it so it can put the FK and IKs into the layer 
+        CRU.layerEdit(spineIKs, ikLayer=True)
+        CRU.layerEdit(fkJnts, ikLayer=True)'''
+
     def tgpMakeBC(self, *args):
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)

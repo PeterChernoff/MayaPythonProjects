@@ -564,9 +564,9 @@ class pcCreateRigArms(UI):
         CRU.lockHideCtrls(ikArms[0], visible=True)
         CRU.lockHideCtrls(ikArms[1], visible=True)
 
-        CRU.layerEdit(ikJnts, ikLayer=True)
-        CRU.layerEdit(fkJnts, fkLayer=True)
-        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True)
+        CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
+        CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
+        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
 
     def tgpMakeBC(self, *args):
 
