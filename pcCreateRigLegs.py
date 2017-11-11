@@ -550,9 +550,6 @@ class pcCreateRigLegs(UI):
         mc.setAttr("{0}.visibility".format(hipIKOffsetCtrl[1]), False)
 
         # locking and hiding the IK controls
-        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
-        for fkOC in fkJntOffsetCtrls:
-            CRU.lockHideCtrls(fkOC[1], translate=True, scale=True, visible=True)
 
         # my custom control shouldn't be moved by the animator
         CRU.lockHideCtrls(footCtrlsOffsetCtrl[1], translate=True, rotate=True, scale=True, visible=True)
@@ -584,6 +581,11 @@ class pcCreateRigLegs(UI):
         CRU.layerEdit(fkJnts, fkLayer=True, layerVis=False, noRecurse=True)
         CRU.layerEdit(ikJnts, ikLayer=True, layerVis=False, noRecurse=True)
         CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, layerVis=False, noRecurse=True)
+
+        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
+
+        for fkOC in fkJntOffsetCtrls:
+            CRU.lockHideCtrls(fkOC[1], translate=True, scale=True, visible=True)
 
     def makeLeg(self, isLeft, leftRight,
                 jntLegArray,
