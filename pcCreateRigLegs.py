@@ -502,6 +502,10 @@ class pcCreateRigLegs(UI):
         ikLegs = mc.ikHandle(n=ikLegName, sj=ikJntsDriveToUse[0], ee=ikJntsDriveToUse[-1], sol=ikSolver)
         mc.rename(ikLegs[1], effLegName)
 
+        # we are going to hide this eventually anyways
+        mc.setAttr("{0}.v".format(ikLegName), False)
+        mc.setAttr("{0}.v".format(effLegName), False)
+
         # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
         ikOffsetCtrl = None
         if createCtrl:
