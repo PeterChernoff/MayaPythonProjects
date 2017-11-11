@@ -72,6 +72,7 @@ class pcCreateRigUtilities:
     @staticmethod
     def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals=[], toHide=False, visible=False,
                       toLock=True):
+        # can be used to lock or unlock
         myVals = list(theVals)  # need to reset it every time
         if translate:
             myVals.extend(["tx", "ty", "tz"])
@@ -84,6 +85,7 @@ class pcCreateRigUtilities:
 
         for i in range(len(myVals)):
             mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
+
 
     @staticmethod
     def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
@@ -199,7 +201,7 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def checkObjectType(val, *args):
-        sels = mc.listRelatives(val, children=True, shapes=True)
+        sels = mc.listRelatives(val, children=True, shapes=True, f=True)
         if "transform" in mc.objectType(val) and sels != None:
             # if there are children, it's not just a transform
             return mc.objectType(sels[0])
