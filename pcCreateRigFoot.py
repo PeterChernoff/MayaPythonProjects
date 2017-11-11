@@ -228,32 +228,7 @@ class pcCreateRigFoot(UI):
         self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 0, 1)
         self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 1, 0)
 
-    def makeFoot(self, ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU, *args):
-
-        childrenFoot = mc.listRelatives(ctrlIKLeg, ad=True, type="ikHandle")
-        ikLeg = [x for x in childrenFoot if "leg" in x][0]
-        ikBall = [x for x in childrenFoot if "ball" in x][0]
-        ikToe = [x for x in childrenFoot if "toe" in x][0]
-        legLength = mc.getAttr("{0}.ty".format(jntLegs[1])) + mc.getAttr("{0}.ty".format(jntLegs[-1]))
-
-        '''
-        # this is just to determine if I've run the program. Delete this later
-        toDelete = mc.spaceLocator(p=(0, 0, 0))[0]
-        mc.setAttr('{0}.overrideEnabled'.format(toDelete), 1)
-        mc.setAttr("{0}.overrideColor".format(toDelete), 13)'''
-
-        locToeFlap = [x for x in locArray if "toeFlap" in x][0]
-        mc.parent(ikBall, ikToe, locToeFlap)
-        locBall = [x for x in locArray if "ball" in x][0]
-        locToeEnd = [x for x in locArray if "toeEnd" in x][0]
-        locHeel = [x for x in locArray if "heel" in x][0]
-        locInner = [x for x in locArray if "Inner" in x][0]
-        locOuter = [x for x in locArray if "Outer" in x][0]
-        mc.parent(ikLeg, locBall)
-        mc.parent(offsetFoot, ctrlIKLeg)
-
-        mc.addAttr(ctrlIKLeg, longName="break1", nn="_____", at="enum", k=True, en="_____:_____")
-        # Rotating the IK Foot
+    def createRotateIKFoot(self, ctrlIKLeg, locFootRoot, isLeft, leftRight, *args):
         rotVals = ["rotX", "rotY", "rotZ"]
         for i in range(len(rotVals)):
             mc.addAttr(ctrlIKLeg, longName=rotVals[i], at="float", k=True)
@@ -272,23 +247,7 @@ class pcCreateRigFoot(UI):
 
         mc.expression(s=footExpr, n=xprName)
 
-        footRoll = "footRoll"
-        heelOffset = "heelOffset"
-        ballOffset = "ballOffset"
-        toePivotOffset = "toePivotOffset"
-        heelTwist = "heelTwist"
-        toeTwist = "toeTwist"
-        sideToSide = "sideToSide"
-        toeFlap = "toeFlap"
-        footAttributes = [[footRoll, -10, 10], [heelOffset, 0, 10], [ballOffset, 0, 10], [toePivotOffset, 0, 10],
-                          [heelTwist, -10, 10], [toeTwist, -10, 10], [sideToSide, -10, 10], [toeFlap, -10, 10], ]
-
-        mc.addAttr(ctrlIKLeg, longName="break2", nn="_____", at="enum", k=True, en="_____:_____")
-        for i in range(len(footAttributes)):
-            mc.addAttr(ctrlIKLeg, longName=footAttributes[i][0], at="float", k=True, minValue=footAttributes[i][1],
-                       maxValue=footAttributes[i][2])
-
-        # Foot Rolling
+    def createFootRollAll(self, ctrlIKLeg, footRoll, locHeel, locBall, locToeEnd, *args):
         footRollValues = [0, -10, 5, 10]
         footRollValuesHeel = [0, -50, 0, 0]
         footRollValuesBall = [0, 0, 40, 0]
@@ -298,16 +257,65 @@ class pcCreateRigFoot(UI):
         self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locBall, footRollValuesBall, "rotateX")
         self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locToeEnd, footRollValuesEnd, "rotateX")
 
+    def createFootRollIndividual(self, ctrlIKLeg, heelOffset, ballOffset, toePivotOffset, locHeel, locBall, locToeEnd,
+                                 *args):
         # individual values
         footRollIndiVals = [0, 10]
         footRollIndiValsHeel = [0, -50]
         footRollIndiValsBall = [0, 40]
         footRollIndiValsToeEnd = [0, 60]
-
         self.setFootAttributeValues(ctrlIKLeg, heelOffset, footRollIndiVals, locHeel, footRollIndiValsHeel, "rotateX")
         self.setFootAttributeValues(ctrlIKLeg, ballOffset, footRollIndiVals, locBall, footRollIndiValsBall, "rotateX")
         self.setFootAttributeValues(ctrlIKLeg, toePivotOffset, footRollIndiVals, locToeEnd, footRollIndiValsToeEnd,
                                     "rotateX")
+
+    def makeFoot(self, ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU, *args):
+
+        # gets a bunch of values for later use
+        childrenFoot = mc.listRelatives(ctrlIKLeg, ad=True, type="ikHandle")
+        ikLeg = [x for x in childrenFoot if "leg" in x][0]
+        ikBall = [x for x in childrenFoot if "ball" in x][0]
+        ikToe = [x for x in childrenFoot if "toe" in x][0]
+        legLength = mc.getAttr("{0}.ty".format(jntLegs[1])) + mc.getAttr("{0}.ty".format(jntLegs[-1]))
+
+        locToeFlap = [x for x in locArray if "toeFlap" in x][0]
+        mc.parent(ikBall, ikToe, locToeFlap)
+        locBall = [x for x in locArray if "ball" in x][0]
+        locToeEnd = [x for x in locArray if "toeEnd" in x][0]
+        locHeel = [x for x in locArray if "heel" in x][0]
+        locInner = [x for x in locArray if "Inner" in x][0]
+        locOuter = [x for x in locArray if "Outer" in x][0]
+        mc.parent(ikLeg, locBall)
+        mc.parent(offsetFoot, ctrlIKLeg)
+
+        # meaningless break, just for ease of use
+        mc.addAttr(ctrlIKLeg, longName="break1", nn="_____", at="enum", k=True, en="_____:_____")
+
+        # Rotating the IK Foot
+        self.createRotateIKFoot(ctrlIKLeg, locFootRoot, isLeft, leftRight)
+
+        # gets a bunch of values for later use
+        footRoll = "footRoll"
+        heelOffset = "heelOffset"
+        ballOffset = "ballOffset"
+        toePivotOffset = "toePivotOffset"
+        heelTwist = "heelTwist"
+        toeTwist = "toeTwist"
+        sideToSide = "sideToSide"
+        toeFlap = "toeFlap"
+
+        footAttributes = [[footRoll, -10, 10], [heelOffset, 0, 10], [ballOffset, 0, 10], [toePivotOffset, 0, 10],
+                          [heelTwist, -10, 10], [toeTwist, -10, 10], [sideToSide, -10, 10], [toeFlap, -10, 10], ]
+
+        mc.addAttr(ctrlIKLeg, longName="break2", nn="_____", at="enum", k=True, en="_____:_____")
+        for i in range(len(footAttributes)):
+            mc.addAttr(ctrlIKLeg, longName=footAttributes[i][0], at="float", k=True, minValue=footAttributes[i][1],
+                       maxValue=footAttributes[i][2])
+
+        # Foot Rolling
+        self.createFootRollAll(ctrlIKLeg, footRoll, locHeel, locBall, locToeEnd)
+
+        self.createFootRollIndividual(ctrlIKLeg, heelOffset, ballOffset, toePivotOffset, locHeel, locBall, locToeEnd, )
 
         # Heel and Toe Twist
         # I can accidentally flip the direction of the locators, so I need to keep these values separate
