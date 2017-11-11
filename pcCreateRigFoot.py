@@ -201,38 +201,18 @@ class pcCreateRigFoot(UI):
 
         return self.locArray
 
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
-                              modifyInOut=None, modifyBoth=None):
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        # modify tanget is determining if the tanget goes in or out
-        if modifyInOut or modifyBoth:
-
-            if modifyBoth:
-                modifyIn = modifyBoth
-                modifyOut = modifyBoth
-            else:
-                modifyIn = modifyInOut[0]
-                modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
-        else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue)
-
     def tgpSetDriverEnumWorldFollowLeg(self, driver, driverAttr, driven, *args):
 
         # sets the leg enum to shift between world follow and knee follow
         w0w1Attr = mc.listAttr(driven)[-1:]
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 0, 1)
-        self.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 1, 0)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 0, 1)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 1, 0)
 
     def createRotateIKFoot(self, ctrlIKLeg, locFootRoot, isLeft, leftRight, *args):
         rotVals = ["rotX", "rotY", "rotZ"]
         for i in range(len(rotVals)):
             mc.addAttr(ctrlIKLeg, longName=rotVals[i], at="float", k=True)
-            # mc.connectAttr("{0}.{1}".format(ctrlIKLeg, rotVals[i]), locFootRoot + ".rotate{0}".format(rotVals[i][-1])) #To delete: need to replace this with an expression
+
         if isLeft:
             mult = 1;
         else:
@@ -268,6 +248,51 @@ class pcCreateRigFoot(UI):
         self.setFootAttributeValues(ctrlIKLeg, ballOffset, footRollIndiVals, locBall, footRollIndiValsBall, "rotateX")
         self.setFootAttributeValues(ctrlIKLeg, toePivotOffset, footRollIndiVals, locToeEnd, footRollIndiValsToeEnd,
                                     "rotateX")
+
+    def createHeelAndToeTwists(self, ctrlIKLeg, twistValues, heelTwist, locHeel, toeTwist, locToeEnd, isLeft, *args):
+
+        # I can accidentally flip the direction of the locators, so I need to keep these values separate
+        heelTwistValues = [0, -50, 50]
+        toeTwistValues = [0, 50, -50]
+
+        self.setFootAttributeValues(ctrlIKLeg, heelTwist, twistValues, locHeel, heelTwistValues, "rotateY", isLeft)
+        self.setFootAttributeValues(ctrlIKLeg, toeTwist, twistValues, locToeEnd, toeTwistValues, "rotateY", isLeft)
+
+    def createSideToSide(self, ctrlIKLeg, twistValues, sideToSide, locInner, locOuter, isLeft, *args):
+        sideToSideInnerValues = [0, 50, 0]
+        sideToSideOuterValues = [0, 0, -50]
+
+        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locInner, sideToSideInnerValues, "rotateZ",
+                                    isLeft)
+        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locOuter, sideToSideOuterValues, "rotateZ",
+                                    isLeft)
+
+    def createToeFlap(self, ctrlIKLeg, toeFlap, twistValues, locToeFlap, *args):
+
+        toeFlapValues = [0, 40, -40]
+        self.setFootAttributeValues(ctrlIKLeg, toeFlap, twistValues, locToeFlap, toeFlapValues, "rotateX")
+
+    def createAutoKneeFollow(self, locFootRoot, kneeOffsetCtrl, leftRight, *args):
+        autoKneeName = "LOC_" + leftRight + "kneeFollow"
+
+        # Moves the knee follow locator into the proper place
+        locAutoKneeFollow = mc.spaceLocator(p=(0, 0, 0), name=autoKneeName)[0]
+        toDelete = mc.parentConstraint(locFootRoot, locAutoKneeFollow)
+        mc.delete(toDelete)
+
+        # constrains the locator to the foot in point and orient
+        kneeFollowPnt = mc.pointConstraint(locFootRoot, locAutoKneeFollow)[0]
+        kneeFollowOrntY = mc.orientConstraint(locFootRoot, locAutoKneeFollow, skip=["x", "z"])[0]
+
+        kneeFollowPrnt = mc.parentConstraint(locAutoKneeFollow, kneeOffsetCtrl[0], mo=True)
+        kneeFollow = "kneeFollow"
+        mc.addAttr(kneeOffsetCtrl[1], longName=kneeFollow, at="enum", k=True, en="foot:world")
+
+        # tgpSetDriverEnumWorldFollow(driver, driverAttr, driven, numNodes)
+        # sets the autoKneeControl parent values to on or off
+        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowPnt)
+        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowOrntY)
+        return locAutoKneeFollow
 
     def makeFoot(self, ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU, *args):
 
@@ -317,27 +342,17 @@ class pcCreateRigFoot(UI):
 
         self.createFootRollIndividual(ctrlIKLeg, heelOffset, ballOffset, toePivotOffset, locHeel, locBall, locToeEnd, )
 
-        # Heel and Toe Twist
-        # I can accidentally flip the direction of the locators, so I need to keep these values separate
+        # common values that are used
         twistValues = [0, -10, 10]
-        heelTwistValues = [0, -50, 50]
-        toeTwistValues = [0, 50, -50]
 
-        self.setFootAttributeValues(ctrlIKLeg, heelTwist, twistValues, locHeel, heelTwistValues, "rotateY", isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, toeTwist, twistValues, locToeEnd, toeTwistValues, "rotateY", isLeft)
+        # Heel and Toe Twist
+        self.createHeelAndToeTwists(ctrlIKLeg, twistValues, heelTwist, locHeel, toeTwist, locToeEnd, isLeft)
 
         # Adding Side To Side
-        sideToSideInnerValues = [0, 50, 0]
-        sideToSideOuterValues = [0, 0, -50]
-
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locInner, sideToSideInnerValues, "rotateZ",
-                                    isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locOuter, sideToSideOuterValues, "rotateZ",
-                                    isLeft)
+        self.createSideToSide(ctrlIKLeg, twistValues, sideToSide, locInner, locOuter, isLeft)
 
         # Adding the toeFlap
-        toeFlapValues = [0, 40, -40]
-        self.setFootAttributeValues(ctrlIKLeg, toeFlap, twistValues, locToeFlap, toeFlapValues, "rotateX")
+        self.createToeFlap(ctrlIKLeg, toeFlap, twistValues, locToeFlap)
 
         # Adding Knee Controls
         # I prefer creating new ones over using elbows
@@ -345,31 +360,13 @@ class pcCreateRigFoot(UI):
         kneeOffsetCtrl = self.createKnee(jntLegs, leftRight, legLength, ikLeg, isLeft)
 
         # Auto Knee Follow
-        autoKneeName = "LOC_" + leftRight + "kneeFollow"
-
-        # Moves the knee follow locator into the proper place
-        locAutoKneeFollow = mc.spaceLocator(p=(0, 0, 0), name=autoKneeName)[0]
-        toDelete = mc.parentConstraint(locFootRoot, locAutoKneeFollow)
-        mc.delete(toDelete)
-
-        # constrains the locator to the foot in point and orient
-        kneeFollowPnt = mc.pointConstraint(locFootRoot, locAutoKneeFollow)[0]
-        kneeFollowOrntY = mc.orientConstraint(locFootRoot, locAutoKneeFollow, skip=["x", "z"])[0]
-
-        kneeFollowPrnt = mc.parentConstraint(locAutoKneeFollow, kneeOffsetCtrl[0], mo=True)
-        kneeFollow = "kneeFollow"
-        mc.addAttr(kneeOffsetCtrl[1], longName=kneeFollow, at="enum", k=True, en="foot:world")
-
-        # tgpSetDriverEnumWorldFollow(driver, driverAttr, driven, numNodes)
-        # sets the autoKneeControl parent values to on or off
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowPnt)
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowOrntY)
+        locAutoKneeFollow = self.createAutoKneeFollow(locFootRoot, kneeOffsetCtrl, leftRight)
 
         # Cleaning Up
 
-        self.footCleanUp(locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl[0], colourTU)
+        self.footCleanUp(locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl, ctrlIKLeg, colourTU)
 
-    def footCleanUp(self, locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl0, colourTU, *args):
+    def footCleanUp(self, locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl, ctrlIKLeg, colourTU, *args):
         # rename the GRP_LOC_worldFollow to GRP_LOC_follow if not already
         try:
             grpFollowWorld = mc.ls("GRP_LOC_worldFollow")[0]
@@ -397,16 +394,19 @@ class pcCreateRigFoot(UI):
 
         # groups the knee under the leg rig
         grpRigLeg = "GRP_rig_" + leftRight + "leg"
-        mc.parent(kneeOffsetCtrl0, grpRigLeg)
+        mc.parent(kneeOffsetCtrl[0], grpRigLeg)
 
         # makes our colours the corresponding side values
-        mc.setAttr('{0}.overrideEnabled'.format(kneeOffsetCtrl0), 1)
-        mc.setAttr("{0}.overrideColor".format(kneeOffsetCtrl0), colourTU)
+        mc.setAttr('{0}.overrideEnabled'.format(kneeOffsetCtrl[0]), 1)
+        mc.setAttr("{0}.overrideColor".format(kneeOffsetCtrl[0]), colourTU)
 
         mc.setAttr('{0}.overrideEnabled'.format(offsetFoot), 1)
         mc.setAttr("{0}.overrideColor".format(offsetFoot), colourTU)
 
-        # To delete: remember to connect CTRL_IK_leg.visible to the CTRL_knee.visibilty
+        mc.connectAttr("{0}.v".format(ctrlIKLeg), "{0}.v".format(kneeOffsetCtrl[1]))
+
+        # lock and hide stuff at the end
+        CRU.lockHideCtrls(kneeOffsetCtrl[1], scale=True, rotate=True, visible=True)
 
     def tgpCreateMirror(self, offsetFoot, leftRightReplace, leftRightReplaceMirror, jntLegs):
         offsetFootStuffMirrorWork = mc.duplicate(offsetFoot, rc=True)
@@ -448,10 +448,10 @@ class pcCreateRigFoot(UI):
             mult = -1
         for i in range(len(footAttributeValues)):
             # def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue):
-            self.setDriverDrivenValues(ctrlIKLeg, footAttribute, loc, setValue, footAttributeValues[i],
-                                       footAttributeValuesLoc[i] * mult)
+            CRU.setDriverDrivenValues(ctrlIKLeg, footAttribute, loc, setValue, footAttributeValues[i],
+                                      footAttributeValuesLoc[i] * mult)
 
-    def createKnee(self, ikJntsDrive, leftRight, legLength, ikLeg0, isLeft, *args):
+    def createKnee(self, ikJntsDrive, leftRight, legLength, ikLeg, isLeft, *args):
 
         kneeName = "CTRL_" + leftRight + "knee"
 
@@ -476,7 +476,7 @@ class pcCreateRigFoot(UI):
         # moves along the Z axis, relative to its pre-move position, along the object space, using worldspace distance units
         mc.move(0, 0, legLength / 2, kneeOffsetCtrl[0], r=True, os=True, wd=True)
 
-        mc.poleVectorConstraint(kneeOffsetCtrl[1], ikLeg0)
+        mc.poleVectorConstraint(kneeOffsetCtrl[1], ikLeg)
 
         return kneeOffsetCtrl
 
@@ -542,7 +542,11 @@ class pcCreateRigFoot(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
+            if not (CRU.checkLeftRight(isLeft, locFootRoot)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side")
+                return
 
             if mirrorRig:
                 # we want to get the foot before we add anything to it. When doing this programmatically, it's easier
