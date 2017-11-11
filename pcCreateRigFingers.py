@@ -16,6 +16,11 @@ bc.tgpBlendColors()
 
 '''
 
+import pcCreateRigUtilities
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+
+reload(pcCreateRigUtilities)
+
 
 class pcCreateRigFingers(UI):
     def __init__(self):
@@ -60,9 +65,7 @@ class pcCreateRigFingers(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Palm CTRL: ")
         mc.textFieldButtonGrp("ctrlPalmLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_palm")
 
-
         mc.setParent("..")
-
 
         mc.separator(st="in", h=20, w=500)
 
@@ -99,7 +102,6 @@ class pcCreateRigFingers(UI):
         self.ctrlSel = self.loadCtrlBtn("ctrlPalmLoad_tf")
         print(self.ctrlSel)
 
-
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
         # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
@@ -109,12 +111,14 @@ class pcCreateRigFingers(UI):
             mc.warning("Select only the Control")
             return
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-            #print(selName)
-
+            # print(selName)
 
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
@@ -126,6 +130,9 @@ class pcCreateRigFingers(UI):
             return
         else:
 
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = ', '.join(self.selLoad)
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
@@ -139,109 +146,20 @@ class pcCreateRigFingers(UI):
 
             # add to the current list
             self.ctrlsArray.extend(self.child)
-            #print(self.ctrlsArray)
+            # print(self.ctrlsArray)
             ctrlsArraySorted = []
-            #print(self.ctrlsArray)
-            #sort the array
+            # print(self.ctrlsArray)
+            # sort the array
             for i in range(len(self.ctrlsArray)):
                 sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
                 if myType in mc.objectType(sels) or myType == mc.objectType(sels):
                     ctrlsArraySorted.append(self.ctrlsArray[i])
 
             self.ctrlsRoot = self.selLoad[0]
-            #print(ctrlsArraySorted)
+            # print(ctrlsArraySorted)
             self.ctrlsArray = ctrlsArraySorted
 
         return self.ctrlsArray
-
-    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                    addPrefix=False):
-        selname = str(s)
-        '''
-        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
-        5 dark blue, 6 blue, 7 dark green, 8 dark purple, 9 pink
-        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
-        darkish blue
-        white
-        yellow
-        cyan
-        greenish blue
-        light pink
-        peach
-        other yellow
-        turquoise
-        light brown
-        puke yellow
-        puke green
-        lightish green
-        light blue
-        darkish blue
-        purple
-        magenta
-        '''
-
-        if addPrefix:
-            ctrlName = "CTRL_" + selname
-        else:
-            ctrlName = selname.replace("JNT_", "CTRL_")
-
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        auto = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(auto, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-        # we normally don't include auto
-        offsetCtrl = [offset, ctrl, auto]
-        return offsetCtrl
-
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-            mc.setAttr("{0}.tx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-            mc.setAttr("{0}.rx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-            mc.setAttr("{0}.sx".format(s), k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
-
-    def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
-                              modifyInOut=None, modifyBoth=None):
-        # the way it's written, the setDrivenKeyframe is driven-> driver, not the other way around. My custom value does the more intuitive manner
-        # modify tanget is determining if the tanget goes in or out
-        if modifyInOut or modifyBoth:
-
-            if modifyBoth:
-                modifyIn = modifyBoth
-                modifyOut = modifyBoth
-            else:
-                modifyIn = modifyInOut[0]
-                modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
-        else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue)
 
     def makeFingers(self, ctrlPalm, ctrlsArray, leftRight, colourTU, *args):
 
@@ -288,30 +206,37 @@ class pcCreateRigFingers(UI):
 
         # creating the Finger scrunch
         self.fingerScrunchSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
+
         # creating the Finger spread
         self.fingerSpreadSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
-        # creating the Finger relax
 
+        # creating the Finger relax
         self.fingerRelaxSetup(ctrlArrayFingers, autoTIMRP, ctrlFingers, handAttr)
 
+        # Cleaning up
         self.fingersCleanup(ctrlFingers, ctrlPalm, colourTU)
 
     def fingersCleanup(self, ctrlFingers, ctrlPalm, colourTU, *args):
 
         mc.parent(ctrlFingers, ctrlPalm)
-        mc.makeIdentity(ctrlFingers, apply=True, scale=True)
 
-        #get the non-shape values
+        checkList = mc.listRelatives(ctrlFingers)
+        for i in range(len(checkList)):
+            if mc.objectType(checkList[i]) == "transform":
+                CRU.lockHideCtrls(checkList[i], translate=True, rotate=True, scale=True, toHide=True, visible=True,
+                                  toLock=False)
+        mc.makeIdentity(ctrlFingers, apply=True, translate=True, rotate=True, scale=True)
+
+        # get the non-shape values
         lockValues = mc.listRelatives(ctrlFingers, c=True, s=False, type="transform")
         lockValues.append(ctrlFingers)
         print(lockValues)
 
         for i in range(len(lockValues)):
-            self.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True)
+            CRU.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True, visible=True)
 
             mc.setAttr('{0}.overrideEnabled'.format(lockValues[i]), 1)
             mc.setAttr("{0}.overrideColor".format(lockValues[i]), colourTU)
-
 
     def fingerCurlsSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
 
@@ -320,7 +245,7 @@ class pcCreateRigFingers(UI):
         self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0,
                          thumbsAttrArrayDriven=0, )
 
-        #self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlArray=0, thumbsCurlArrayDriven=0)
+        # self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlArray=0, thumbsCurlArrayDriven=0)
 
         # set at 10 for curl and rotateX, and the thumb values
 
@@ -345,7 +270,7 @@ class pcCreateRigFingers(UI):
         driverVal = 10
         self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersCurlXP10,
                          thumbCurlsZP10, )
-        #self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlXP10, thumbCurlsZP10)
+        # self.fingerCurlsIndividual(ctrlArrayFingers, autoTIMRP, fingerAttr, driverVal, fingersCurlXP10, thumbCurlsZP10)
 
         # set at -10 for curl and rotateX, and the thumb values
 
@@ -374,8 +299,8 @@ class pcCreateRigFingers(UI):
         self.fingerCurls(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersCurlXN10,
                          thumbCurlsZN10, )
 
-
-    def fingerCurls(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+    def fingerCurls(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0,
+                    thumbsAttrArrayDriven=0, *args):
         # sets the value for the finger curls, and the individual finger curls
         fingerAttrVal = fingerAttr[0]
 
@@ -389,23 +314,24 @@ class pcCreateRigFingers(UI):
                 else:
 
                     valToUse = fingersAttrArray[i][j]
-                self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
-                                           valToUse)
-                self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
-                                               driverVal, valToUse)
+                CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                          valToUse)
+                CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                          driverVal, valToUse)
 
         if isinstance(thumbsAttrArrayDriven, int):
-            #if the value is an integer, we use the integer, if the value is a list, we use the list
+            # if the value is an integer, we use the integer, if the value is a list, we use the list
             valToUse = [thumbsAttrArrayDriven, thumbsAttrArrayDriven]
         else:
-            valToUse = [thumbsAttrArrayDriven[0],thumbsAttrArrayDriven[1] ]
+            valToUse = [thumbsAttrArrayDriven[0], thumbsAttrArrayDriven[1]]
 
-        self.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][0], "rotateZ", driverVal, valToUse[0])
-        self.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][1], "rotateZ", driverVal, valToUse[1])
+        CRU.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][0], "rotateZ", driverVal, valToUse[0])
+        CRU.setDriverDrivenValues(ctrlFingers, fingerAttr[0], autoTIMRP[0][1], "rotateZ", driverVal, valToUse[1])
 
-
-        self.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][0], "rotateZ", driverVal, valToUse[0])
-        self.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][1], "rotateZ", driverVal, valToUse[1])
+        CRU.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][0], "rotateZ", driverVal,
+                                  valToUse[0])
+        CRU.setDriverDrivenValues(ctrlArrayFingers[0], fingerAttrVal, autoTIMRP[0][1], "rotateZ", driverVal,
+                                  valToUse[1])
 
     def fingerScrunchSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
 
@@ -423,7 +349,8 @@ class pcCreateRigFingers(UI):
         scrunchThumb_3XP10 = 80
         scrunchThumb_23XP10 = [0, scrunchThumb_2XP10, scrunchThumb_3XP10]
 
-        self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, scrunchFingers_234XP10, scrunchThumb_23XP10)
+        self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, scrunchFingers_234XP10,
+                           scrunchThumb_23XP10)
 
         driverVal = -10
         scrunchFinger_2XN10 = 15
@@ -437,8 +364,8 @@ class pcCreateRigFingers(UI):
         self.fingerScrunch(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, scrunchFingers_234XN10,
                            scrunchThumb_23XN10)
 
-
-    def fingerScrunch(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+    def fingerScrunch(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0,
+                      thumbsAttrArrayDriven=0, *args):
         # sets the value for the finger scrunch, and the individual finger scrunches
         fingerAttrVal = fingerAttr[1]
 
@@ -448,18 +375,18 @@ class pcCreateRigFingers(UI):
                 # set all the x values in curl to 0
                 if j != 0:
                     if i == 0:
-                        #0 is the thumb version, if properly set up
+                        # 0 is the thumb version, if properly set up
 
                         if isinstance(thumbsAttrArrayDriven, int):
                             valToUse = thumbsAttrArrayDriven
                         else:
                             valToUse = thumbsAttrArrayDriven[j]
                         # sets the thumb as a fingers control
-                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
-                                                   valToUse)
+                        CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                  valToUse)
                         # sets the thumb individual control
-                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
-                                                   driverVal, valToUse)
+                        CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                  driverVal, valToUse)
                     else:
                         # the rest are the other fingers
                         if isinstance(fingersAttrArray, int):
@@ -468,11 +395,11 @@ class pcCreateRigFingers(UI):
                             valToUse = fingersAttrArray[j]
                         # sets the fingers as a whole
 
-                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
-                                                   valToUse)
+                        CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                  valToUse)
                         # sets the fingers individually
-                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
-                                                   driverVal, valToUse)
+                        CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                  driverVal, valToUse)
 
     def fingerSpreadSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
 
@@ -492,9 +419,8 @@ class pcCreateRigFingers(UI):
         spreadZ_P10_Pink = [-2, -15]
         spreadZ_P10_Fingers = [0, spreadZ_P10_Index, spreadZ_P10_Middle, spreadZ_P10_Ring, spreadZ_P10_Pink]
 
-
-        self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, spreadZ_P10_Fingers, spread_P10Thumb)
-
+        self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, spreadZ_P10_Fingers,
+                          spread_P10Thumb)
 
         driverVal = -10
         spreadX_N10_Thumb = [12, 12]
@@ -509,18 +435,18 @@ class pcCreateRigFingers(UI):
         self.fingerSpread(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, spreadZ_N10_Fingers,
                           spread_N10Thumb)
 
-
-    def fingerSpread(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, thumbsAttrArrayDriven = 0, *args):
+    def fingerSpread(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0,
+                     thumbsAttrArrayDriven=0, *args):
         # sets the value for the finger scrunch, and the individual finger scrunches
         fingerAttrVal = fingerAttr[2]
         for i in range(len(ctrlArrayFingers)):
             for j in range(len(autoTIMRP[i])):
                 # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
                 # set all the x values in curl to 0
-                if j <2:
+                if j < 2:
                     # we only do this for the first two finger joints
                     if i == 0:
-                        #0 is the thumb version, if properly set up
+                        # 0 is the thumb version, if properly set up
 
                         if isinstance(thumbsAttrArrayDriven, int):
                             valToUseX = thumbsAttrArrayDriven
@@ -529,31 +455,29 @@ class pcCreateRigFingers(UI):
                             valToUseX = thumbsAttrArrayDriven[0][j]
                             valToUseZ = thumbsAttrArrayDriven[1][j]
                         # sets the thumb as a fingers control
-                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
-                                                   valToUseX)
-                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
-                                                   valToUseZ)
+                        CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                                  valToUseX)
+                        CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
+                                                  valToUseZ)
 
                         # sets the thumb individual control
-                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
-                                                   driverVal, valToUseX)
-                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
-                                                   driverVal, valToUseZ)
+                        CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateX",
+                                                  driverVal, valToUseX)
+                        CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
+                                                  driverVal, valToUseZ)
                     else:
-
 
                         if isinstance(fingersAttrArray, int):
                             valToUse = fingersAttrArray
                         else:
                             valToUse = fingersAttrArray[i][j]
                         # sets the thumb as a fingers control
-                        self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
-                                                   valToUse)
+                        CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateZ", driverVal,
+                                                  valToUse)
 
                         # sets the thumb individual control
-                        self.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
-                                                   driverVal, valToUse)
-
+                        CRU.setDriverDrivenValues(ctrlArrayFingers[i], fingerAttrVal, autoTIMRP[i][j], "rotateZ",
+                                                  driverVal, valToUse)
 
     def fingerRelaxSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
 
@@ -569,9 +493,7 @@ class pcCreateRigFingers(UI):
         relaxX_P10_Pink = [8, 25, 35, 40]
         relaxX_P10_Fingers = [0, relaxX_P10_Index, relaxX_P10_Middle, relaxX_P10_Ring, relaxX_P10_Pink]
 
-
         self.fingerRelax(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, relaxX_P10_Fingers)
-
 
         driverVal = -10
 
@@ -582,12 +504,11 @@ class pcCreateRigFingers(UI):
         relaxX_N10_Fingers = [0, relaxX_N10_Index, relaxX_N10_Middle, relaxX_N10_Ring, relaxX_N10_Pink]
         self.fingerRelax(ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, relaxX_N10_Fingers)
 
-
     def fingerRelax(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, driverVal, fingersAttrArray=0, *args):
         # sets the value for the finger scrunch, and the individual finger scrunches
         fingerAttrVal = fingerAttr[3]
         for i in range(len(ctrlArrayFingers)):
-            #skip the thumb
+            # skip the thumb
             if i != 0:
                 for j in range(len(autoTIMRP[i])):
                     # setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,):
@@ -599,33 +520,13 @@ class pcCreateRigFingers(UI):
                         valToUse = fingersAttrArray[i][j]
                     # sets the fingers as a whole
                     # we don't work with the fingers individually
-                    self.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
-                                                   valToUse)
-
-    def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
-
-        print(rotateChangeList)
-        for rotateChange in rotateChangeList:
-            if (getRotOrder == "XYZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 0)
-            elif (getRotOrder == "YZX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 1)
-            elif (getRotOrder == "ZXY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 2)
-            elif (getRotOrder == "XZY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 3)
-            elif (getRotOrder == "YXZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 4)
-            elif (getRotOrder == "ZYX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 5)
-
-                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
+                    CRU.setDriverDrivenValues(ctrlFingers, fingerAttrVal, autoTIMRP[i][j], "rotateX", driverVal,
+                                              valToUse)
 
     def tgpCreateMirror(self, ctrlFingers, leftRightReplace, leftRightReplaceMirror):
         ctrlFingersMirrorWork = mc.duplicate(ctrlFingers, rc=True)
 
         ctrlFingersMirror = []
-
 
         offsetCtrlStuffMirror = []
         for i in range(len(ctrlFingersMirrorWork)):
@@ -640,20 +541,40 @@ class pcCreateRigFingers(UI):
         # takes the initial offset value, duplicates it, flips the values around, then freezes the transformation
         # translates everything into place
         mirrorTrans = mc.xform(ctrlFingersMirrorTop, q=True, ws=True, rotatePivot=True)
-        mirrorTransX = mirrorTrans[0]*-1
+        mirrorRot = mc.xform(ctrlFingersMirrorTop, q=True, ws=True, rotation=True)
+        print("MirrorTrans = {0}".format(mirrorTrans))
+        print("MirrorAxis = {0}".format(mirrorRot))
+        mirrorTransX = mirrorTrans[0] * -1
         mirrorTransY = mirrorTrans[1]
         mirrorTransZ = mirrorTrans[2]
+        mirrorRotX = mirrorRot[0] * 1
+        mirrorRotY = mirrorRot[1] * -1
+        mirrorRotZ = mirrorRot[2] * -1
+
         mirrorXScal = mc.getAttr("{0}.sx".format(ctrlFingersMirrorTop)) * -1
         print(mirrorTrans)
         print(mirrorXScal)
 
-        #mc.move(mirrorTrans[0], mirrorTrans[1], mirrorTrans[2], ctrlFingersMirrorTop, a=True)
-        mc.setAttr("{0}.tx".format(ctrlFingersMirrorTop), mirrorTransX)
+        # mirrors the values
+        '''mc.setAttr("{0}.tx".format(ctrlFingersMirrorTop), mirrorTransX)
         mc.setAttr("{0}.sx".format(ctrlFingersMirrorTop), mirrorXScal)
-        mc.makeIdentity(ctrlFingersMirrorTop, apply=True, translate = True, scale=True)
+        mc.setAttr("{0}.rx".format(ctrlFingersMirrorTop), mirrorRotX)
+        mc.setAttr("{0}.ry".format(ctrlFingersMirrorTop), mirrorRotY)
+        mc.setAttr("{0}.rz".format(ctrlFingersMirrorTop), mirrorRotZ)'''
+
+        mc.xform(ctrlFingersMirrorTop, translation=(mirrorTransX, mirrorTransY, mirrorTransZ))
+        mc.xform(ctrlFingersMirrorTop, scale=( mirrorXScal, 1, 1) )
+        mc.xform(ctrlFingersMirrorTop, rotation = (mirrorRotX, mirrorRotY, mirrorRotZ))
+
+        checkList = mc.listRelatives(ctrlFingersMirrorTop)
+        for i in range(len(checkList)):
+            if mc.objectType(checkList[i]) == "transform":
+                CRU.lockHideCtrls(checkList[i], translate=True, rotate=True, scale=True, toHide=True, visible=True,
+                                  toLock=False)
+        # mc.scale(-1, ctrlFingersMirrorTop, x=True, pivot=(0,0,0), a=True)
+        mc.makeIdentity(ctrlFingersMirrorTop, apply=True, translate=True, scale=True)
 
         return ctrlFingersMirror, ctrlFingersMirrorTop
-
 
     def tgpMakeBC(self, *args):
 
@@ -663,7 +584,6 @@ class pcCreateRigFingers(UI):
 
         ctrlPalm = mc.textFieldButtonGrp("ctrlPalmLoad_tf", q=True, text=True)
 
-
         try:
             fingerRoot = self.ctrlsArray[0]
 
@@ -672,7 +592,6 @@ class pcCreateRigFingers(UI):
             return
 
         ctrlsArray = self.ctrlsArray
-
 
         print("-------")
 
@@ -707,29 +626,24 @@ class pcCreateRigFingers(UI):
             return
         else:
 
-            '''toDelete = mc.spaceLocator(p=(0, 0, 0))[0]
-            mc.setAttr('{0}.overrideEnabled'.format(toDelete), 1)
-            mc.setAttr("{0}.overrideColor".format(toDelete), 13)'''
+            CRU.createLocatorToDelete()
 
             if mirrorRig:
-                #we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
+                # we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
                 # make sure the children are not locked
-                ctrlsArrayMirror, ctrlFingerNames = self.tgpCreateMirror(ctrlFingerNames, leftRightReplace, leftRightReplaceMirror)
+                ctrlsArrayMirror, ctrlFingerNames = self.tgpCreateMirror(ctrlFingerNames, leftRightReplace,
+                                                                         leftRightReplaceMirror)
 
             self.makeFingers(ctrlPalm, ctrlsArray, leftRight, colourTU)
 
-
             print(mirrorRig)
             if mirrorRig:
-
                 print("I got here!")
 
                 isLeftMirror = not isLeft
 
                 ctrlPalmMirror = ctrlPalm.replace(leftRightReplace, leftRightReplaceMirror)
 
-
                 print(ctrlsArray)
 
                 self.makeFingers(ctrlPalmMirror, ctrlsArrayMirror, leftRightMirror, colourTUMirror)
-
