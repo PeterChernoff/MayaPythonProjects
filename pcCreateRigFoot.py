@@ -16,6 +16,11 @@ bc.tgpBlendColors()
 
 '''
 
+import pcCreateRigUtilities
+
+reload(pcCreateRigUtilities)
+from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+
 
 class pcCreateRigFoot(UI):
     def __init__(self):
@@ -114,6 +119,9 @@ class pcCreateRigFoot(UI):
             mc.warning("Select only the Control")
             return
         else:
+            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
+                mc.warning("The Control should be a nurbsCurve")
+                return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
@@ -164,7 +172,9 @@ class pcCreateRigFoot(UI):
             mc.warning("Select only the root locator")
             return
         else:
-
+            if CRU.checkObjectType(self.selLoad[0]) != "locator":
+                mc.warning("The ankle should be a locator")
+                return
             selName = ', '.join(self.selLoad)
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
@@ -190,75 +200,6 @@ class pcCreateRigFoot(UI):
             self.locArray = locArraySorted
 
         return self.locArray
-
-    def createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                    addPrefix=False):
-        selname = str(s)
-        '''
-        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
-        5 dark blue, 6 blue, 7 dark green, 8 dark purple, 9 pink
-        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
-        darkish blue
-        white
-        yellow
-        cyan
-        greenish blue
-        light pink
-        peach
-        other yellow
-        turquoise
-        light brown
-        puke yellow
-        puke green
-        lightish green
-        light blue
-        darkish blue
-        purple
-        magenta
-        '''
-
-        if addPrefix:
-            ctrlName = "CTRL_" + selname
-        else:
-            ctrlName = selname.replace("JNT_", "CTRL_")
-
-        if sectionsTU:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
-        else:
-            ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
-        auto = mc.group(ctrl, n="AUTO_" + ctrl)
-        offset = mc.group(auto, n="OFFSET_" + ctrl)
-
-        mc.parentConstraint(s, offset, mo=0)
-        mc.delete(mc.parentConstraint(s, offset))
-        # parent and orient/point are not inclusive
-        if prnt:
-            mc.parentConstraint(ctrl, s, mo=0)
-        else:
-            if ornt:
-                mc.orientConstraint(ctrl, s, mo=0)
-            if pnt:
-                mc.pointConstraint(ctrl, s, mo=0)
-        # we normally don't include auto
-        offsetCtrl = [offset, ctrl, auto]
-        return offsetCtrl
-
-    def lockHideCtrls(self, s, translate=False, rotate=False, scale=False):
-        if translate:
-            mc.setAttr("{0}.tx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ty".format(s), k=False, l=True)
-            mc.setAttr("{0}.tz".format(s), k=False, l=True)
-        if rotate:
-            mc.setAttr("{0}.rx".format(s), k=False, l=True)
-            mc.setAttr("{0}.ry".format(s), k=False, l=True)
-            mc.setAttr("{0}.rz".format(s), k=False, l=True)
-        if scale:
-            mc.setAttr("{0}.sx".format(s), k=False, l=True)
-            mc.setAttr("{0}.sy".format(s), k=False, l=True)
-            mc.setAttr("{0}.sz".format(s), k=False, l=True)
 
     def setDriverDrivenValues(self, driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
                               modifyInOut=None, modifyBoth=None):
@@ -415,23 +356,6 @@ class pcCreateRigFoot(UI):
         # sets the autoKneeControl parent values to on or off
         self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowPnt)
         self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowOrntY)
-        """
-        #Finishing the Leg, Leg IK Twist
-        # TO DELETE: May be moving to pcCreateRigLegs
-        # we are connecting the leg twist in the IK. We want the leg twist to aim inward in negative.
-        ikCtrlLegTwistNode = "{0}_LegTwist_MD".format(ctrlIKLeg)
-        mc.shadingNode("multiplyDivide", n=ikCtrlLegTwistNode, au=True)
-        # We want the
-        if isLeft:
-            mult = -1
-        else:
-            mult = 1
-        mc.setAttr("{0}.operation".format(ikCtrlLegTwistNode), 2)
-        mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), mult)
-        mc.connectAttr("{0}.{1}".format(ctrlIKLeg, "legTwist"), ikCtrlLegTwistNode + ".i1x")
-
-        mc.connectAttr("{0}.ox".format(ikCtrlLegTwistNode), ikLeg + ".twist")
-        """
 
         # Cleaning Up
 
@@ -475,25 +399,6 @@ class pcCreateRigFoot(UI):
         mc.setAttr("{0}.overrideColor".format(offsetFoot), colourTU)
 
         # To delete: remember to connect CTRL_IK_leg.visible to the CTRL_knee.visibilty
-
-    def changeRotateOrder(self, rotateChangeList, getRotOrder, *args):
-
-        print(rotateChangeList)
-        for rotateChange in rotateChangeList:
-            if (getRotOrder == "XYZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 0)
-            elif (getRotOrder == "YZX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 1)
-            elif (getRotOrder == "ZXY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 2)
-            elif (getRotOrder == "XZY"):
-                mc.setAttr(rotateChange + ".rotateOrder", 3)
-            elif (getRotOrder == "YXZ"):
-                mc.setAttr(rotateChange + ".rotateOrder", 4)
-            elif (getRotOrder == "ZYX"):
-                mc.setAttr(rotateChange + ".rotateOrder", 5)
-
-                # print ("Changed Rotate Order for {0} to {1}".format(rotateChange, getRotOrder))
 
     def tgpCreateMirror(self, offsetFoot, leftRightReplace, leftRightReplaceMirror, jntLegs):
         offsetFootStuffMirrorWork = mc.duplicate(offsetFoot, rc=True)
@@ -590,7 +495,12 @@ class pcCreateRigFoot(UI):
         except:
             mc.warning("No locator selected!")
             return
-        offsetFoot = mc.listRelatives(locFootRoot, parent=True)[0]
+        try:
+            offsetFoot = mc.listRelatives(locFootRoot, parent=True)[0]
+        except:
+            # if this doesn't work, tell the user to check if under
+            mc.warning("Be sure the locator is under an offset")
+            return
         locArray = self.locArray
 
         print(mirrorSel)
@@ -624,6 +534,8 @@ class pcCreateRigFoot(UI):
             mc.warning("You are missing a selection!")
             return
         else:
+            CRU.createLocatorToDelete()
+
             if mirrorRig:
                 # we want to get the foot before we add anything to it. When doing this programmatically, it's easier
                 offsetFootStuffMirror, offsetFootMirror, jntLegsMirror = self.tgpCreateMirror(offsetFoot,
@@ -639,8 +551,6 @@ class pcCreateRigFoot(UI):
             if mirrorRig:
 
                 print("I got here!")
-                toReplace = "_" + leftRight
-                toReplaceWith = "_" + leftRightMirror
 
                 isLeftMirror = not isLeft
 
