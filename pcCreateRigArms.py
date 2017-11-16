@@ -47,7 +47,7 @@ class pcCreateRigArms(UI):
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder Joint: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
@@ -627,12 +627,20 @@ class pcCreateRigArms(UI):
         toReplace = "_" + leftRight
         toReplaceWith = "_" + leftRightMirror
 
+
+
         if ctrlFKIK:
+            try:
+                mc.select(ctrlFKIK)
+            except:
+                mc.warning("You need the CTRL FK/IK to exist or be named correctly")
+                return
             for i in range(len(listCtrlFKIKAttr)):
                 try:
                     mc.addAttr(ctrlFKIK, longName=listCtrlFKIKAttr[i], at="float", k=True, min=0, max=1, dv=0)
                 except:
                     mc.warning("Error, attribute may already exist")
+
         # self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
 
         # make sure the selections are not empty

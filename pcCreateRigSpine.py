@@ -98,16 +98,16 @@ class pcCreateRigSpine(UI):
     def createSpineIK(self, jntEnd, jntEndSize, midValue, *args):
 
         ikHip = mc.duplicate(jntEnd, n="JNT_IK_hip", renameChildren=True)
-        print(ikHip)
+        # print(ikHip)
         mc.parent(ikHip, w=True)
         noUnicode = str(ikHip[0])
-        print(noUnicode)
+        # print(noUnicode)
         mc.setAttr('{0}.radius'.format(noUnicode), jntEndSize * 3)
         ikMidSpine = mc.duplicate(ikHip, n="JNT_IK_midSpine")
         ikChest = mc.duplicate(ikHip, n="JNT_IK_chest")
         spineIKs = [ikHip[0], ikMidSpine[0], ikChest[0]]
 
-        print(ikHip)
+        # print(ikHip)
 
         # moves the named IK joints into position using constraints, then deletes the constraints
         todelete1 = mc.pointConstraint(self.jointArray[0], ikHip[0], mo=False)
@@ -231,18 +231,18 @@ class pcCreateRigSpine(UI):
                 lastTerm = "{0}".format(i / 2 + 1)
 
             pos = mc.xform(self.jointArray[i], query=True, translation=True, worldSpace=True)
-            print(pos)
+            # print(pos)
             fkJnts.append(mc.joint(name="JNT_FK_spine_{0}".format(lastTerm), p=pos, rad=jntEndSize * 2))
             mc.joint("JNT_FK_spine_{0}".format(lastTerm), e=True, zso=True, oj="none")
 
         # create CTRLs, then parent them appropriately
         offsetCtrlFKJnts = []  # keeps track of the offsets so we can parent them appropriately
         for i in range(len(fkJnts[:-1])):
-            print(fkJnts[i])
+            # print(fkJnts[i])
             # Putting into a list so the CTRL sees it properly
             offsetCtrl = CRU.createCTRLs(fkJnts[i], 23, ornt=True, orientVal=(0, 1, 0), colour=17)
 
-            print(offsetCtrl)
+            # print(offsetCtrl)
             offsetCtrlFKJnts.append(offsetCtrl)
 
         cvsToMove = mc.select(offsetCtrlFKJnts[0][1] + ".cv[:]")
@@ -266,7 +266,7 @@ class pcCreateRigSpine(UI):
 
 
         fkHip = mc.duplicate(ikHip, n="JNT_FK_hip")
-        print(fkHip)
+        # print(fkHip)
         print("------")
         # delete the children
         fkHipChilds = mc.listRelatives(fkHip[0], ad=True, f=True)
@@ -281,13 +281,13 @@ class pcCreateRigSpine(UI):
 
         fkHipOffsetCtrl = CRU.createCTRLs(fkHip, 27, prnt=True, colour=17)
         cvsToMove = mc.select(fkHipOffsetCtrl[1] + ".cv[:]")
-        print(valToMove)
+        # print(valToMove)
         mc.move(-10, cvsToMove, x=True, r=True, wd=True, ls=True)
 
         mc.parent(fkHipOffsetCtrl[0], spineIKCtrls[0][
             1])
-        print(fkHip)
-        print(ikHip)
+        # print(fkHip)
+        # print(ikHip)
         mc.parent(fkHip, ikHip)
 
         return fkHip, fkHipOffsetCtrl
@@ -332,16 +332,16 @@ class pcCreateRigSpine(UI):
         return cogOffsetCtrl
 
     def spineCleanup(self, fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine, ikSpine,
-                     *args):
-        # lock attributes
+                     fkHip, fkJnts, *args):  # lock attributes
+
         CRU.lockHideCtrls(fkHipOffsetCtrl[1], translate=True, scale=True, visible=True)
-        print(offsetCtrlFKJnts)
+        # print(offsetCtrlFKJnts)
         for i in range(len(offsetCtrlFKJnts)):
             CRU.lockHideCtrls(offsetCtrlFKJnts[i][1], translate=True, scale=True, visible=True)
 
         for i in range(len(spineIKs)):
             CRU.lockHideCtrls(spineIKCtrls[i][1], scale=True, visible=True)
-            print(spineIKCtrls[i][1])
+            # print(spineIKCtrls[i][1])
 
         CRU.lockHideCtrls(cogOffsetCtrl[1], scale=True, visible=True)
 
@@ -351,13 +351,12 @@ class pcCreateRigSpine(UI):
         CRU.lockHideCtrls(crvSpine, visible=True)
         CRU.lockHideCtrls(ikSpine, visible=True)
 
-        '''
-        #TO DELETE: come back and adjust it so it can put the FK and IKs into the layer 
-        CRU.layerEdit(spineIKs, ikLayer=True)
-        CRU.layerEdit(fkJnts, ikLayer=True)'''
+        CRU.layerEdit(spineIKs, ikLayer=True, noRecurse=True)
+        CRU.layerEdit(self.jointArray, ikLayer=True, noRecurse=True)
+        CRU.layerEdit(fkHip, fkLayer=True, noRecurse=True)
+        CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
 
     def tgpMakeBC(self, *args):
-
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
@@ -370,13 +369,12 @@ class pcCreateRigSpine(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            # print(m.ModClass.static_method())
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             # create the IK base controls
             jntEnd = self.jointArray[-1]
 
             noUnicode = str(jntEnd)
-            print(noUnicode)
+            # print(noUnicode)
             jntEndSize = mc.getAttr('{0}.radius'.format(noUnicode))
 
             # gets values for later use
@@ -410,11 +408,10 @@ class pcCreateRigSpine(UI):
 
             # cleanup
             self.spineCleanup(fkHipOffsetCtrl, offsetCtrlFKJnts, spineIKs, spineIKCtrls, cogOffsetCtrl, crvSpine,
-                              ikSpine, )
+                              ikSpine, fkHip, fkJnts)
 
             # make the last thing we do the geometry
             if checkGeo:
-                print("2222222")
                 CRU.tgpSetGeo(self.jointArray, "JNT_IK_")
             try:
                 CRU.tgpSetGeo([fkHip], "JNT_FK_")

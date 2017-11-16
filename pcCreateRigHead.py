@@ -46,7 +46,7 @@ class pcCreateRigHead(UI):
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Joints: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Neck Start Joint: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.setParent("..")

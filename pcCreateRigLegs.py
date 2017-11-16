@@ -62,6 +62,7 @@ class pcCreateRigLegs(UI):
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
+
         mc.setParent("..")
 
         mc.separator(st="in", h=20, w=500)
@@ -669,6 +670,7 @@ class pcCreateRigLegs(UI):
             mirrorRig = False
         else:
             mirrorRig = True
+
 
         listCtrlFKIKAttr = ["l_leg", "r_leg", "l_leg", "r_leg"]
         if checkSelLeft == 1:

@@ -19,7 +19,7 @@ class pcCreateRigHands(UI):
     def __init__(self):
 
         self.window = "bcWindow"
-        self.title = "pcRigHand"
+        self.title = "pcRigHands"
         self.winSize = (500, 325)
 
         self.createUI()
@@ -45,7 +45,7 @@ class pcCreateRigHands(UI):
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Hand: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Hand Joint: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm: ")

@@ -626,7 +626,7 @@ class pcCreateRigFingers(UI):
             return
         else:
 
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
 
             if mirrorRig:
                 # we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
