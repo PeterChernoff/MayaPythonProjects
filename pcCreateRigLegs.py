@@ -579,9 +579,9 @@ class pcCreateRigLegs(UI):
         CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
                                   driverValue=1, modifyInOut=tangentToUse)
 
-        CRU.layerEdit(fkJnts, fkLayer=True, layerVis=False, noRecurse=True)
-        CRU.layerEdit(ikJnts, ikLayer=True, layerVis=False, noRecurse=True)
-        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, layerVis=False, noRecurse=True)
+        CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
+        CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
+        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
 
         CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
 
