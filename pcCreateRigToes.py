@@ -390,201 +390,205 @@ class pcCreateRigToes(UI):
 
         # set at 0 for curl and rotateX, and the thumb values
         driverVal = 0
-        curl_P0_Toes = []
+        curl_P0_Digits = []
         for i in range(len(autoTIMRP)):
             if i == 0:
                 toesToAddX = [[0, 0, 0], autoTIMRP[i], ctrlArrayToes[i], "rotateX", ]
             else:
                 toesToAddX = [[0, 0, 0, 0], autoTIMRP[i], ctrlArrayToes[i], "rotateX", ]
-            curl_P0_Toes.append(toesToAddX)
+            curl_P0_Digits.append(toesToAddX)
 
-        self.setDigitVals(curl_P0_Toes, driverVal, ctrlToes, toeAttr[0])
+        self.setDigitVals(curl_P0_Digits, driverVal, ctrlToes, toeAttr[0])
 
         # set at 10 for curl and rotateX, and the thumb values
         driverVal = 10
-        curl_P10_toesOther = [5, 55, 55, 55]
-        curl_P10_ToeThumbsX = [[10, 45, 70], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
-        curl_P10_ToeIndexX = [curl_P10_toesOther, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        curl_P10_ToeMiddleX = [curl_P10_toesOther, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        curl_P10_ToeRingX = [curl_P10_toesOther, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        curl_P10_ToePinkX = [curl_P10_toesOther, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        curl_P10_Other = [5, 55, 55, 55]
+        curl_P10_ThumbsX = [[10, 45, 70], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
+        curl_P10_IndexX = [curl_P10_Other, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        curl_P10_MiddleX = [curl_P10_Other, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        curl_P10_RingX = [curl_P10_Other, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        curl_P10_PinkX = [curl_P10_Other, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
 
-        curl_P10_Toes = [ curl_P10_ToeThumbsX, curl_P10_ToeIndexX, curl_P10_ToeMiddleX, curl_P10_ToeRingX, curl_P10_ToePinkX]
+        curl_P10_Digits = [curl_P10_ThumbsX, curl_P10_IndexX, curl_P10_MiddleX, curl_P10_RingX, curl_P10_PinkX]
 
-        self.setDigitVals(curl_P10_Toes, driverVal, ctrlToes, toeAttr[0])
+        self.setDigitVals(curl_P10_Digits, driverVal, ctrlToes, toeAttr[0])
 
         # set at -10 for curl and rotateX, and the thumb values
         driverVal = -10
-        curl_P10_toesIM = [-3, -25, -25, -25]
-        curl_P10_toesRP = [-3, -25, -25, -25]
+        curl_P10_DigitsIM = [-3, -25, -25, -25]
+        curl_P10_DigitsRP = [-3, -25, -25, -25]
 
-        curl_N10_ToeThumbsX = [[-10, -15, -10], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
-        curl_N10_ToeIndexX = [curl_P10_toesIM, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        curl_N10_ToeMiddleX = [curl_P10_toesIM, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        curl_N10_ToeRingX = [curl_P10_toesRP, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        curl_N10_ToePinkX = [curl_P10_toesRP, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        curl_N10_ThumbsX = [[-10, -15, -10], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
+        curl_N10_IndexX = [curl_P10_DigitsIM, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        curl_N10_MiddleX = [curl_P10_DigitsIM, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        curl_N10_RingX = [curl_P10_DigitsRP, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        curl_N10_PinkX = [curl_P10_DigitsRP, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
 
-        curl_N10_Toes = [ curl_N10_ToeThumbsX, curl_N10_ToeIndexX, curl_N10_ToeMiddleX, curl_N10_ToeRingX, curl_N10_ToePinkX]
+        curl_N10_Digits = [curl_N10_ThumbsX, curl_N10_IndexX, curl_N10_MiddleX, curl_N10_RingX, curl_N10_PinkX]
 
-        self.setDigitVals(curl_N10_Toes, driverVal, ctrlToes, toeAttr[0])
+        self.setDigitVals(curl_N10_Digits, driverVal, ctrlToes, toeAttr[0])
 
     def toeScrunchSetup(self, ctrlArrayToes, autoTIMRP, ctrlToes, toeAttr, *args):
 
         driverVal = 0
 
-        scrunch_P0_Toes = []
+        scrunch_P0_Digits = []
         for i in range(len(autoTIMRP)):
             if i == 0:
                 toesToAddX = [[None, 0, 0], autoTIMRP[i], ctrlArrayToes[i], "rotateX", ]
             else:
                 toesToAddX = [[None, 0, 0, 0], autoTIMRP[i], ctrlArrayToes[i], "rotateX", ]
-            scrunch_P0_Toes.append(toesToAddX)
+            scrunch_P0_Digits.append(toesToAddX)
 
-        self.setDigitVals(scrunch_P0_Toes, driverVal, ctrlToes, toeAttr[1])
+        self.setDigitVals(scrunch_P0_Digits, driverVal, ctrlToes, toeAttr[1])
 
         driverVal = 10
-        scrunch_P10_toesOther = [None, -50, 50, 50]
-        scrunch_P10_ToeThumbsX = [[None, -50, 70], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
-        scrunch_P10_ToeIndexX = [scrunch_P10_toesOther, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        scrunch_P10_ToeMiddleX = [scrunch_P10_toesOther, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        scrunch_P10_ToeRingX = [scrunch_P10_toesOther, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        scrunch_P10_ToePinkX = [scrunch_P10_toesOther, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        scrunch_P10_Other = [None, -50, 50, 50]
+        scrunch_P10_ThumbsX = [[None, -50, 70], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
+        scrunch_P10_IndexX = [scrunch_P10_Other, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        scrunch_P10_MiddleX = [scrunch_P10_Other, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        scrunch_P10_RingX = [scrunch_P10_Other, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        scrunch_P10_PinkX = [scrunch_P10_Other, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
 
-        scrunch_P10_Toes = [ scrunch_P10_ToeThumbsX, scrunch_P10_ToeIndexX, scrunch_P10_ToeMiddleX, scrunch_P10_ToeRingX, scrunch_P10_ToePinkX]
-        self.setDigitVals(scrunch_P10_Toes, driverVal, ctrlToes, toeAttr[1])
+        scrunch_P10_Digits = [scrunch_P10_ThumbsX, scrunch_P10_IndexX, scrunch_P10_MiddleX, scrunch_P10_RingX,
+                              scrunch_P10_PinkX]
+        self.setDigitVals(scrunch_P10_Digits, driverVal, ctrlToes, toeAttr[1])
 
         driverVal = -10
-        scrunch_N10_toesOther = [None, 15, -30, -40]
+        scrunch_N10_Other = [None, 15, -30, -40]
 
-        scrunch_N10_ToeThumbsX = [[None, 20, -40], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
-        scrunch_N10_ToeIndexX = [scrunch_N10_toesOther, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        scrunch_N10_ToeMiddleX = [scrunch_N10_toesOther, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        scrunch_N10_ToeRingX = [scrunch_N10_toesOther, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        scrunch_N10_ToePinkX = [scrunch_N10_toesOther, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        scrunch_N10_ThumbsX = [[None, 20, -40], autoTIMRP[0], ctrlArrayToes[0], "rotateX", ]
+        scrunch_N10_IndexX = [scrunch_N10_Other, autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        scrunch_N10_MiddleX = [scrunch_N10_Other, autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        scrunch_N10_RingX = [scrunch_N10_Other, autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        scrunch_N10_PinkX = [scrunch_N10_Other, autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
 
-        scrunch_N10_Toes = [ scrunch_N10_ToeThumbsX, scrunch_N10_ToeIndexX, scrunch_N10_ToeMiddleX, scrunch_N10_ToeRingX, scrunch_N10_ToePinkX]
-        self.setDigitVals(scrunch_N10_Toes, driverVal, ctrlToes, toeAttr[1])
-
+        scrunch_N10_Digits = [scrunch_N10_ThumbsX, scrunch_N10_IndexX, scrunch_N10_MiddleX, scrunch_N10_RingX,
+                              scrunch_N10_PinkX]
+        self.setDigitVals(scrunch_N10_Digits, driverVal, ctrlToes, toeAttr[1])
 
     def toeSpreadSetup(self, ctrlArrayToes, autoTIMRP, ctrlToes, toeAttr, *args):
 
         driverVal = 0
 
-        spread_P0_ToeThumbsX = [[0, 0, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
+        spread_P0_DigitThumbsX = [[0, 0, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
 
-        spread_P0_Toes = []
+        spread_P0_Digits = []
         for i in range(len(autoTIMRP)):
             if i == 0:
-                spread_P0_Toes.append(spread_P0_ToeThumbsX)
+                spread_P0_Digits.append(spread_P0_DigitThumbsX)
             else:
                 toesToAddX = [[0, 0, None, None], autoTIMRP[i], ctrlArrayToes[i], "rotateX", ]
                 toesToAddZ = [[0, 0, None, None], autoTIMRP[i], ctrlArrayToes[i], "rotateZ", ]
 
-                spread_P0_Toes.append(toesToAddX)
-                spread_P0_Toes.append(toesToAddZ)
+                spread_P0_Digits.append(toesToAddX)
+                spread_P0_Digits.append(toesToAddZ)
 
-        self.setDigitVals(spread_P0_Toes, driverVal, ctrlToes, toeAttr[2])
+        self.setDigitVals(spread_P0_Digits, driverVal, ctrlToes, toeAttr[2])
 
         driverVal = 10
-        spread_P10_ToeThumbsZ = [[4, 4, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
+        spread_P10_ThumbsZ = [[4, 4, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
 
-        spread_P10_ToeIndexX = [[-15, -22.5, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        spread_P10_ToeIndexZ = [[-5, -15, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateZ", ]
+        spread_P10_IndexX = [[-15, -22.5, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        spread_P10_IndexZ = [[-5, -15, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateZ", ]
 
-        spread_P10_ToeMiddleX = [[-10, -20, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        spread_P10_ToeMiddleZ = [[-3, -15, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateZ", ]
+        spread_P10_MiddleX = [[-10, -20, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        spread_P10_MiddleZ = [[-3, -15, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateZ", ]
 
-        spread_P10_ToeRingX = [[-7, -15, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        spread_P10_ToeRingZ = [[-1, -15, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateZ", ]
+        spread_P10_RingX = [[-7, -15, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        spread_P10_RingZ = [[-1, -15, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateZ", ]
 
-        spread_P10_ToePinkX = [[-5, -7.5, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
-        spread_P10_ToePinkZ = [[-5, -25, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateZ", ]
+        spread_P10_PinkX = [[-5, -7.5, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        spread_P10_PinkZ = [[-5, -25, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateZ", ]
 
-        spread_P10_Toes = [spread_P10_ToeThumbsZ,
-                           spread_P10_ToeIndexZ, spread_P10_ToeIndexX,
-                           spread_P10_ToeMiddleZ, spread_P10_ToeMiddleX,
-                           spread_P10_ToeRingZ, spread_P10_ToeRingX,
-                           spread_P10_ToePinkZ, spread_P10_ToePinkX, ]
+        spread_P10_Digits = [spread_P10_ThumbsZ,
+                             spread_P10_IndexZ, spread_P10_IndexX,
+                             spread_P10_MiddleZ, spread_P10_MiddleX,
+                             spread_P10_RingZ, spread_P10_RingX,
+                             spread_P10_PinkZ, spread_P10_PinkX, ]
 
-        self.setDigitVals(spread_P10_Toes, driverVal, ctrlToes, toeAttr[2])
+        self.setDigitVals(spread_P10_Digits, driverVal, ctrlToes, toeAttr[2])
 
         driverVal = -10
-        spread_N10_ToeThumbsZ = [[-5, -10, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
+        spread_N10_ThumbsZ = [[-5, -10, None], autoTIMRP[0], ctrlArrayToes[0], "rotateZ", ]
 
-        spread_N10_ToeIndexX = [[0, 0, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
-        spread_N10_ToeIndexZ = [[2, 2, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateZ", ]
+        spread_N10_IndexX = [[0, 0, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateX", ]
+        spread_N10_IndexZ = [[2, 2, None, None], autoTIMRP[1], ctrlArrayToes[1], "rotateZ", ]
 
-        spread_N10_ToeMiddleX = [[0, 0, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
-        spread_N10_ToeMiddleZ = [[4, 9, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateZ", ]
+        spread_N10_MiddleX = [[0, 0, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateX", ]
+        spread_N10_MiddleZ = [[4, 9, None, None], autoTIMRP[2], ctrlArrayToes[2], "rotateZ", ]
 
-        spread_N10_ToeRingX = [[0, 0, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
-        spread_N10_ToeRingZ = [[4, 11, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateZ", ]
+        spread_N10_RingX = [[0, 0, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateX", ]
+        spread_N10_RingZ = [[4, 11, None, None], autoTIMRP[3], ctrlArrayToes[3], "rotateZ", ]
 
-        spread_N10_ToePinkX = [[0, 0, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
-        spread_N10_ToePinkZ = [[5, 17, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateZ", ]
+        spread_N10_PinkX = [[0, 0, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateX", ]
+        spread_N10_PinkZ = [[5, 17, None, None], autoTIMRP[4], ctrlArrayToes[4], "rotateZ", ]
 
-        spread_N10_Toes = [spread_N10_ToeThumbsZ,
-                           spread_N10_ToeIndexZ, spread_N10_ToeIndexX,
-                           spread_N10_ToeMiddleZ, spread_N10_ToeMiddleX,
-                           spread_N10_ToeRingZ, spread_N10_ToeRingX,
-                           spread_N10_ToePinkZ, spread_N10_ToePinkX]
+        spread_N10_Digits = [spread_N10_ThumbsZ,
+                             spread_N10_IndexZ, spread_N10_IndexX,
+                             spread_N10_MiddleZ, spread_N10_MiddleX,
+                             spread_N10_RingZ, spread_N10_RingX,
+                             spread_N10_PinkZ, spread_N10_PinkX]
 
-        self.setDigitVals(spread_N10_Toes, driverVal, ctrlToes, toeAttr[2])
+        self.setDigitVals(spread_N10_Digits, driverVal, ctrlToes, toeAttr[2])
 
     def toeRelaxSetup(self, ctrlArrayToes, autoTIMRP, ctrlToes, toeAttr, *args):
 
         driverVal = 0
 
-        relax_P0_Toes = []
+        relax_P0_Digits = []
         for i in range(len(autoTIMRP)):
             if i == 0:
                 toesToAddX = [[0, 0, 0], autoTIMRP[i], None, "rotateX", ]
             else:
                 toesToAddX = [[0, 0, 0, 0], autoTIMRP[i], None, "rotateX", ]
-            relax_P0_Toes.append(toesToAddX)
+            relax_P0_Digits.append(toesToAddX)
 
-        self.setDigitVals(relax_P0_Toes, driverVal, ctrlToes, toeAttr[3])
+        self.setDigitVals(relax_P0_Digits, driverVal, ctrlToes, toeAttr[3])
 
         driverVal = 10
-        relax_P10_ToeThumbsX = [[1, 5, 10], autoTIMRP[0], None, "rotateX", ]
-        relax_P10_ToeIndexX = [[2, 7.5, 12.5, 17.5], autoTIMRP[1], None, "rotateX", ]
-        relax_P10_ToeMiddleX = [[4, 10, 15, 20], autoTIMRP[2], None, "rotateX", ]
-        relax_P10_ToeRingX = [[6, 12.5, 17.5, 22.5], autoTIMRP[3], None, "rotateX", ]
-        relax_P10_ToePinkX = [[8, 15, 20, 25], autoTIMRP[4], None, "rotateX", ]
+        relax_P10_ThumbsX = [[1, 5, 10], autoTIMRP[0], None, "rotateX", ]
+        relax_P10_IndexX = [[2, 7.5, 12.5, 17.5], autoTIMRP[1], None, "rotateX", ]
+        relax_P10_MiddleX = [[4, 10, 15, 20], autoTIMRP[2], None, "rotateX", ]
+        relax_P10_RingX = [[6, 12.5, 17.5, 22.5], autoTIMRP[3], None, "rotateX", ]
+        relax_P10_PinkX = [[8, 15, 20, 25], autoTIMRP[4], None, "rotateX", ]
 
-        relax_p10_Toes = [relax_P10_ToeThumbsX, relax_P10_ToeIndexX, relax_P10_ToeMiddleX, relax_P10_ToeRingX,
-                          relax_P10_ToePinkX]
+        relax_P10_Digits = [relax_P10_ThumbsX,
+                            relax_P10_IndexX,
+                            relax_P10_MiddleX,
+                            relax_P10_RingX,
+                            relax_P10_PinkX]
 
-        self.setDigitVals(relax_p10_Toes, driverVal, ctrlToes, toeAttr[3])
+        self.setDigitVals(relax_P10_Digits, driverVal, ctrlToes, toeAttr[3])
 
         driverVal = -10
 
-        relax_N10_ToeThumbsX = [[10, 20, 25], autoTIMRP[0], None, "rotateX", ]
-        relax_N10_ToeIndexX = [[8, 17.5, 22.5, 27.5], autoTIMRP[1], None, "rotateX", ]
-        relax_N10_ToeMiddleX = [[6, 15, 20, 25], autoTIMRP[2], None, "rotateX", ]
-        relax_N10_ToeRingX = [[4, 12.5, 17.5, 22.5], autoTIMRP[3], None, "rotateX", ]
-        relax_N10_ToePinkX = [[2, 10, 15, 20], autoTIMRP[4], None, "rotateX", ]
+        relax_N10_ThumbsX = [[10, 20, 25], autoTIMRP[0], None, "rotateX", ]
+        relax_N10_IndexX = [[8, 17.5, 22.5, 27.5], autoTIMRP[1], None, "rotateX", ]
+        relax_N10_MiddleX = [[6, 15, 20, 25], autoTIMRP[2], None, "rotateX", ]
+        relax_N10_RingX = [[4, 12.5, 17.5, 22.5], autoTIMRP[3], None, "rotateX", ]
+        relax_N10_PinkX = [[2, 10, 15, 20], autoTIMRP[4], None, "rotateX", ]
 
-        relax_N10_Toes = [relax_N10_ToeThumbsX, relax_N10_ToeIndexX, relax_N10_ToeMiddleX, relax_N10_ToeRingX,
-                          relax_N10_ToePinkX]
+        relax_N10_Digits = [relax_N10_ThumbsX, relax_N10_IndexX, relax_N10_MiddleX, relax_N10_RingX,
+                            relax_N10_PinkX]
 
-        self.setDigitVals(relax_N10_Toes, driverVal, ctrlToes, toeAttr[3])
+        self.setDigitVals(relax_N10_Digits, driverVal, ctrlToes, toeAttr[3])
 
-    def setDigitVals(self, finger_drvnvls_autos_toeCtrl, driverVal, ctrlToes, toeAttr, *args):
-        for i in range(len(finger_drvnvls_autos_toeCtrl)):
-            for j in range(len(finger_drvnvls_autos_toeCtrl[i][0])):
+    def setDigitVals(self, digit_drvnvls_autos_digitCtrl, driverVal, ctrlDigits, digitAttr, *args):
+        for i in range(len(digit_drvnvls_autos_digitCtrl)):
+            for j in range(len(digit_drvnvls_autos_digitCtrl[i][0])):
                 # skip if the value is a None
-                if finger_drvnvls_autos_toeCtrl[i][0][j] is not None:
-                    CRU.setDriverDrivenValues(ctrlToes, toeAttr,
-                                              finger_drvnvls_autos_toeCtrl[i][1][j],
-                                              finger_drvnvls_autos_toeCtrl[i][-1],
-                                              driverVal, finger_drvnvls_autos_toeCtrl[i][0][j])
-                    # skip if the toe Control is not there
-                    if finger_drvnvls_autos_toeCtrl[i][2] is not None:
-                        CRU.setDriverDrivenValues(finger_drvnvls_autos_toeCtrl[i][2], toeAttr,
-                                                  finger_drvnvls_autos_toeCtrl[i][1][j],
-                                                  finger_drvnvls_autos_toeCtrl[i][-1],
-                                                  driverVal, finger_drvnvls_autos_toeCtrl[i][0][j])
+                if digit_drvnvls_autos_digitCtrl[i][0][j] is not None:
+                    CRU.setDriverDrivenValues(ctrlDigits, digitAttr,
+                                              digit_drvnvls_autos_digitCtrl[i][1][j],
+                                              digit_drvnvls_autos_digitCtrl[i][-1],
+                                              driverVal, digit_drvnvls_autos_digitCtrl[i][0][j])
+                    # skip if the digit Control is not there
+                    if digit_drvnvls_autos_digitCtrl[i][2] is not None:
+                        CRU.setDriverDrivenValues(digit_drvnvls_autos_digitCtrl[i][2], digitAttr,
+                                                  digit_drvnvls_autos_digitCtrl[i][1][j],
+                                                  digit_drvnvls_autos_digitCtrl[i][-1],
+                                                  driverVal, digit_drvnvls_autos_digitCtrl[i][0][j])
 
     def tgpCreateMirrorToes(self, jntMasterToes, leftRightReplace, leftRightReplaceMirror):
         # just reflects it
