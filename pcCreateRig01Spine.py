@@ -336,7 +336,7 @@ class pcCreateRigSpine(UI):
         CRU.lockHideCtrls(ikSpine, visible=True)
 
         CRU.layerEdit(spineIKs, ikLayer=True, noRecurse=True)
-        CRU.layerEdit(self.jointArray, ikLayer=True, noRecurse=True)
+        CRU.layerEdit(self.jointArray, bndLayer=True, noRecurse=True)
         CRU.layerEdit(fkHip, fkLayer=True, noRecurse=True)
         CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
 
@@ -395,9 +395,9 @@ class pcCreateRigSpine(UI):
 
             # make the last thing we do the geometry
             if checkGeo:
-                CRU.tgpSetGeo(self.jointArray, "JNT_IK_")
+                CRU.tgpSetGeo(self.jointArray, "JNT_IK_", setLayer=True)
             try:
-                CRU.tgpSetGeo([fkHip], "JNT_FK_")
+                CRU.tgpSetGeo([fkHip], "JNT_FK_", setLayer=True)
                 # mc.parent("GEO_hip", ikHip)
             except:
                 mc.warning("Hip geometry either does not exist or is not properly named")

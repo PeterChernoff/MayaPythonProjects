@@ -577,6 +577,7 @@ class pcCreateRigLegs(UI):
         CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
         CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
         CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
+        CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
         CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
 
@@ -630,7 +631,7 @@ class pcCreateRigLegs(UI):
                         leftRight, ctrlFKIK, ctrlFKIKAttr, checkboxHip, footCtrlsOffsetCtrl)
 
         if checkGeo:
-            CRU.tgpSetGeo(geoJntArray)
+            CRU.tgpSetGeo(geoJntArray, setLayer=True)
 
     def tgpMakeBC(self, *args):
 

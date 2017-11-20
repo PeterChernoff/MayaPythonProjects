@@ -396,6 +396,8 @@ class pcCreateRigHead(UI):
 
         CRU.lockHideCtrls(eyesCtrl, scale=True, visible=True)
 
+        CRU.layerEdit(self.jointArray, bndLayer=True, noRecurse=True)
+
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
@@ -437,4 +439,4 @@ class pcCreateRigHead(UI):
             self.neckCleanUp(headOffsetCtrls, eyeCtrlArray, eyesCtrl)
 
             if checkGeo:
-                CRU.tgpSetGeo(jntArrayNoEnd)
+                CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)

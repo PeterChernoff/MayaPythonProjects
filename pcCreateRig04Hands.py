@@ -323,7 +323,7 @@ class pcCreateRigHands(UI):
                  isLeft, checkGeo, geoJntArray, *args):
         # Creating the Palm Control
         jntPalmBase = jntPalm[0]
-        jntFingers = self.getFingers(jntsHand)
+        jntFingers, jntFingersUnsorted = self.getFingers(jntsHand)
 
         handOffsetCtrl = self.createPalmCtrls(jntPalmBase, leftRight, colourTU, jntPalm, isLeft)
 
@@ -338,13 +338,15 @@ class pcCreateRigHands(UI):
         for i in range(len(fkFingerOffsetCtrls)):
             mc.parent(fkFingerOffsetCtrls[i][0][0], handOffsetCtrl[1])
         # clean up the outliner
-        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl,
+        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntFingersUnsorted, grpConPalm,
+                         conLocFKOffsetCtrl,
                          conLocIKOffsetCtrl)
 
         if checkGeo:
-            CRU.tgpSetGeo(geoJntArray)
+            CRU.tgpSetGeo(geoJntArray, setLayer=True)
 
-    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl,
+    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntFingersUnsorted, grpConPalm,
+                    conLocFKOffsetCtrl,
                     conLocIKOffsetCtrl, *args):
 
         grpRigArm = mc.group(n="GRP_rig{0}arm".format(leftRight), w=True, em=True)
@@ -359,19 +361,22 @@ class pcCreateRigHands(UI):
         mc.setAttr("{0}.visibility".format(conLocFKOffsetCtrl[1]), False)
         mc.setAttr("{0}.visibility".format(conLocIKOffsetCtrl[1]), False)
 
+        CRU.layerEdit(jntPalmBase, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntFingersUnsorted, bndLayer=True, noRecurse=True)
+
     def getPalm(self, jntsHand, *args):
         return ([x for x in jntsHand if "palm" in x])
 
     def getFingers(self, jntsHand, *args):
         allFingers = []
-        palmLess = [x for x in jntsHand if "palm" not in x]
+        allFingersUnsorted = [x for x in jntsHand if "palm" not in x]
 
         indexOfFingers = ["index", "middle", "ring", "pinky", "thumb"]
 
         for finger in indexOfFingers:
-            allFingers.append([x for x in palmLess if finger in x])
+            allFingers.append([x for x in allFingersUnsorted if finger in x])
 
-        return allFingers
+        return allFingers, allFingersUnsorted
 
     def tgpMakeBC(self, *args):
 

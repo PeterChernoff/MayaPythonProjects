@@ -86,7 +86,6 @@ class pcCreateRigUtilities:
         for i in range(len(myVals)):
             mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
 
-
     @staticmethod
     def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue,
                               modifyInOut=None, modifyBoth=None):
@@ -117,23 +116,20 @@ class pcCreateRigUtilities:
             mc.setAttr("{0}.overrideColor".format(toDelete), 13)
 
     @staticmethod
-    def tgpSetGeo(geoJntArray, setter="JNT_", *args):
+    def tgpSetGeo(geoJntArray, setter="JNT_", setLayer=False, *args):
         print(geoJntArray)
+
         for i in range(len(geoJntArray)):
             try:
                 # print("------")
                 theParent = geoJntArray[i]
-                # print(theParent)
                 geoName = theParent.replace(setter, "GEO_")
-                # print(geoName)
                 mc.parent(geoName, theParent)
-                # print("parent successful")
                 pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
-                # print("pivotTranslate Successful")
                 mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
-                # print("make identity Successful")
                 mc.xform(geoName, ws=True, pivots=pivotTranslate)
-                # print("xform Successful")
+                if setLayer:
+                    pcCreateRigUtilities.layerEdit([geoName], geoLayer=True, noRecurse=True)
 
             except:
                 mc.warning("Geo for {0} properly named or available".format(geoJntArray[i]))
@@ -173,7 +169,8 @@ class pcCreateRigUtilities:
         return True
 
     @staticmethod
-    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, layerVis=True, layerState=2, noRecurse=False, *args):
+    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, geoLayer=False,
+                  layerVis=True, layerState=2, noRecurse=False, *args):
         if layerVis:
             visVal = 1
         else:
@@ -188,6 +185,10 @@ class pcCreateRigUtilities:
             layerName = "jnt_FK_LYR"
         elif ikdriveLayer:
             layerName = "jnt_IKDrive_LYR"
+        elif bndLayer:
+            layerName = "jnt_bnd_LYR"
+        elif geoLayer:
+            layerName = "geo_LYR"
 
         # creates the layer if it doesn't already exist
         if not mc.objExists(layerName):

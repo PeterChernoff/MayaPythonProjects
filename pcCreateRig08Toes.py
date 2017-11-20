@@ -347,7 +347,7 @@ class pcCreateRigToes(UI):
         # Cleaning up
         self.toesCleanup(ctrlToes, jntMasterToes, jntAnkleTwist, fkJntOffsetCtrls, grpCtrlFoot, grpLegs, colourTU)
 
-        CRU.tgpSetGeo(toesJnts)
+        CRU.tgpSetGeo(toesJnts, setLayer=True)
 
     def toesCleanup(self, ctrlToes, jntMasterToes, jntAnkleTwist, fkJntOffsetCtrls, grpCtrlFoot, grpLegs, colourTU,
                     *args):
@@ -372,8 +372,6 @@ class pcCreateRigToes(UI):
             mc.setAttr('{0}.overrideEnabled'.format(lockValues[i]), 1)
             mc.setAttr("{0}.overrideColor".format(lockValues[i]), colourTU)
 
-        # CRU.lockHideCtrls(jntMasterToes, translate=True, rotate=True, scale=True, )
-
         # toeGrpName = "GRP_CTRL_{0}toes".format(leftRight)
         # toeGrp = mc.group(name=toeGrpName, w=True)
         for i in range(len(fkJntOffsetCtrls)):
@@ -383,6 +381,9 @@ class pcCreateRigToes(UI):
                 # print(fkJntOffsetCtrls[i][0][0])
 
         mc.parent(grpCtrlFoot, grpLegs)
+        CRU.layerEdit(jntMasterToes, bndLayer=True, noRecurse=True)
+
+
 
     def toeCurlsSetup(self, ctrlArrayToes, autoTIMRP, ctrlToes, toeAttr, *args):
 

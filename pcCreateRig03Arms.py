@@ -272,16 +272,16 @@ class pcCreateRigArms(UI):
         CRU.changeRotateOrder(rotationChange, "YZX")
 
         # Adding the Elbow Control
-        elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft)
+        elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, )
 
         # Organize the rig
-        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, jntShoulderRoot, checkboxSpine,
+        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts, jntShoulderRoot, checkboxSpine,
                         shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                         ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6,
                         ikSide, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
 
         if checkGeo:
-            CRU.tgpSetGeo(geoJntArray)
+            CRU.tgpSetGeo(geoJntArray, setLayer=True)
 
     def makeTwists(self, numTwists, leftRight, jntArmArray, geoJntArray, *args):
         numTwistsPlus1 = numTwists + 1
@@ -373,7 +373,7 @@ class pcCreateRigArms(UI):
         mc.connectAttr("{0}.{1}".format(ikOffsetCtrl[1], armTwistAttr), ikCtrlArmTwistNode + ".i1x")
         mc.connectAttr("{0}.ox".format(ikCtrlArmTwistNode), ikArms[0] + ".twist")
 
-    def createElbow(self, ikJntsDrive, leftRight, armLength, ikArms, isLeft, *args):
+    def createElbow(self, ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, *args):
 
         elbowName = "CTRL_" + leftRight + "elbow"
 
@@ -384,6 +384,9 @@ class pcCreateRigArms(UI):
 
         mc.parent(elbowOffsetCtrl[2], elbowOffsetCtrl[0])
         mc.parent(elbowOffsetCtrl[1], elbowOffsetCtrl[2])
+
+        mc.setAttr("{0}.overrideEnabled".format(elbowOffsetCtrl[1]), 1)
+        mc.setAttr("{0}.overrideColor".format(elbowOffsetCtrl[1]), colourTU)
 
         toDelete = mc.pointConstraint(ikJntsDrive, elbowOffsetCtrl[0])
         toDelete2 = mc.aimConstraint(ikJntsDrive[1], elbowOffsetCtrl[0], aim=(0, 0, 1))
@@ -492,7 +495,7 @@ class pcCreateRigArms(UI):
 
         return ikOffsetCtrl, ikArms, ikJntsDrive, ikSide
 
-    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, jntShoulderRoot, checkboxSpine,
+    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, bndJnts, jntShoulderRoot, checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                    ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
@@ -562,6 +565,7 @@ class pcCreateRigArms(UI):
         CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
         CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
         CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
+        CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
     def tgpMakeBC(self, *args):
 
