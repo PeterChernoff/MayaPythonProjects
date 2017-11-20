@@ -33,7 +33,7 @@ class pcCreateRigSpine(UI):
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
         mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
@@ -42,7 +42,7 @@ class pcCreateRigSpine(UI):
 
         mc.setParent("..")
 
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
@@ -66,18 +66,23 @@ class pcCreateRigSpine(UI):
 
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
+        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint", "root spine IK", ["JNT", "IK", "spine", "1"])
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadTxBtn(self, loadBtn, myType, type, keywords):
         # hierarchy
         self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="joint")
+        self.selLoad = mc.ls(sl=True, fl=True, type=myType)
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root joint")
+            mc.warning("Select only the {0}".format(myType))
             return
         else:
 
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong joint")
+                return
+
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
