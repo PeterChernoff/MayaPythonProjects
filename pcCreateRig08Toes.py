@@ -146,7 +146,7 @@ class pcCreateRigToes(UI):
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the ball joint")
+            mc.warning("Select only the leg group")
             return
         else:
 
@@ -184,9 +184,7 @@ class pcCreateRigToes(UI):
 
             # add to the current list
             self.ctrlsArray.extend(self.child)
-            # print(self.ctrlsArray)
             ctrlsArraySorted = []
-            # print(self.ctrlsArray)
             # sort the array
             for i in range(len(self.ctrlsArray)):
                 sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
@@ -194,7 +192,6 @@ class pcCreateRigToes(UI):
                     ctrlsArraySorted.append(self.ctrlsArray[i])
 
             self.ctrlsRoot = self.selLoad[0]
-            # print(ctrlsArraySorted)
             self.ctrlsArray = ctrlsArraySorted
 
         return self.ctrlsArray
