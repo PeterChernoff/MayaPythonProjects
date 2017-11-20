@@ -105,22 +105,18 @@ class pcCreateRigHead(UI):
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg")
-        print(self.jntSel)
 
     def loadSrc2Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.ctrlSel = self.tgpLoadIKCtrl("ctrlIKChestLoad_tf")
-        print(self.ctrlSel)
 
     def loadSrc3Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.grpSel = self.tgpLoadRigBtn("jointJNTSpine_tfbg")
-        print(self.grpSel)
 
     def loadSrc4Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.grpSel2 = self.tgpLoadCOGBtn("cog_tfbg")
-        print(self.grpSel2)
 
     def tgpLoadIKCtrl(self, loadBtn):
         self.selLoad = []
@@ -135,7 +131,6 @@ class pcCreateRigHead(UI):
                 return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-            print(selName)
 
     def tgpLoadRigBtn(self, loadBtn):
         self.selLoad = []
@@ -192,9 +187,7 @@ class pcCreateRigHead(UI):
             # removes if the last joint is End
             # checks if the last three letters are "End"
             self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
-            # print(self.jointEndArray)
             self.jointArray = [x for x in self.jointArray if "End" not in x[-3:]]
-            # print(self.jointArray)
 
         return self.jointArray
 
@@ -207,7 +200,6 @@ class pcCreateRigHead(UI):
             colourTU = 17
 
             if any(x in val for x in listCtrls):
-                # print("val = {0}".format(val))
                 # if the neck, do the following
                 if listCtrls[0] in val:
                     sizeCtrl = 10
@@ -239,8 +231,6 @@ class pcCreateRigHead(UI):
                     getBoneChild = mc.listRelatives(val, type="joint", ad=True)
                     boneLength = mc.getAttr("{0}.ty".format(getBoneChild[0]))
                     boneLength2 = mc.getAttr("{0}.ty".format(getBoneChild[1]))
-                    # print(boneLength)
-                    # print(boneLength2)
                     headOffsetCtrls.append(
                         CRU.createCTRLs(val, prnt=False, ornt=True, size=sizeCtrl, orientVal=orntVal, colour=colourTU))
                     # move the CVs into place
@@ -281,15 +271,12 @@ class pcCreateRigHead(UI):
             # takes the eye joints, creates a corresponding locator
             eyeName = str(eyeArray[i]).replace("JNT_", "")
             eyeCtrlArray.append(mc.spaceLocator(p=(0, 0, 0), name="CTRL_" + eyeName)[0])
-            # print(eyeCtrlArray[i])
 
             mc.setAttr('{0}.overrideEnabled'.format(eyeCtrlArray[i]), 1)
             if "_l_" in eyeCtrlArray[i]:
                 mc.setAttr("{0}.overrideColor".format(eyeCtrlArray[i]), 14)
-                # print("Left")
             elif "_r_" in eyeCtrlArray[i]:
                 mc.setAttr("{0}.overrideColor".format(eyeCtrlArray[i]), 13)
-                # print("Right")
 
             # groups them at the creation point
             autoGrp = mc.group(eyeCtrlArray[i], name="AUTO_" + eyeName)
@@ -301,7 +288,6 @@ class pcCreateRigHead(UI):
 
             mc.move(radiusBase * 2, eyeOffsetArray[i], z=True, r=True)
 
-        # print(eyeCtrlArray)
         # Create the eyes control
         eyesCtrlName = "CTRL_eyes"
         eyesCtrl = mc.circle(nr=(0, 1, 0), r=radiusBase * .75, n=eyesCtrlName, degree=1, sections=4)[0]
@@ -379,25 +365,19 @@ class pcCreateRigHead(UI):
 
         headFollowOrntConstr = mc.orientConstraint(eyesHeadLocArray, headCtrl)[0]
         mc.addAttr(headCtrl, longName='headFollow', at="enum", enumName="Neck:Torso:COG:World", k=True)
-        # print(headFollowOrntConstr)
 
         # grab the last 4 attributes
         headSpaceFollow = mc.listAttr(headFollowOrntConstr)[-4:]
-        # print(headSpaceFollow)
         for i in range(len(headSpaceFollow)):
             # set the driven key to 1 and the undriven keys to 0
 
             CRU.setDriverDrivenValues(headCtrl, "headFollow", headFollowOrntConstr, headSpaceFollow[i], i, 1)
-            print("-------")
-            print(headSpaceFollow[i])
             for i2 in range(len(headSpaceFollow)):
                 if i2 != i:
                     # need to have the second to last value be i, not i2
                     CRU.setDriverDrivenValues(headCtrl, "headFollow", headFollowOrntConstr, headSpaceFollow[i2], i, 0)
-                    print(headSpaceFollow[i2])
 
         locParents = [headOffsetCtrls[1][1], ctrlIKChest, ctrlCOG, grpWorldFollow]
-        # print(locParents)
         # parent LOC_headNeckFollow under CTRL_neck2
         # parent LOC_headTorsoFollow under CTRL_IK_chest
         # parent LOC_headCOGFollow under CTRL_COG
@@ -434,7 +414,6 @@ class pcCreateRigHead(UI):
         # gets us most of the geos
         jntArrayNoEnd = [x for x in self.jointArray if "End" not in x]
 
-        # print(eyeArray)
 
         if ((checkList[0] == "")):
             mc.warning("You are missing a selection!")

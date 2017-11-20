@@ -96,11 +96,9 @@ class pcCreateRigFingers(UI):
 
     def loadSrc1Btn(self):
         self.ctrlsSel = self.tgpLoadTxBtn("ctrlFingersLoad_tfbg", "nurbsCurve")
-        print(self.ctrlsSel)
 
     def loadSrc2Btn(self):
         self.ctrlSel = self.loadCtrlBtn("ctrlPalmLoad_tf")
-        print(self.ctrlSel)
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
@@ -117,8 +115,6 @@ class pcCreateRigFingers(UI):
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
-
-            # print(selName)
 
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
@@ -146,9 +142,7 @@ class pcCreateRigFingers(UI):
 
             # add to the current list
             self.ctrlsArray.extend(self.child)
-            # print(self.ctrlsArray)
             ctrlsArraySorted = []
-            # print(self.ctrlsArray)
             # sort the array
             for i in range(len(self.ctrlsArray)):
                 sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
@@ -156,7 +150,6 @@ class pcCreateRigFingers(UI):
                     ctrlsArraySorted.append(self.ctrlsArray[i])
 
             self.ctrlsRoot = self.selLoad[0]
-            # print(ctrlsArraySorted)
             self.ctrlsArray = ctrlsArraySorted
 
         return self.ctrlsArray
@@ -165,7 +158,6 @@ class pcCreateRigFingers(UI):
 
         fingersPalmSetup = mc.listRelatives(ctrlPalm, ad=True, s=False)
         fingersPalmSetup.reverse()
-        print(fingersPalmSetup)
         autoThumbs = [x for x in fingersPalmSetup if ("thumb" in x.lower()) and "AUTO" in x]
         autoIndex = [x for x in fingersPalmSetup if ("index" in x.lower()) and "AUTO" in x]
         autoMiddle = [x for x in fingersPalmSetup if ("middle" in x.lower()) and "AUTO" in x]
@@ -230,7 +222,6 @@ class pcCreateRigFingers(UI):
         # get the non-shape values
         lockValues = mc.listRelatives(ctrlFingers, c=True, s=False, type="transform")
         lockValues.append(ctrlFingers)
-        print(lockValues)
 
         for i in range(len(lockValues)):
             CRU.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True, visible=True)
@@ -295,7 +286,6 @@ class pcCreateRigFingers(UI):
         self.setDigitVals(curl_N10_Digits, driverVal, ctrlFingers, fingerAttr[0])
 
     def fingerScrunchSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
-        print("ctrlArrayFingers {0}".format(ctrlArrayFingers))
 
         driverVal = 0
 
@@ -309,7 +299,6 @@ class pcCreateRigFingers(UI):
                 # scrunch_P0_Digits.append(fingersToAddX)
 
         self.setDigitVals(scrunch_P0_Digits, driverVal, ctrlFingers, fingerAttr[1])
-        print("ctrlFingers {0}".format(ctrlFingers))
 
         driverVal = 10
         scrunch_P10_Other = [None, -50, 50, 50]  # good value
@@ -344,7 +333,6 @@ class pcCreateRigFingers(UI):
         self.setDigitVals(scrunch_N10_Digits, driverVal, ctrlFingers, fingerAttr[1])
 
     def fingerSpreadSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
-        print("ctrlArrayFingers {0}".format(ctrlArrayFingers))
         driverVal = 0
 
         spread_P0_Digits = []
@@ -394,7 +382,6 @@ class pcCreateRigFingers(UI):
         self.setDigitVals(spread_N10_Digits, driverVal, ctrlFingers, fingerAttr[2])
 
     def fingerRelaxSetup(self, ctrlArrayFingers, autoTIMRP, ctrlFingers, fingerAttr, *args):
-        print("ctrlArrayFingers {0}".format(ctrlArrayFingers))
 
         driverVal = 0
 
@@ -441,7 +428,6 @@ class pcCreateRigFingers(UI):
             for j in range(len(digit_drvnvls_autos_digitCtrl[i][0])):
                 # skip if the value is a None
                 if digit_drvnvls_autos_digitCtrl[i][0][j] is not None:
-                    # print(digit_drvnvls_autos_digitCtrl)
                     CRU.setDriverDrivenValues(ctrlDigits, digitAttr,
                                               digit_drvnvls_autos_digitCtrl[i][1][j],
                                               digit_drvnvls_autos_digitCtrl[i][-1],
@@ -464,10 +450,7 @@ class pcCreateRigFingers(UI):
         offsetCtrlStuffMirror = []
         for i in range(len(ctrlFingersMirrorWork)):
             # switch the l/r,
-            # print("--------")
-            # print(ctrlFingersMirrorWork[i])
             toRename = ctrlFingersMirrorWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
-            # print(toRename)
             mc.rename(ctrlFingersMirrorWork[i], toRename)
             ctrlFingersMirror.append(toRename)
         ctrlFingersMirrorTop = ctrlFingersMirror[0]
@@ -475,8 +458,6 @@ class pcCreateRigFingers(UI):
         # translates everything into place
         mirrorTrans = mc.xform(ctrlFingersMirrorTop, q=True, ws=True, rotatePivot=True)
         mirrorRot = mc.xform(ctrlFingersMirrorTop, q=True, ws=True, rotation=True)
-        # print("MirrorTrans = {0}".format(mirrorTrans))
-        # print("MirrorAxis = {0}".format(mirrorRot))
         mirrorTransX = mirrorTrans[0] * -1
         mirrorTransY = mirrorTrans[1]
         mirrorTransZ = mirrorTrans[2]
@@ -485,15 +466,8 @@ class pcCreateRigFingers(UI):
         mirrorRotZ = mirrorRot[2] * -1
 
         mirrorXScal = mc.getAttr("{0}.sx".format(ctrlFingersMirrorTop)) * -1
-        # print(mirrorTrans)
-        # print(mirrorXScal)
 
         # mirrors the values
-        '''mc.setAttr("{0}.tx".format(ctrlFingersMirrorTop), mirrorTransX)
-        mc.setAttr("{0}.sx".format(ctrlFingersMirrorTop), mirrorXScal)
-        mc.setAttr("{0}.rx".format(ctrlFingersMirrorTop), mirrorRotX)
-        mc.setAttr("{0}.ry".format(ctrlFingersMirrorTop), mirrorRotY)
-        mc.setAttr("{0}.rz".format(ctrlFingersMirrorTop), mirrorRotZ)'''
 
         mc.xform(ctrlFingersMirrorTop, translation=(mirrorTransX, mirrorTransY, mirrorTransZ))
         mc.xform(ctrlFingersMirrorTop, scale=(mirrorXScal, 1, 1))
@@ -525,8 +499,6 @@ class pcCreateRigFingers(UI):
             return
 
         ctrlsArray = self.ctrlsArray
-
-        print("-------")
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -569,14 +541,11 @@ class pcCreateRigFingers(UI):
 
             self.makeFingers(ctrlPalm, ctrlsArray, leftRight, colourTU)
 
-            print(mirrorRig)
             if mirrorRig:
-                print("I got here!")
+                print("Mirroring")
 
                 isLeftMirror = not isLeft
 
                 ctrlPalmMirror = ctrlPalm.replace(leftRightReplace, leftRightReplaceMirror)
-
-                print(ctrlsArray)
 
                 self.makeFingers(ctrlPalmMirror, ctrlsArrayMirror, leftRightMirror, colourTUMirror)

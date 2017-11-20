@@ -100,15 +100,12 @@ class pcCreateRigFoot(UI):
 
     def loadSrc1Btn(self):
         self.locSel = self.tgpLoadTxBtn("locLoad_tfbg", "locator")
-        print(self.locSel)
 
     def loadSrc2Btn(self):
         self.ctrlSel = self.loadCtrlBtn("ctrlIKLegLoad_tf")
-        print(self.ctrlSel)
 
     def loadSrc3Btn(self):
         self.jntSel = self.tgpLoadJntBtn("jntLegLoad_tf", "joint")
-        print(self.jntSel)
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
@@ -126,7 +123,6 @@ class pcCreateRigFoot(UI):
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-            # print(selName)
 
     def tgpLoadJntBtn(self, loadBtn, myType):
         # hierarchy
@@ -189,14 +185,12 @@ class pcCreateRigFoot(UI):
             # add to the current list
             self.locArray.extend(self.child)
             locArraySorted = []
-            # print(self.locArray)
             for i in range(len(self.locArray)):
                 sels = mc.listRelatives(self.locArray[i], c=True, s=True)
                 if myType in mc.objectType(sels) or myType == mc.objectType(sels):
                     locArraySorted.append(self.locArray[i])
 
             self.locRoot = self.selLoad[0]
-            # print(locArraySorted)
             self.locArray = locArraySorted
 
         return self.locArray
@@ -416,10 +410,7 @@ class pcCreateRigFoot(UI):
         offsetFootStuffMirror = []
         for i in range(len(offsetFootStuffMirrorWork)):
             # switch the l/r,
-            print("--------")
-            print(offsetFootStuffMirrorWork[i])
             toRename = offsetFootStuffMirrorWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
-            print(toRename)
             mc.rename(offsetFootStuffMirrorWork[i], toRename)
             offsetFootStuffMirror.append(toRename)
         jntLegsMirror = []
@@ -459,7 +450,6 @@ class pcCreateRigFoot(UI):
         kneeOffsetCtrl.append(mc.group(n="OFFSET_" + kneeName, w=True, em=True))
         kneeOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=kneeName)[0])
         kneeOffsetCtrl.append(mc.group(n="AUTO_" + kneeName, w=True, em=True))
-        print(kneeOffsetCtrl)
 
         mc.parent(kneeOffsetCtrl[2], kneeOffsetCtrl[0])
         mc.parent(kneeOffsetCtrl[1], kneeOffsetCtrl[2])
@@ -468,7 +458,6 @@ class pcCreateRigFoot(UI):
         toDelete2 = mc.aimConstraint(ikJntsDrive[1], kneeOffsetCtrl[0], aim=(0, 0, 1))
 
         mc.delete(toDelete, toDelete2)
-        print(legLength)
 
         if not isLeft:
             legLength = -legLength
@@ -511,7 +500,6 @@ class pcCreateRigFoot(UI):
             return
         locArray = self.locArray
 
-        print(mirrorSel)
         if mirrorSel == 1:
             mirrorRig = False
         else:
@@ -558,18 +546,15 @@ class pcCreateRigFoot(UI):
             # makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft)
             self.makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU)
 
-            print(mirrorRig)
-
             if mirrorRig:
 
-                print("I got here!")
+                print("Mirroring")
 
                 isLeftMirror = not isLeft
 
                 ctrlIKLegMirror = ctrlIKLeg.replace(leftRightReplace, leftRightReplaceMirror)
                 locFootRootMirror = locFootRoot.replace(leftRightReplace, leftRightReplaceMirror)
                 locArrayMirror = []
-                print(locArray)
                 for i in range(len(locArray)):
                     locArrayMirror.append(locArray[i].replace(leftRightReplace, leftRightReplaceMirror))
 

@@ -96,15 +96,12 @@ class pcCreateRigLegs(UI):
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
-        print(self.jntSel)
 
     def loadSrc2Btn(self):
         self.ctrlSel = self.loadCtrlBtn("ctrlFKHipLoad_tf")
-        print(self.ctrlSel)
 
     def loadSrc3Btn(self):
         self.grpSel = self.loadCtrlBtn("ctrlLoad_tfbg")
-        print(self.grpSel)
 
     def loadCtrlBtn(self, loadBtn):
         self.selLoad = []
@@ -121,7 +118,6 @@ class pcCreateRigLegs(UI):
                 return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-            print(selName)
             return selName
 
     def tgpLoadTxBtn(self, loadBtn, myType):
@@ -171,14 +167,10 @@ class pcCreateRigLegs(UI):
                 nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
                 nextJntVal = nextJnt
             else:
-                # print("I AM THE FISH!!")
                 nextJnts = mc.listRelatives(val, c=True, type="joint", ad=True)
                 nextJnt = nextJnts[-2]
                 nextJntVal = nextJnts[-1]
-                print("=-=-=-=-=-=")
-                print(nextJnts)
-                print(nextJnt)
-                print("=+=+=+=+=+=")
+
                 # with the ankle, we can create the control
 
             nextJntYVal = mc.getAttr("{0}.ty".format(nextJntVal))
@@ -188,13 +180,16 @@ class pcCreateRigLegs(UI):
             # create the joint twists at the proper location
 
             # upper leg is positive, lower leg is negative
-            '''JNT_l_upperLegTwist1.rotateY = JNT_l_lowerLeg.rotateY * .25;
-            JNT_l_upperLegTwist2.rotateY = JNT_l_lowerLeg.rotateY * .5;
-            JNT_l_upperLegTwist3.rotateY = JNT_l_lowerLeg.rotateY * .75;
-
-            JNT_l_lowerLegTwist1.rotateY = JNT_l_ankleTwist.rotateY * .25 * -1;
-            JNT_l_lowerLegTwist2.rotateY = JNT_l_ankleTwist.rotateY * .5 * -1;
-            JNT_l_lowerLegTwist3.rotateY = JNT_l_ankleTwist.rotateY * .75 * -1;'''
+            '''
+            # The calculation should look like this. The negative values may not be needed
+            JNT_l_upperLegTwist1.rotateY = JNT_l_lowerLeg.rotateY * 0.25* CTRL_l_foot.upperLegTwist;
+            JNT_l_upperLegTwist2.rotateY = JNT_l_lowerLeg.rotateY * 0.5* CTRL_l_foot.upperLegTwist;
+            JNT_l_upperLegTwist3.rotateY = JNT_l_lowerLeg.rotateY * 0.75* CTRL_l_foot.upperLegTwist;
+            
+            JNT_l_lowerLegTwist1.rotateY = JNT_l_ankleTwist.rotateY * -0.25* CTRL_l_foot.lowerLegTwist;
+            JNT_l_lowerLegTwist2.rotateY = JNT_l_ankleTwist.rotateY * -0.5* CTRL_l_foot.lowerLegTwist;
+            JNT_l_lowerLegTwist3.rotateY = JNT_l_ankleTwist.rotateY * -0.75* CTRL_l_foot.lowerLegTwist;
+            '''
             for x in range(twists):
 
                 valx = x + 1
@@ -206,10 +201,13 @@ class pcCreateRigLegs(UI):
                 mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
                 twistJntsSubgroup.append(twistTemp[0])
 
+                twistInverse = 1.0 / (numTwistsPlus1)
+                '''
+                # this was not necessary, but I am still keeping this as other rigs may still suffer this problem
                 if i == 0:
                     twistInverse = 1.0 / (numTwistsPlus1)
                 else:
-                    twistInverse = -1.0 / (numTwistsPlus1)
+                    twistInverse = -1.0 / (numTwistsPlus1)'''
 
                 if "upper" in nextJnt:
                     legType = self.upperTwistVal
@@ -282,7 +280,6 @@ class pcCreateRigLegs(UI):
         hipIKOffsetCtrl = self.createHip(leftRight, ikJnts, ikJntsDrive)
 
         # Constraining the upperLeg FK control to the upperLeg JNT
-        print("{0} constraining {1}".format(fkJntOffsetCtrls[0][1], bndJnts[0]))
         mc.pointConstraint(fkJntOffsetCtrls[0][1], fkJnts[0])
 
         return hipIKOffsetCtrl
@@ -540,8 +537,6 @@ class pcCreateRigLegs(UI):
 
         # attach objects to the hip
         if checkboxHip:
-            # mc.parentConstrain(shoulderOffsetCtrl[0], JNT_IK_spine_6,  mo=True)
-            # print(fkJntOffsetCtrls[0][1])
             mc.parent(fkJntOffsetCtrls[0][0], hipIKOffsetCtrl[0], ctrlFKHip)
 
         # Hiding the visibility of the joints
@@ -657,20 +652,16 @@ class pcCreateRigLegs(UI):
         else:
             ctrlFKHip = None
 
-        # print(ctrlFKHip)
-
         try:
             jntLegRoot = self.jointArray[0]
         except:
             mc.warning("No joint selected!")
             return
 
-        # print(mirrorSel)
         if mirrorSel == 1:
             mirrorRig = False
         else:
             mirrorRig = True
-
 
         listCtrlFKIKAttr = ["l_leg", "r_leg", "l_leg", "r_leg"]
         if checkSelLeft == 1:
@@ -731,7 +722,6 @@ class pcCreateRigLegs(UI):
                          ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists,
                          checkboxHip=checkboxHip)
 
-            # print(mirrorRig)
             if mirrorRig:
                 print("Mirroring")
 

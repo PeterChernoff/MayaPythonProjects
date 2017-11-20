@@ -114,23 +114,18 @@ class pcCreateRigToes(UI):
 
     def loadSrc1Btn(self):
         self.ctrlsSel = self.tgpLoadTxBtn("ctrlToesLoad_tfbg", "nurbsCurve")
-        print(self.ctrlsSel)
 
     def loadSrc2Btn(self):
         self.jntBallSel = self.loadJntBtn("jntBallLoad_tf", "ball")
-        print(self.jntBallSel)
 
     def loadSrc3Btn(self):
         self.jntAnkleTwistSel = self.loadJntBtn("jntAnkleTwistLoad_tf", "ankle twist")
-        print(self.jntAnkleTwistSel)
 
     def loadSrc4Btn(self):
         self.jntMasterToesSel = self.loadJntBtn("jntToesLoad_tf", "master toes")
-        print(self.jntMasterToesSel)
 
     def loadSrc5Btn(self):
         self.grpLegSel = self.loadGrpBtn("grpLegLoad_tfbg")
-        print(self.grpLegSel)
 
     def loadJntBtn(self, loadBtn, jntSel):
         self.selLoad = []
@@ -144,8 +139,6 @@ class pcCreateRigToes(UI):
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
-
-            # print(selName)
 
     def loadGrpBtn(self, loadBtn):
         self.selLoad = []
@@ -164,25 +157,6 @@ class pcCreateRigToes(UI):
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-            # print(selName)
-
-    """def loadLocBtn(self, loadBtn):
-        self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True)
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the toes locator")
-            return
-        else:
-            if CRU.checkObjectType(self.selLoad[0]) != "locator":
-                mc.warning("The master toe should be a locator")
-                return
-            selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-            return selName
-
-            # print(selName)"""
 
     def tgpLoadTxBtn(self, loadBtn, myType):
         # hierarchy
@@ -742,9 +716,7 @@ class pcCreateRigToes(UI):
                 mc.warning("You are selecting the incorrect side")
                 return
 
-            CRU.createLocatorToDelete()
-
-            # print(jntMasterToes)
+            # CRU.createLocatorToDelete()
 
             if mirrorRig:
                 # we want to get the toe control before we add anything to it. When doing this programmatically, it's easier
@@ -760,9 +732,8 @@ class pcCreateRigToes(UI):
 
             self.makeToes(jntBall, jntMasterToes, ctrlToes, grpLegs, jntAnkleTwist, leftRight, colourTU, isLeft)
 
-            print(mirrorRig)
             if mirrorRig:
-                print("I got here!")
+                print("Mirroring")
 
                 isLeftMirror = not isLeft
 

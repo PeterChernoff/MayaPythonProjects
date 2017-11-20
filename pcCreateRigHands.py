@@ -92,15 +92,12 @@ class pcCreateRigHands(UI):
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
         self.jntHandSel = self.tgpLoadTxBtn("jointLoad_tfbg")
-        # print(self.jntHandSel)
 
     def loadSrc2Btn(self):
         self.jntArmSel = self.tgpLoadArm("armLoad_tfbg")
-        # print(self.jntArmSel)
 
     def loadSrc3Btn(self):
         self.jntCtrl = self.tgpLoadCtrl("ctrlLoad_tfbg")
-        # print(self.jntCtrl)
 
     def tgpLoadCtrl(self, loadBtn):
         self.selLoad = []
@@ -182,7 +179,6 @@ class pcCreateRigHands(UI):
 
     def tgpSetDriverArmFKIKSwitch(self, driver, driverAttr, driven, *args):
         w0w1Attr = mc.listAttr(driven)[-2:]
-        # print(w0w1Attr)
         CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
                                   modifyBoth="linear")
         CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
@@ -234,7 +230,6 @@ class pcCreateRigHands(UI):
 
         # change the rotation order
         toRotateChange = [handOffsetCtrl[1], jntPalmBase]
-        # print(toRotateChange)
         CRU.changeRotateOrder(toRotateChange, "YZX")
 
         return handOffsetCtrl
@@ -268,7 +263,6 @@ class pcCreateRigHands(UI):
             fkJntOffsetCtrls.append(fkFingerOffsetCtrls)
 
         # parents the fingers fks under each other
-        # print(fkJntOffsetCtrls)
         for i in range(len(fkJntOffsetCtrls)):
             for j in range(len(fkJntOffsetCtrls[i]) - 1):
                 mc.parent(fkJntOffsetCtrls[i][j + 1][0], fkJntOffsetCtrls[i][j][1])
@@ -282,7 +276,6 @@ class pcCreateRigHands(UI):
         conLocFKOffsetCtrl.append(mc.group(n="OFFSET_{0}".format(conFKName), em=True))
         conLocFKOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=conFKName)[0])
         mc.parent(conLocFKOffsetCtrl[1], conLocFKOffsetCtrl[0])
-        # print(conLocFKOffsetCtrl)
 
         mc.setAttr('{0}.overrideEnabled'.format(conLocFKOffsetCtrl[0]), 1)
         mc.setAttr("{0}.overrideColor".format(conLocFKOffsetCtrl[0]), fkColour)
@@ -349,7 +342,6 @@ class pcCreateRigHands(UI):
                          conLocIKOffsetCtrl)
 
         if checkGeo:
-            print(geoJntArray)
             CRU.tgpSetGeo(geoJntArray)
 
     def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, grpConPalm, conLocFKOffsetCtrl,
@@ -404,7 +396,6 @@ class pcCreateRigHands(UI):
             mc.warning("No joint selected!")
             return
 
-        # print(mirrorSel)
         if mirrorSel == 1:
             mirrorRig = False
         else:

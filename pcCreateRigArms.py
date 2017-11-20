@@ -92,16 +92,12 @@ class pcCreateRigArms(UI):
 
     def loadSrc1Btn(self):
         self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
-        print(self.jntSel)
 
     def loadSrc2Btn(self):
         self.ctrlSel = self.tgpLoadJntSpine("jntSpineTopLoad_tf", "joint")
-        print(self.ctrlSel)
 
     def loadSrc3Btn(self):
-        print("hello")
         self.grpSel = self.tgpLoadCtrl("ctrlLoad_tfbg")
-        print(self.grpSel)
 
     def tgpLoadCtrl(self, loadBtn):
         self.selLoad = []
@@ -117,7 +113,6 @@ class pcCreateRigArms(UI):
                 return
             selName = self.selLoad[0]
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-            print(selName)
 
     def tgpLoadJntSpine(self, loadBtn, myType):
         # hierarchy
@@ -588,15 +583,12 @@ class pcCreateRigArms(UI):
         else:
             jntSpine6 = None
 
-        print(jntSpine6)
-
         try:
             jntShoulderRoot = self.jointArray[0]
         except:
             mc.warning("No joint selected!")
             return
 
-        print(mirrorSel)
         if mirrorSel == 1:
             mirrorRig = False
         else:
@@ -626,8 +618,6 @@ class pcCreateRigArms(UI):
 
         toReplace = "_" + leftRight
         toReplaceWith = "_" + leftRightMirror
-
-
 
         if ctrlFKIK:
             try:
@@ -670,7 +660,6 @@ class pcCreateRigArms(UI):
                          ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
                          checkboxSpine, checkGeo, geoJntArray)
 
-            print(mirrorRig)
             if mirrorRig:
 
                 print("Mirroring")
@@ -691,7 +680,6 @@ class pcCreateRigArms(UI):
 
                     if mc.objectType(mb) == "joint" and "End" not in mb:
                         geoJntArrayMirror.append(mb)
-                # print("geoJntArrayMirror is {0}".format(geoJntArrayMirror))
                 self.makeArm(isLeftMirror, leftRightMirror,
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
                              colourTUMirror, jntShoulderRootMirror,
