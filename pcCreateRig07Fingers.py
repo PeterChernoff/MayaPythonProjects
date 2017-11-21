@@ -95,41 +95,58 @@ class pcCreateRigFingers(UI):
         return
 
     def loadSrc1Btn(self):
-        self.ctrlsSel = self.tgpLoadTxBtn("ctrlFingersLoad_tfbg", "nurbsCurve")
+        self.selSrc1 = self.tgpLoadCtrlsBtn("ctrlFingersLoad_tfbg", "nurbsCurve", "Fingers Control", ["CTRL", "fingers"],
+                                             "control")
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.loadCtrlBtn("ctrlPalmLoad_tf")
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlPalmLoad_tf", "nurbsCurve", "Palm Control", ["CTRL", "palm"],
+                                         "control")
+        print(self.selSrc2)
 
-    def loadCtrlBtn(self, loadBtn):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the Control")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadCtrlsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root control")
+            mc.warning("Select only the {0} control".format(objectDesc))
             return
         else:
 
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("The Control should be a {0}".format(objectType))
                 return
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
@@ -146,7 +163,7 @@ class pcCreateRigFingers(UI):
             # sort the array
             for i in range(len(self.ctrlsArray)):
                 sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
-                if myType in mc.objectType(sels) or myType == mc.objectType(sels):
+                if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
                     ctrlsArraySorted.append(self.ctrlsArray[i])
 
             self.ctrlsRoot = self.selLoad[0]
@@ -532,6 +549,15 @@ class pcCreateRigFingers(UI):
         else:
 
             # CRU.createLocatorToDelete()
+            if not (CRU.checkLeftRight(isLeft, fingerRoot)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the fingers control")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, ctrlPalm)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the palm control")
+                return
 
             if mirrorRig:
                 # we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
