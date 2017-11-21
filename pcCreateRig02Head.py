@@ -37,7 +37,6 @@ class pcCreateRigHead(UI):
 
         mc.text(l="Select The Neck Root: ")
         mc.text(l="")
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
         mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=True)
@@ -58,8 +57,13 @@ class pcCreateRigHead(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="COG: ")
         mc.textFieldButtonGrp("cog_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
 
+        mc.separator(st="in", h=17, w=500)
         mc.setParent("..")
 
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
+
+        mc.setParent("..")
         # Attributes
 
         # load buttons
@@ -72,18 +76,6 @@ class pcCreateRigHead(UI):
 
     def createButtonCmd(self, *args):
         self.tgpMakeBC()
-
-    def tgpShowBtnOp(self, sel, trigger, action, *args):
-        if (sel == "1"):
-            # radio button
-            checkBtn = mc.radioButtonGrp(trigger, q=True, select=True)
-            # if "attr" not in trigger:
-            if (checkBtn == 1):
-                mc.checkBox(action, edit=True, en=True)
-            else:
-                mc.checkBox(action, edit=True, v=0, en=False)
-
-        return
 
     def loadSrc1Btn(self):
         self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "neck", "1"])

@@ -30,7 +30,6 @@ class pcCreateRigSpine(UI):
 
         mc.text(l="Select The IK Spine Root: ")
         mc.text(l="")
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
@@ -44,6 +43,9 @@ class pcCreateRigSpine(UI):
 
         mc.separator(st="in", h=17, w=500)
 
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
+        mc.setParent("..")
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
 
@@ -51,18 +53,6 @@ class pcCreateRigSpine(UI):
 
     def createButtonCmd(self, *args):
         self.tgpMakeBC()
-
-    def tgpShowBtnOp(self, type, trigger, action, *args):
-        if (type == "1"):
-            # radio button
-            checkBtn = mc.radioButtonGrp(trigger, q=True, select=True)
-            # if "attr" not in trigger:
-            if (checkBtn == 1):
-                mc.checkBox(action, edit=True, en=True)
-            else:
-                mc.checkBox(action, edit=True, v=0, en=False)
-
-        return
 
     def loadSrc1Btn(self):
         self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "IK", "spine", "1"])
