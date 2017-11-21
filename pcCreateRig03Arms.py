@@ -58,7 +58,7 @@ class pcCreateRigArms(UI):
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Top Spine Joint: ")
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_spine_6")
@@ -74,7 +74,7 @@ class pcCreateRigArms(UI):
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", e=True, bc=self.loadSrc3Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -92,7 +92,7 @@ class pcCreateRigArms(UI):
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("ctrlLoad_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
 
 
@@ -570,7 +570,7 @@ class pcCreateRigArms(UI):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
+        ctrlFKIK = mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", q=True, text=True)
 
         geoJntArray = self.jointArray[:]
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)

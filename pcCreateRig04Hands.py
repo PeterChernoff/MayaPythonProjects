@@ -59,7 +59,7 @@ class pcCreateRigHands(UI):
         mc.textFieldButtonGrp("armLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_l_armEnd")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
         mc.setParent("..")
 
@@ -73,7 +73,7 @@ class pcCreateRigHands(UI):
         #
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("armLoad_tfbg", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", e=True, bc=self.loadSrc3Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -93,7 +93,7 @@ class pcCreateRigHands(UI):
         print(self.selSrc2b)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("ctrlLoad_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
@@ -406,7 +406,7 @@ class pcCreateRigHands(UI):
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
+        ctrlFKIK = mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", q=True, text=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
 
