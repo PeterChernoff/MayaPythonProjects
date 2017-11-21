@@ -90,7 +90,7 @@ class pcCreateRigLegs(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("ctrlFKHipLoad_tf", "nurbsCurve", "FK Hip Control", ["CTRL", "FK", "hip"], "control")
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlFKHipLoad_tf", "nurbsCurve", "FK Hip Control", ["CTRL", "_FK_", "hip"], "control")
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
@@ -699,7 +699,7 @@ class pcCreateRigLegs(UI):
             # CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, jntLegRoot)):
                 # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side")
+                mc.warning("You are selecting the incorrect side for the leg")
                 return
 
             if mirrorRig:

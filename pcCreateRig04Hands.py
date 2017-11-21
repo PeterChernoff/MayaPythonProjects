@@ -467,6 +467,16 @@ class pcCreateRigHands(UI):
 
             # get the fingers and palm
             jntsHand = self.jntHandSel
+
+            if not (CRU.checkLeftRight(isLeft, jntHandRoot)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the hand")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, jntArmEnd)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the arm")
+                return
             # gets the hand joints
             geoJntArray = [x for x in jntsHand if "End" not in x[-3:]]
 
