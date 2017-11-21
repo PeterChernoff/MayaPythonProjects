@@ -132,7 +132,7 @@ class pcCreateRigUtilities:
                     pcCreateRigUtilities.layerEdit([geoName], geoLayer=True, noRecurse=True)
 
             except:
-                mc.warning("Geo for {0} properly named or available".format(geoJntArray[i]))
+                mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
                 mc.warning("===========")
 
     @staticmethod
