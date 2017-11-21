@@ -26,6 +26,13 @@ class pcCreateRigLegs(UI):
 
     def createCustom(self, *args):
         # selection type
+
+        mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
+
+        mc.text(l="Select The Leg Root: ")
+        mc.text(l="")
+        mc.separator(st="in", h=17, w=500)
+        mc.setParent("..")
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
@@ -36,43 +43,40 @@ class pcCreateRigLegs(UI):
         mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Hip", en=True, v=True)
         mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
         mc.radioButtonGrp("selLegType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         # sources
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="Leg: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FKIK Ctrl: ")
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_fkikSwitch")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="FK Hip CTRL: ")
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_FK_hip")
 
         mc.setParent("..")
 
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
         mc.setParent("..")
 
-        mc.separator(st="in", h=20, w=500)
-
         # load buttons
         #
-
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("ctrlLoad_tfbg", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", e=True, bc=self.loadSrc3Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -81,46 +85,43 @@ class pcCreateRigLegs(UI):
     def createButtonCmd(self, *args):
         self.tgpMakeBC()
 
-    def tgpShowBtnOp(self, type, trigger, action, *args):
-        if (type == "1"):
-            # radio button
-            checkBtn = mc.radioButtonGrp(trigger, q=True, select=True)
-            # if "attr" not in trigger:
-            if (checkBtn == 1):
-                mc.checkBox(action, edit=True, en=True)
-            else:
-                mc.checkBox(action, edit=True, v=0, en=False)
-
-        return
-
     def loadSrc1Btn(self):
-        '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint")
+        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.loadCtrlBtn("ctrlFKHipLoad_tf")
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlFKHipLoad_tf", "nurbsCurve", "FK Hip Control", ["CTRL", "FK", "hip"], "control")
+        print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.grpSel = self.loadCtrlBtn("ctrlLoad_tfbg")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        print(self.selSrc3)
 
-    def loadCtrlBtn(self, loadBtn):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the Control")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="joint")
@@ -130,7 +131,11 @@ class pcCreateRigLegs(UI):
             return
         else:
 
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
@@ -643,7 +648,7 @@ class pcCreateRigLegs(UI):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        ctrlFKIK = mc.textFieldButtonGrp("ctrlLoad_tfbg", q=True, text=True)
+        ctrlFKIK = mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", q=True, text=True)
 
         geoJntArray = self.jointArray
         checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
