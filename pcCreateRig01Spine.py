@@ -65,12 +65,12 @@ class pcCreateRigSpine(UI):
         return
 
     def loadSrc1Btn(self):
-        '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "IK", "spine", "1"])
+        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "IK", "spine", "1"])
+        print(self.selSrc1)
 
-    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectName=None):
-        if objectName is None:
-            objectName = objectType
+    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
@@ -80,13 +80,13 @@ class pcCreateRigSpine(UI):
         else:
 
             if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectName))
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
 
             selName = self.selLoad[0]
 
             if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong joint. Select the {0}".format(objectDesc))
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectType, objectDesc))
                 return
 
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
