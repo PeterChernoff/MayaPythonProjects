@@ -28,7 +28,7 @@ class pcCreateRigSpine(UI):
         # selection type
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
-        mc.text(l="Select The Root: ")
+        mc.text(l="Select The IK Spine Root: ")
         mc.text(l="")
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
@@ -36,7 +36,7 @@ class pcCreateRigSpine(UI):
         mc.separator(st="in", h=17, w=500)
 
         # sources
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Spine Joints: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
@@ -66,21 +66,27 @@ class pcCreateRigSpine(UI):
 
     def loadSrc1Btn(self):
         '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint", "root spine IK", ["JNT", "IK", "spine", "1"])
+        self.jntSel = self.tgpLoadTxBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "IK", "spine", "1"])
 
-    def tgpLoadTxBtn(self, loadBtn, myType, type, keywords):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectName=None):
+        if objectName is None:
+            objectName = objectType
         # hierarchy
         self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type=myType)
+        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(myType))
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
+
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectName))
+                return
 
             selName = self.selLoad[0]
 
             if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong joint")
+                mc.warning("That is the wrong joint. Select the {0}".format(objectDesc))
                 return
 
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
