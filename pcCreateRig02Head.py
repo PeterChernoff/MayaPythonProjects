@@ -86,22 +86,26 @@ class pcCreateRigHead(UI):
         return
 
     def loadSrc1Btn(self):
-        self.jntSel = self.tgpLoadJnts("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "neck", "1"])
+        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "neck", "1"])
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.tgpLoadTxBtn("ctrlIKChestLoad_tf", "nurbsCurve", "IK Chest Control",
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlIKChestLoad_tf", "nurbsCurve", "IK Chest Control",
                                          ["CTRL", "IK", "Chest"], "control")
+        print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.grpSel = self.tgpLoadTxBtn("grpJNTSpine_tfbg", "transform", "Spine Joint Group", ["GRP", "JNT", "spine"],
+        self.selSrc3 = self.tgpLoadTxBtn("grpJNTSpine_tfbg", "transform", "Spine Joint Group", ["GRP", "JNT", "spine"],
                                         "group")
+        print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.grpSel2 = self.tgpLoadTxBtn("cog_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"])
+        self.selSrc4 = self.tgpLoadTxBtn("cog_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"])
+        print(self.selSrc4)
 
-    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectName=None):
-        if objectName is None:
-            objectName = objectType
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
 
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
@@ -111,17 +115,19 @@ class pcCreateRigHead(UI):
             return
         else:
             if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectName))
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
 
             if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectName, objectDesc))
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-    def tgpLoadJnts(self, loadBtn, objectType, objectDesc, keywords):
+    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
@@ -133,7 +139,7 @@ class pcCreateRigHead(UI):
             selName = self.selLoad[0]
 
             if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectType, objectDesc))
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
