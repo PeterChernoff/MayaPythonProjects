@@ -26,6 +26,13 @@ class pcCreateRigHands(UI):
 
     def createCustom(self, *args):
         # selection type
+
+        mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
+
+        mc.text(l="Select The Palm Root: ")
+        mc.text(l="")
+        mc.separator(st="in", h=17, w=500)
+        mc.setParent("..")
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
@@ -34,17 +41,17 @@ class pcCreateRigHands(UI):
         mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
         mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
         mc.text(l="Initial Limb: ")
         mc.radioButtonGrp("selArmType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
         mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         # sources
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="Hand Joint: ")
         mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
@@ -56,13 +63,11 @@ class pcCreateRigHands(UI):
 
         mc.setParent("..")
 
-        mc.separator(st="in", h=20, w=500)
+        mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
-
-        mc.separator(st="in", h=20, w=500)
 
         # load buttons
         #
@@ -77,58 +82,68 @@ class pcCreateRigHands(UI):
     def createButtonCmd(self, *args):
         self.tgpMakeBC()
 
-    def tgpShowBtnOp(self, type, trigger, action, *args):
-        if (type == "1"):
-            # radio button
-            checkBtn = mc.radioButtonGrp(trigger, q=True, select=True)
-            # if "attr" not in trigger:
-            if (checkBtn == 1):
-                mc.checkBox(action, edit=True, en=True)
-            else:
-                mc.checkBox(action, edit=True, v=0, en=False)
-
-        return
-
     def loadSrc1Btn(self):
-        '''self.src1Sel = self.tgpLoadTxBtn("jointLoad_tfbg", "selType_rbg", "selGeo_cb")'''
-        self.jntHandSel = self.tgpLoadTxBtn("jointLoad_tfbg")
+        self.jntHandSel = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Palm Joint", ["JNT", "palm"])
+        self.selSrc1 = self.jntHandSel
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.jntArmSel = self.tgpLoadArm("armLoad_tfbg")
+        self.selSrc2a, self.selSrc2b = self.tgpLoadJntsArmBtn("armLoad_tfbg", "joint", "Arm Joint", ["JNT", "Arm"])
+        print(self.selSrc2a)
+        print(self.selSrc2b)
 
     def loadSrc3Btn(self):
-        self.jntCtrl = self.tgpLoadCtrl("ctrlLoad_tfbg")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlLoad_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        print(self.selSrc3)
 
-    def tgpLoadCtrl(self, loadBtn):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the FKIK Control")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-    def tgpLoadArm(self, loadBtn):
+    def tgpLoadJntsArmBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="joint")
+        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the arm joint")
+            mc.warning("Select only the {0}".format(objectType))
             return
         else:
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+            exclusions = ["Twist", "_FK_", "_IK_"]
+
+            if (not all(word.lower() in selName.lower() for word in keywords)) or any(exclsn.lower() in selName.lower() for exclsn in exclusions):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return None, None
+            print(exclusions)
+
+            if any(exclsn.lower() in selName.lower() for exclsn in exclusions):
+                mc.warning("That is the wrong {0} to delete. Select the {1}".format(objectNickname, objectDesc))
+                return None, None
 
             # get the children joints
             self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
+            self.child = mc.listRelatives(self.selLoad, ad=True, type=objectType)
             # collect the joints in an array
             self.jointArray = [self.parent]
             # reverse the order of the children joints
@@ -140,20 +155,26 @@ class pcCreateRigHands(UI):
             self.jointArmEndArray = [x for x in self.jointArray if "End" in x[-3:]]
 
             mc.textFieldButtonGrp(loadBtn, e=True, tx=self.jointArmEndArray[0])
+            return self.jointArray, self.jointArmEndArray
 
-            return self.jointArray
-
-    def tgpLoadTxBtn(self, loadBtn):
+    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="joint")
+        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root joint")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
 
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+
             self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
 
             if self.child is None:
