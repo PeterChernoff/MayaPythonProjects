@@ -83,7 +83,7 @@ class pcCreateRigHead(UI):
 
     def loadSrc2Btn(self):
         self.selSrc2 = self.tgpLoadTxBtn("ctrlIKChestLoad_tf", "nurbsCurve", "IK Chest Control",
-                                         ["CTRL", "IK", "Chest"], "control")
+                                         ["CTRL", "_IK_", "Chest"], "control")
         print(self.selSrc2)
 
     def loadSrc3Btn(self):

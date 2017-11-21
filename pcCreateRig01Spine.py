@@ -55,7 +55,7 @@ class pcCreateRigSpine(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "IK", "spine", "1"])
+        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Spine IK", ["JNT", "_IK_", "spine", "1"])
         print(self.selSrc1)
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):

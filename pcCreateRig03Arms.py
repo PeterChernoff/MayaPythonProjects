@@ -88,13 +88,14 @@ class pcCreateRigArms(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("jntSpineTopLoad_tf", "joint", "Top Spine Joint", ["JNT", "spine", "6"])
+        self.selSrc2 = self.tgpLoadTxBtn("jntSpineTopLoad_tf", "joint", "Top Spine Joint",
+                                         ["JNT", "_IK_", "spine", "6"])
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control",
+                                         ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
-
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
