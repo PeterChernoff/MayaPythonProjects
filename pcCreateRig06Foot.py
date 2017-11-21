@@ -99,41 +99,59 @@ class pcCreateRigFoot(UI):
         return
 
     def loadSrc1Btn(self):
-        self.locSel = self.tgpLoadTxBtn("locLoad_tfbg", "locator")
+        self.selSrc1 = self.tgpLoadLocsBtn("locLoad_tfbg", "locator", "Ankle Locator", ["LOC", "ankle"])
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.ctrlSel = self.loadCtrlBtn("ctrlIKLegLoad_tf")
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlIKLegLoad_tf", "nurbsCurve", "IK Leg Control", ["CTRL", "_IK_", "leg"],
+                                         "control")
+        print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.jntSel = self.tgpLoadJntBtn("jntLegLoad_tf", "joint")
+        self.selSrc3 = self.tgpLoadJntsLegBtn("jntLegLoad_tf", "joint", "Upper Leg Joint", ["JNT", "upper", "Leg"])
+        print(self.selSrc3)
 
-    def loadCtrlBtn(self, loadBtn):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the Control")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-
-    def tgpLoadJntBtn(self, loadBtn, myType):
+    def tgpLoadJntsLegBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
 
-        self.selLoad = mc.ls(sl=True, fl=True, type=myType)
+        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root {0}".format(myType))
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
+
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+
             self.jointLegArray = self.getLegJnts(loadBtn, self.selLoad)
 
         return self.jointLegArray
@@ -159,19 +177,25 @@ class pcCreateRigFoot(UI):
 
         return jointLegArray
 
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root locator")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != "locator":
-                mc.warning("The ankle should be a locator")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
@@ -187,7 +211,7 @@ class pcCreateRigFoot(UI):
             locArraySorted = []
             for i in range(len(self.locArray)):
                 sels = mc.listRelatives(self.locArray[i], c=True, s=True)
-                if myType in mc.objectType(sels) or myType == mc.objectType(sels):
+                if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
                     locArraySorted.append(self.locArray[i])
 
             self.locRoot = self.selLoad[0]
@@ -496,7 +520,7 @@ class pcCreateRigFoot(UI):
             offsetFoot = mc.listRelatives(locFootRoot, parent=True)[0]
         except:
             # if this doesn't work, tell the user to check if under
-            mc.warning("Be sure the locator is under an offset")
+            mc.warning("Be sure the locator is under an offset group")
             return
         locArray = self.locArray
 
@@ -533,7 +557,17 @@ class pcCreateRigFoot(UI):
             # CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, locFootRoot)):
                 # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side")
+                mc.warning("You are selecting the incorrect side for the locator")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, ctrlIKLeg)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the IK leg control")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, jntLegs[0])):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the leg joint")
                 return
 
             if mirrorRig:
