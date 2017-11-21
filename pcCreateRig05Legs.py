@@ -9,10 +9,10 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
-import pcCreateRigUtilities
+import pcCreateRig00AUtilities
 
-reload(pcCreateRigUtilities)
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRig00AUtilities)
+from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
 
 class pcCreateRigLegs(UI):

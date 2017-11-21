@@ -16,10 +16,10 @@ bc.tgpBlendColors()
 
 '''
 # This program assumes there are no toes in the original.
-import pcCreateRigUtilities
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+import pcCreateRig00AUtilities
+from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
-reload(pcCreateRigUtilities)
+reload(pcCreateRig00AUtilities)
 
 
 class pcCreateRig09Cleanup(UI):

@@ -9,10 +9,10 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
-import pcCreateRigUtilities
+import pcCreateRig00AUtilities
 
-reload(pcCreateRigUtilities)
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRig00AUtilities)
+from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
 
 class pcCreateRigArms(UI):
@@ -20,7 +20,7 @@ class pcCreateRigArms(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigArms"
-        self.winSize = (500, 325)
+        self.winSize = (500, 375)
 
         self.createUI()
 
@@ -644,7 +644,7 @@ class pcCreateRigArms(UI):
             # checks if the starting joint is correct to the direction we want
             if not (CRU.checkLeftRight(isLeft, jntShoulderRoot)):
                 # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side")
+                mc.warning("You are selecting the incorrect side for the root shoulder joint")
                 return
 
             if mirrorRig:

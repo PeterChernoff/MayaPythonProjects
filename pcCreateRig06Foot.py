@@ -16,10 +16,10 @@ bc.tgpBlendColors()
 
 '''
 
-import pcCreateRigUtilities
+import pcCreateRig00AUtilities
 
-reload(pcCreateRigUtilities)
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRig00AUtilities)
+from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
 
 class pcCreateRigFoot(UI):
@@ -32,14 +32,14 @@ class pcCreateRigFoot(UI):
         self.createUI()
 
     def createCustom(self, *args):
-        '''
-        #
-        #
-        #
-        #
-        #
-        '''
         # selection type
+
+        mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
+
+        mc.text(l="Select The Ankle Root: ")
+        mc.text(l="")
+        mc.separator(st="in", h=17, w=500)
+        mc.setParent("..")
         mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
@@ -58,14 +58,14 @@ class pcCreateRigFoot(UI):
         mc.separator(st="in", h=20, w=500)
 
         # sources
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="Ankle Locator: ")
         mc.textFieldButtonGrp("locLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Foot CTRL: ")
         mc.textFieldButtonGrp("ctrlIKLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_l_leg")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Leg CTRL: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Upper Leg Joint: ")
         mc.textFieldButtonGrp("jntLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_upperLeg")
 
         mc.setParent("..")
