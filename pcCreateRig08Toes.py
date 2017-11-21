@@ -82,15 +82,13 @@ class pcCreateRigToes(UI):
 
         mc.setParent("..")
 
-        mc.separator(st="in", h=20, w=500)
-
         # load buttons
         #
 
-        mc.textFieldButtonGrp("ctrlToesLoad_tfbg", e=True, bc=self.loadSrc1Btn)
+        mc.textFieldButtonGrp("jntToesLoad_tf", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("jntBallLoad_tf", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("jntAnkleTwistLoad_tf", e=True, bc=self.loadSrc3Btn)
-        mc.textFieldButtonGrp("jntToesLoad_tf", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("ctrlToesLoad_tfbg", e=True, bc=self.loadSrc4Btn)
         mc.textFieldButtonGrp("grpLegLoad_tfbg", e=True, bc=self.loadSrc5Btn)
 
         self.selLoad = []
@@ -113,65 +111,68 @@ class pcCreateRigToes(UI):
         return
 
     def loadSrc1Btn(self):
-        self.ctrlsSel = self.tgpLoadTxBtn("ctrlToesLoad_tfbg", "nurbsCurve")
+        self.selSrc1 = self.tgpLoadTxBtn("jntToesLoad_tf", "joint", "Master Toes Joint", ["JNT", "master", "Toes"])
+        print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.jntBallSel = self.loadJntBtn("jntBallLoad_tf", "ball")
+        self.selSrc2 = self.tgpLoadTxBtn("jntBallLoad_tf", "joint", "Ball Joint", ["JNT" "ball"])
+        print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.jntAnkleTwistSel = self.loadJntBtn("jntAnkleTwistLoad_tf", "ankle twist")
+        self.selSrc3 = self.tgpLoadTxBtn("jntAnkleTwistLoad_tf", "joint", "Ankle Twist Joint", ["JNT" "ankle", "Twist"])
+        print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.jntMasterToesSel = self.loadJntBtn("jntToesLoad_tf", "master toes")
+        self.selSrc4 = self.tgpLoadCtrlsBtn("ctrlToesLoad_tfbg", "nurbsCurve", "Toes Control", ["CTRL" "toes"],
+                                            "control")
+        print(self.selSrc4)
 
     def loadSrc5Btn(self):
-        self.grpLegSel = self.loadGrpBtn("grpLegLoad_tfbg")
+        self.selSrc5 = self.tgpLoadTxBtn("grpLegLoad_tfbg", "transform", "Leg Group", ["GRP", "rig", "leg"], "group")
+        print(self.selSrc5)
 
-    def loadJntBtn(self, loadBtn, jntSel):
+    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
         self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
-        self.selLoad = mc.ls(sl=True, fl=True, type="joint")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0} joint".format(jntSel))
-            return
-        else:
-            selName = self.selLoad[0]
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-            return selName
-
-    def loadGrpBtn(self, loadBtn):
-        self.selLoad = []
-        # self.selLoad = mc.ls(sl=True, fl=True, type="nurbsCurve")
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the leg group")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-
-            if CRU.checkObjectType(self.selLoad[0]) != "transform":
-                mc.warning("The Control should be a group")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-
-    def tgpLoadTxBtn(self, loadBtn, myType):
+    def tgpLoadCtrlsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
-            mc.warning("Select only the root control")
+            mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
 
-            if CRU.checkObjectType(self.selLoad[0]) != "nurbsCurve":
-                mc.warning("The Control should be a nurbsCurve")
+            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+                mc.warning("The Control should be a {0}".format(objectType))
                 return
-            selName = ', '.join(self.selLoad)
+            selName = self.selLoad[0]
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
             # get the children joints
@@ -188,7 +189,7 @@ class pcCreateRigToes(UI):
             # sort the array
             for i in range(len(self.ctrlsArray)):
                 sels = mc.listRelatives(self.ctrlsArray[i], c=True, s=True)
-                if myType in mc.objectType(sels) or myType == mc.objectType(sels):
+                if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
                     ctrlsArraySorted.append(self.ctrlsArray[i])
 
             self.ctrlsRoot = self.selLoad[0]
@@ -240,7 +241,6 @@ class pcCreateRigToes(UI):
             fkJntOffsetCtrls.append(fkToeOffsetCtrls)
 
         # parents the toes fks under each other
-        # print(fkJntOffsetCtrls)
         for i in range(len(fkJntOffsetCtrls)):
             for j in range(len(fkJntOffsetCtrls[i]) - 1):
                 mc.parent(fkJntOffsetCtrls[i][j + 1][0], fkJntOffsetCtrls[i][j][1])
@@ -258,17 +258,16 @@ class pcCreateRigToes(UI):
         if theParent is None:
             mc.parent(jntMasterToes, jntBall)
 
-        # print(fkJntOffsetCtrls)
         grpCtrlFoot = mc.group(n="GRP_CTRL_{0}toes".format(leftRight), w=True, em=True)
         # parent constrain the initial toe offsets to the ball joint
         for i in range(len(fkJntOffsetCtrls)):
-            # print(fkJntOffsetCtrls[i][0])
             mc.parentConstraint(jntBall, fkJntOffsetCtrls[i][0][0], mo=True)
             mc.parent(fkJntOffsetCtrls[i][0][0], grpCtrlFoot)
 
         return grpCtrlFoot
 
-    def makeToes(self, jntBall, jntMasterToes, ctrlToes, grpLegs, jntAnkleTwist, leftRight, colourTU, isLeft, *args):
+    def makeToes(self, jntBall, jntMasterToes, ctrlToes, grpLegs, jntAnkleTwist, leftRight, colourTU, isLeft, checkGeo,
+                 *args):
 
         toesJnts = mc.listRelatives(jntMasterToes, ad=True, s=False, type="joint")
         toesJnts.reverse()
@@ -310,8 +309,6 @@ class pcCreateRigToes(UI):
 
         autoTIMRP = [autoThumb, autoIndex, autoMiddle, autoRing, autoPink]
 
-        # print("bbbbbbb {0}".format(autoTIMRP))
-
         toeAttr = ["curl", "scrunch", "spread"]
         footAttr = list(toeAttr)
 
@@ -343,8 +340,8 @@ class pcCreateRigToes(UI):
 
         # Cleaning up
         self.toesCleanup(ctrlToes, jntMasterToes, jntAnkleTwist, fkJntOffsetCtrls, grpCtrlFoot, grpLegs, colourTU)
-
-        CRU.tgpSetGeo(toesJnts, setLayer=True)
+        if checkGeo:
+            CRU.tgpSetGeo(toesJnts, setLayer=True)
 
     def toesCleanup(self, ctrlToes, jntMasterToes, jntAnkleTwist, fkJntOffsetCtrls, grpCtrlFoot, grpLegs, colourTU,
                     *args):
@@ -361,7 +358,6 @@ class pcCreateRigToes(UI):
         # get the non-shape values
         lockValues = mc.listRelatives(ctrlToes, c=True, s=False, type="transform")
         lockValues.append(ctrlToes)
-        # print(lockValues)
 
         for i in range(len(lockValues)):
             CRU.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True, visible=True)
@@ -375,12 +371,8 @@ class pcCreateRigToes(UI):
             for j in range(len(fkJntOffsetCtrls[i])):
                 CRU.lockHideCtrls(fkJntOffsetCtrls[i][j][1], translate=True, scale=True, visible=True)
 
-                # print(fkJntOffsetCtrls[i][0][0])
-
         mc.parent(grpCtrlFoot, grpLegs)
         CRU.layerEdit(jntMasterToes, bndLayer=True, noRecurse=True)
-
-
 
     def toeCurlsSetup(self, ctrlArrayToes, autoTIMRP, ctrlToes, toeAttr, *args):
 
@@ -635,8 +627,6 @@ class pcCreateRigToes(UI):
         # translates everything into place
         mirrorTrans = mc.xform(ctrlToesMirrorTop, q=True, ws=True, t=True, a=True)
         mirrorRot = mc.xform(ctrlToesMirrorTop, q=True, ws=True, rotation=True)
-        # print("MirrorTrans = {0}".format(mirrorTrans))
-        # print("MirrorAxis = {0}".format(mirrorRot))
         mirrorTransX = mirrorTrans[0] * -1
         mirrorTransY = mirrorTrans[1]
         mirrorTransZ = mirrorTrans[2]
@@ -645,8 +635,6 @@ class pcCreateRigToes(UI):
         mirrorRotZ = mirrorRot[2] * -1
 
         mirrorXScal = mc.getAttr("{0}.sx".format(ctrlToesMirrorTop)) * -1
-        # print(mirrorTrans)
-        # print(mirrorXScal)
 
         # mirrors the values
         '''mc.setAttr("{0}.tx".format(ctrlToesMirrorTop), mirrorTransX)
@@ -670,6 +658,7 @@ class pcCreateRigToes(UI):
         return ctrlToesMirrorTop
 
     def tgpMakeBC(self, *args):
+        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         checkSelLeft = mc.radioButtonGrp("selToesType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selToesMirrorType_rbg", q=True, select=True)
@@ -677,11 +666,16 @@ class pcCreateRigToes(UI):
         jntMasterToes = mc.textFieldButtonGrp("jntToesLoad_tf", q=True, text=True)
         grpLegs = mc.textFieldButtonGrp("grpLegLoad_tfbg", q=True, text=True)
 
-        print(ctrlToes)
-
         jntAnkleTwist = mc.textFieldButtonGrp("jntAnkleTwistLoad_tf", q=True, text=True)
 
         jntBall = mc.textFieldButtonGrp("jntBallLoad_tf", q=True, text=True)
+
+        try:
+            fingerRoot = jntMasterToes[0]
+
+        except:
+            mc.warning("No joint selected!")
+            return
 
         print("-------")
 
@@ -715,7 +709,27 @@ class pcCreateRigToes(UI):
         else:
             if not (CRU.checkLeftRight(isLeft, jntMasterToes)):
                 # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side")
+                mc.warning("You are selecting the incorrect side for the master toes")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, jntBall)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the ball of the foot")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, jntAnkleTwist)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the ankle twist")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, ctrlToes)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the toes control")
+                return
+
+            if not (CRU.checkLeftRight(isLeft, grpLegs)):
+                # if the values are not lined up properly, break out
+                mc.warning("You are selecting the incorrect side for the leg group")
                 return
 
             # CRU.createLocatorToDelete()
@@ -732,7 +746,8 @@ class pcCreateRigToes(UI):
                 jntAnkleTwistMirror = jntAnkleTwist.replace(leftRightReplace, leftRightReplaceMirror)
                 grpLegsMirror = grpLegs.replace(leftRightReplace, leftRightReplaceMirror)
 
-            self.makeToes(jntBall, jntMasterToes, ctrlToes, grpLegs, jntAnkleTwist, leftRight, colourTU, isLeft)
+            self.makeToes(jntBall, jntMasterToes, ctrlToes, grpLegs, jntAnkleTwist, leftRight, colourTU, isLeft,
+                          checkGeo)
 
             if mirrorRig:
                 print("Mirroring")
@@ -740,4 +755,4 @@ class pcCreateRigToes(UI):
                 isLeftMirror = not isLeft
 
                 self.makeToes(jntBallMirror, jntMasterToesMirror, ctrlToesMirror, grpLegsMirror, jntAnkleTwistMirror,
-                              leftRightMirror, colourTUMirror, isLeftMirror)
+                              leftRightMirror, colourTUMirror, isLeftMirror, checkGeo)
