@@ -581,6 +581,10 @@ class pcCreateRigToes(UI):
                                                   driverVal, digit_drvnvls_autos_digitCtrl[i][0][j])
 
     def tgpCreateMirrorToes(self, jntMasterToes, leftRightReplace, leftRightReplaceMirror):
+        # return if the toe mirror alread exists
+        checkReplace = jntMasterToes.replace(leftRightReplace, leftRightReplaceMirror)
+        if mc.objExists(checkReplace):
+            return checkReplace
         # just reflects it
         parentOfJnt = None
         parentOfJntMirror = None
@@ -737,6 +741,7 @@ class pcCreateRigToes(UI):
             if mirrorRig:
                 # we want to get the toe control before we add anything to it. When doing this programmatically, it's easier
                 # make sure the children are not locked
+
                 jntMasterToesMirror = self.tgpCreateMirrorToes(jntMasterToes, leftRightReplace,
                                                                leftRightReplaceMirror)
 
