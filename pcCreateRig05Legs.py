@@ -20,7 +20,7 @@ class pcCreateRigLegs(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigLegs"
-        self.winSize = (500, 325)
+        self.winSize = (500, 375)
 
         self.createUI()
 
@@ -393,6 +393,16 @@ class pcCreateRigLegs(UI):
         return hipIKOffsetCtrl
 
     def getBndFkIkJnts(self, jntLegArray, *args):
+        bndJntsTempToes = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
+
+        # checking for the toes. If it exists, unparent it
+        masterToes = [x for x in bndJntsTempToes if "masterToes" in x]
+        if masterToes:
+            masterToe = masterToes[0]
+            toesParent = mc.listRelatives(masterToe, p=True)[0]
+            mc.parent(masterToe, w=True)
+
+
         bndJntsTemp = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
         bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
         bndJnts.append(jntLegArray[0])
@@ -415,6 +425,10 @@ class pcCreateRigLegs(UI):
         fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
 
         fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
+        # checking for the toes. If it exists, reparent it
+        if masterToes:
+
+            mc.parent(masterToe, toesParent)
 
         return bndJnts, fkJnts, ikJnts
 
