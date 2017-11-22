@@ -20,7 +20,7 @@ class pcCreateRigHands(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigHands"
-        self.winSize = (500, 325)
+        self.winSize = (500, 350)
 
         self.createUI()
 
