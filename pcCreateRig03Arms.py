@@ -269,7 +269,9 @@ class pcCreateRigArms(UI):
         elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, )
 
         # Organize the rig
-        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts, jntShoulderRoot, checkboxSpine,
+        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts,
+                        jntShoulderRoot, jntScapula, jntClavicle,
+                        checkboxSpine,
                         shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                         ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6,
                         ikSide, fkJntOffsetCtrls, ctrlFKIK, ctrlFKIKAttr)
@@ -489,7 +491,9 @@ class pcCreateRigArms(UI):
 
         return ikOffsetCtrl, ikArms, ikJntsDrive, ikSide
 
-    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, bndJnts, jntShoulderRoot, checkboxSpine,
+    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, bndJnts,
+                   jntShoulderRoot, jntScapula, jntClavicle,
+                   checkboxSpine,
                    shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
                    ikOffsetCtrl, elbowOffsetCtrl, ikArms, jntSpine6, ikSide, fkJntOffsetCtrls, ctrlFKIK,
                    ctrlFKIKAttr, *args):
@@ -560,6 +564,9 @@ class pcCreateRigArms(UI):
         CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
         CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntShoulderRoot, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntScapula, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntClavicle, bndLayer=True, noRecurse=True)
 
     def tgpMakeBC(self, *args):
 
