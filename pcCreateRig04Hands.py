@@ -93,7 +93,8 @@ class pcCreateRigHands(UI):
         print(self.selSrc2b)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control",
+                                         ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
@@ -132,7 +133,8 @@ class pcCreateRigHands(UI):
             selName = self.selLoad[0]
             exclusions = ["Twist", "_FK_", "_IK_"]
 
-            if (not all(word.lower() in selName.lower() for word in keywords)) or any(exclsn.lower() in selName.lower() for exclsn in exclusions):
+            if (not all(word.lower() in selName.lower() for word in keywords)) or any(
+                            exclsn.lower() in selName.lower() for exclsn in exclusions):
                 mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return None, None
             print(exclusions)
@@ -359,16 +361,14 @@ class pcCreateRigHands(UI):
         for i in range(len(fkFingerOffsetCtrls)):
             mc.parent(fkFingerOffsetCtrls[i][0][0], handOffsetCtrl[1])
         # clean up the outliner
-        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntFingersUnsorted, grpConPalm,
-                         conLocFKOffsetCtrl,
-                         conLocIKOffsetCtrl)
+        self.handCleanUp(handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntPalm, jntFingersUnsorted,
+                         grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl)
 
         if checkGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True)
 
-    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntFingersUnsorted, grpConPalm,
-                    conLocFKOffsetCtrl,
-                    conLocIKOffsetCtrl, *args):
+    def handCleanUp(self, handOffsetCtrl, fkFingerOffsetCtrls, leftRight, jntPalmBase, jntPalm, jntFingersUnsorted,
+                    grpConPalm, conLocFKOffsetCtrl, conLocIKOffsetCtrl, *args):
 
         grpRigArm = mc.group(n="GRP_rig{0}arm".format(leftRight), w=True, em=True)
         # For the sake of not having a bazillion entries for the input text, I'm hardcoding things here
@@ -382,7 +382,7 @@ class pcCreateRigHands(UI):
         mc.setAttr("{0}.visibility".format(conLocFKOffsetCtrl[1]), False)
         mc.setAttr("{0}.visibility".format(conLocIKOffsetCtrl[1]), False)
 
-        CRU.layerEdit(jntPalmBase, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntPalm, bndLayer=True, noRecurse=True)
         CRU.layerEdit(jntFingersUnsorted, bndLayer=True, noRecurse=True)
 
     def getPalm(self, jntsHand, *args):
