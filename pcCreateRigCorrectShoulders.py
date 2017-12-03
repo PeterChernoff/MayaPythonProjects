@@ -16,9 +16,9 @@ reload(bc)
 bc.tgpBlendColors()
 
 '''
-import pcCreateRigUtilities
-from pcCreateRigUtilities import pcCreateRigUtilities as CRU
-reload(pcCreateRigUtilities)
+import pcCreateRig00AUtilities
+from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRig00AUtilities)
 
 
 class pcCorrectShoulders(UI):
