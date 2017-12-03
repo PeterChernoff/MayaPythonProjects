@@ -11,14 +11,19 @@ sel = sels[0]
 
 if len(sels) == 1:
     if CRU.checkObjectType(sel) == "mesh":
-        print("I got here")
-
-        dupMesh = mc.duplicate(sel, rc=True)[0]
-        print(sel[:2])
         if sel[:2] == "l_":
-            print("Dude!")
+            toReplace = "l_"
+            replaceWith = "r_"
         elif sel[:2] == "r_":
-            print("Dudette!")
+            toReplace = "r_"
+            replaceWith = "l_"
+        replaceName = sel.replace(toReplace, replaceWith)
+        dupMesh = mc.duplicate(sel, n = replaceName, rc=True)[0]
+        mc.move(0, 0, -50, replaceName, r=True)
+
+
+
+
 
 
 
