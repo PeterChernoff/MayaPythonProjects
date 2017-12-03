@@ -283,13 +283,12 @@ class pcCreateRig09Cleanup(UI):
             mc.parent(ctrlFKIKSwitch, ctrlCOG)
         except:
             mc.warning("{0} is already parented to {1}".format(ctrlFKIKSwitch, ctrlCOG))
-
         # parent the legs into GRP_rig_leg
-        grpLegs = mc.group(name="GRP_rig_leg")
+        grpLegs = mc.group(name="GRP_rig_leg", em=True)
         mc.parent(grpLLeg, grpRLeg, grpLegs)
 
         # parent the arms into GRP_rig_arm
-        grpArms = mc.group(name="GRP_rig_arm")
+        grpArms = mc.group(name="GRP_rig_arm", em=True)
         mc.parent(grpLArm, grpRArm, grpArms)
 
         # parent offset eyes, offset cog, and spine do not touch under GRP_rig_torso
