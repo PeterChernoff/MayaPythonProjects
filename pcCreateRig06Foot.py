@@ -22,7 +22,7 @@ reload(pcCreateRig00AUtilities)
 from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRigFoot(UI):
+class pcCreateRig06Foot(UI):
     def __init__(self):
 
         self.window = "bcWindow"

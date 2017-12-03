@@ -15,7 +15,7 @@ from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 reload(pcCreateRig00AUtilities)
 
 
-class pcCreateRigSpine(UI):
+class pcCreateRig01Spine(UI):
     def __init__(self):
 
         self.window = "bcWindow"

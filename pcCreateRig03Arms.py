@@ -15,7 +15,7 @@ reload(pcCreateRig00AUtilities)
 from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRigArms(UI):
+class pcCreateRig03Arms(UI):
     def __init__(self):
 
         self.window = "bcWindow"
@@ -246,7 +246,7 @@ class pcCreateRigArms(UI):
 
         # create the clavicle
         if jntClavicle:
-            clavicleOffsetCtrl = self.setupClavicle(jntClavicle, colourTU, leftRight, shoulderOffsetCtrl)
+            clavicleOffsetCtrl = self.setupClavicle(jntClavicle, colourTU, leftRight, shoulderOffsetCtrl, jntArmArray)
 
         # create the scapula
         if jntScapula:
@@ -261,7 +261,7 @@ class pcCreateRigArms(UI):
         self.setupIkElblowArmTwist(ikOffsetCtrl, ikJnts, ikArms, isLeft)
 
         # change the rotation order
-        rotationChange = [ikJnts[1], self.jointArmArray[1], fkJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
+        rotationChange = [ikJnts[1], jntArmArray[1], fkJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
 
         CRU.changeRotateOrder(rotationChange, "YZX")
 
@@ -426,7 +426,7 @@ class pcCreateRigArms(UI):
 
         return shoulderOffsetCtrl
 
-    def setupClavicle(self, jointClavicle, colourTU, leftRight, shoulderOffsetCtrl, *args):
+    def setupClavicle(self, jointClavicle, colourTU, leftRight, shoulderOffsetCtrl, jntArmArray, *args):
         jntClav = jointClavicle[0]
         childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
         clavLength = mc.getAttr("{0}.ty".format(childClavicle))
@@ -439,7 +439,7 @@ class pcCreateRigArms(UI):
         xprNameClav = "expr_" + leftRight + "clavicle"
 
         # AUTO_CTRL_l_clavicle.rotateX = JNT_l_upperArm.rotateX * CTRL_l_clavicle.autoClavicle;
-        exprStringClav = self.tgpAutoClavicleRotate(autoName, self.jointArmArray[0], clavicleOffsetCtrl[1],
+        exprStringClav = self.tgpAutoClavicleRotate(autoName, jntArmArray[0], clavicleOffsetCtrl[1],
                                                     autoAttrName)
 
         mc.expression(s=exprStringClav, n=xprNameClav)

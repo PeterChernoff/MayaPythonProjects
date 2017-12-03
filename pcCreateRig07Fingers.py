@@ -22,7 +22,7 @@ from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
 reload(pcCreateRig00AUtilities)
 
 
-class pcCreateRigFingers(UI):
+class pcCreateRig07Fingers(UI):
     def __init__(self):
 
         self.window = "bcWindow"
