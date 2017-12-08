@@ -98,18 +98,6 @@ class pcCreateRig08Toes(UI):
     def createButtonCmd(self, *args):
         self.tgpMakeBC()
 
-    def tgpShowBtnOp(self, type, trigger, action, *args):
-        if (type == "1"):
-            # radio button
-            checkBtn = mc.radioButtonGrp(trigger, q=True, select=True)
-            # if "attr" not in trigger:
-            if (checkBtn == 1):
-                mc.checkBox(action, edit=True, en=True)
-            else:
-                mc.checkBox(action, edit=True, v=0, en=False)
-
-        return
-
     def loadSrc1Btn(self):
         self.selSrc1 = self.tgpLoadTxBtn("jntToesLoad_tf", "joint", "Master Toes Joint", ["JNT", "master", "Toes"])
         print(self.selSrc1)
