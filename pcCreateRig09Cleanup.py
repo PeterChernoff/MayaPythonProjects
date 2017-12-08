@@ -144,19 +144,23 @@ class pcCreateRig09Cleanup(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadTxBtn("grpLLegLoad_tf", "transform", "Left Leg Group", ["GRP", "rig", "_l_", "leg"], "group")
+        self.selSrc1 = self.tgpLoadTxBtn("grpLLegLoad_tf", "transform", "Left Leg Group", ["GRP", "rig", "_l_", "leg"],
+                                         "group")
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("grpRLegLoad_tf", "transform", "Right Leg Group", ["GRP", "rig", "_r_", "leg"], "group")
+        self.selSrc2 = self.tgpLoadTxBtn("grpRLegLoad_tf", "transform", "Right Leg Group", ["GRP", "rig", "_r_", "leg"],
+                                         "group")
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("grpLArmLoad_tf", "transform", "Left Arm Group", ["GRP", "rig", "_l_", "arm"], "group")
+        self.selSrc3 = self.tgpLoadTxBtn("grpLArmLoad_tf", "transform", "Left Arm Group", ["GRP", "rig", "_l_", "arm"],
+                                         "group")
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.selSrc4 = self.tgpLoadTxBtn("grpRArmLoad_tf", "transform", "Right Arm Group", ["GRP", "rig", "_r_", "arm"], "group")
+        self.selSrc4 = self.tgpLoadTxBtn("grpRArmLoad_tf", "transform", "Right Arm Group", ["GRP", "rig", "_r_", "arm"],
+                                         "group")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
@@ -169,29 +173,33 @@ class pcCreateRig09Cleanup(UI):
         print(self.selSrc6)
 
     def loadSrc7Btn(self):
-        self.selSrc7 = self.tgpLoadTxBtn("grpTorsoLoad_tfbg", "transform", "Torso Rig", ["GRP", "rig", "torso"], "group")
+        self.selSrc7 = self.tgpLoadTxBtn("grpTorsoLoad_tfbg", "transform", "Torso Rig", ["GRP", "rig", "torso"],
+                                         "group")
         print(self.selSrc7)
 
     def loadSrc8Btn(self):
-        self.selSrc8 = self.tgpLoadTxBtn("grpDNTLoad_tfbg", "transform","doNotTouch Spine Group", ["GRP", "doNotTouch", "spine"], "group")
+        self.selSrc8 = self.tgpLoadTxBtn("grpDNTLoad_tfbg", "transform", "doNotTouch Spine Group",
+                                         ["GRP", "doNotTouch", "spine"], "group")
         print(self.selSrc8)
 
     def loadSrc9Btn(self):
-        self.selSrc9 = self.tgpLoadTxBtn("grpOffsetEyesLoad_tfbg", "transform", "Eyes Offset", ["OFFSET", "eyes"], "offset")
+        self.selSrc9 = self.tgpLoadTxBtn("grpOffsetEyesLoad_tfbg", "transform", "Eyes Offset", ["OFFSET", "eyes"],
+                                         "offset")
         print(self.selSrc9)
 
     def loadSrc10Btn(self):
-        self.selSrc10 = self.tgpLoadTxBtn("grpOffsetCogLoad_tfbg", "transform", "COG Offset", ["OFFSET", "COG"], "offset")
+        self.selSrc10 = self.tgpLoadTxBtn("grpOffsetCogLoad_tfbg", "transform", "COG Offset", ["OFFSET", "COG"],
+                                          "offset")
         print(self.selSrc10)
 
     def loadSrc11Btn(self):
-        self.selSrc11 = self.tgpLoadTxBtn("grpFollowLoad_tfbg", "transform", "Follow Group", ["GRP", "LOC", "follow"], "group")
+        self.selSrc11 = self.tgpLoadTxBtn("grpFollowLoad_tfbg", "transform", "Follow Group", ["GRP", "LOC", "follow"],
+                                          "group")
         print(self.selSrc11)
 
     def loadSrc12Btn(self):
         self.selSrc12 = self.tgpLoadTxBtn("grpGeoLoad_tfbg", "geometry group", ["geo", "grp"])
         print(self.selSrc12)
-
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -288,7 +296,8 @@ class pcCreateRig09Cleanup(UI):
 
         # create the globalSRT
         toDelete = mc.spaceLocator(name="globalSRT", p=(0, 0, 0))[0]
-        offsetCtrlGlobalSRT = CRU.createCTRLs(toDelete, addPrefix=True, size=80, orientVal=(0, -1, 0), sectionsTU=3, colour=6)
+        offsetCtrlGlobalSRT = CRU.createCTRLs(toDelete, addPrefix=True, size=80, orientVal=(0, -1, 0), sectionsTU=3,
+                                              colour=6)
         mc.delete(toDelete)
         cvsToMove = mc.select(offsetCtrlGlobalSRT[1] + ".cv[:]")
         mc.move(25, cvsToMove, z=True, r=True, wd=True, ls=True)
@@ -301,12 +310,3 @@ class pcCreateRig09Cleanup(UI):
         if checkGeo:
             mc.parent(grpGeo, charGrp)
         mc.parent(offsetCtrlGlobalSRT[0], charGrp)
-
-
-
-
-
-
-
-
-
