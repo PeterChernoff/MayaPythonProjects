@@ -125,6 +125,14 @@ class pcCreateRig10BlendSDK(UI):
                 # If 'base' is in there, it's referring to the basic shape
                 skip = True
                 continue
+            if "combo" in blndVals[i][:5]:
+                # If 'combo' is in there, it's referring to the basic shape
+                skip = True
+                continue
+            if "tempAlias" in blndVals[i]:
+                # If 'tempAlias' is in there, it's referring to the basic shape
+                skip = True
+                continue
             if 'weight' in blndVals[i][:6]:
                 # These are typically
                 blndValWeights.append(blndVals[i])
@@ -137,20 +145,28 @@ class pcCreateRig10BlendSDK(UI):
         print(blndValNames)
 
         for i in range(len(blndValNames)):
-            driver, driverAttrDrvnVal = blndValNames[i].split("__", 1)
-            driver = "JNT_" + driver
+            try:
+                driver, driverAttrDrvnVal = blndValNames[i].split("__", 1)
+            except:
+                print ("Error! {0}".format(blndValNames[i]))
+            if "FK_" in driver[:3]:
+
+                driver = "CTRL_" + driver
+
+            else:
+                driver = "JNT_" + driver
             print(driver)
             print(driverAttrDrvnVal)
             driverAttr, driverValNum = self.getDriverAttrDrivenVals(driverAttrDrvnVal)
             print("driverAttr {0}".format(driverAttr))
             print("drivenValue {0}".format(driverValNum))
 
-
             CRU.setDriverDrivenValues(driver, driverAttr, blndName, blndValWeights[i], drivenValue=0, driverValue=0,
-                                                               modifyBoth="linear")
+                                      modifyBoth="linear")
 
-            CRU.setDriverDrivenValues(driver, driverAttr, blndName, blndValWeights[i], drivenValue=1, driverValue=driverValNum,
-                                                               modifyBoth="linear")
+            CRU.setDriverDrivenValues(driver, driverAttr, blndName, blndValWeights[i], drivenValue=1,
+                                      driverValue=driverValNum,
+                                      modifyBoth="linear")
             # CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
             #                         modifyBoth="linear")
 
