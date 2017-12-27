@@ -13,7 +13,6 @@ mirrorRotX = mirrorRot[0] * 1
 mirrorRotY = mirrorRot[1] * -1
 mirrorRotZ = mirrorRot[2] * -1
 
-
 mc.xform(perspVal1, translation=(mirrorTransX, mirrorTransY, mirrorTransZ), ws=True, a=True)
 # mc.xform(perspVal1, scale=(mirrorXScal, 1, 1))
 mc.xform(perspVal1, rotation=(mirrorRotX, mirrorRotY, mirrorRotZ))
