@@ -258,3 +258,46 @@ class pcCreateRigUtilities:
 
         offsetCtrl = [offset, ctrl, auto]
         return offsetCtrl
+
+    @staticmethod
+    def makeLimbSwitch(ctrlLimb, locLimbFollowArray, listParents, enumName, enumVals, colourTU, *args):
+
+        # get the auto_ctrl of the limb
+        autoCtrlLimb = mc.listRelatives(ctrlLimb, p=True, c=False)[0]
+
+        for i in range(len(locLimbFollowArray)):
+            # creates locator, then moves to upperArm FK control
+            locName = locLimbFollowArray[i]
+
+            mc.spaceLocator(p=(0, 0, 0), name=locName)
+            locShape = mc.listRelatives(locName, s=True)[0]
+
+            mc.setAttr("{0}.localScaleX".format(locShape), 15)
+
+            mc.setAttr("{0}.localScaleY".format(locShape), 15)
+            mc.setAttr("{0}.localScaleZ".format(locShape), 15)
+
+            mc.setAttr('{0}.overrideEnabled'.format(locName), 1)
+            mc.setAttr("{0}.overrideColor".format(locName), colourTU)
+
+            toDelete = mc.parentConstraint(ctrlLimb, locName)[0]
+            mc.delete(toDelete)
+            mc.parent(locName, listParents[i])
+
+        mc.addAttr(ctrlLimb, longName=enumName, at="enum", k=True, en=enumVals)
+        # create oreient constraints for the arm locators
+        limbFollowOrntConstr = mc.orientConstraint(locLimbFollowArray, autoCtrlLimb, mo=True)[0]
+
+        limbSpaceFollow = mc.listAttr(limbFollowOrntConstr)[-4:]
+        for i in range(len(limbSpaceFollow)):
+            # set the driven key to 1 and the undriven keys to 0
+
+            pcCreateRigUtilities.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr, limbSpaceFollow[i], i, 1)
+            for i2 in range(len(limbSpaceFollow)):
+                if i2 != i:
+                    # need to have the second to last value be i, not i2
+                    pcCreateRigUtilities.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr, limbSpaceFollow[i2], i, 0)
+
+        for i in range(len(locLimbFollowArray)):
+            mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
+            pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
