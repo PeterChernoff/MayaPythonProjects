@@ -194,7 +194,7 @@ class pcCreateRig02Head(UI):
                     boneLength = mc.getAttr("{0}.ty".format(getBoneChild[0]))
                     boneLength2 = mc.getAttr("{0}.ty".format(getBoneChild[1]))
                     headOffsetCtrls.append(
-                        CRU.createCTRLs(val, prnt=False, ornt=True, size=sizeCtrl, orientVal=orntVal, colour=colourTU))
+                        CRU.createCTRLs(val, prnt=False, ornt=True, pnt=True, size=sizeCtrl, orientVal=orntVal, colour=colourTU))
                     # move the CVs into place
                     mc.select(headOffsetCtrls[specVal][1] + ".cv[:]")
                     mc.move(0, -boneLength2 * 2, boneLength * 1.1, r=True)
@@ -351,7 +351,7 @@ class pcCreateRig02Head(UI):
     def neckCleanUp(self, headOffsetCtrls, eyeCtrlArray, eyesCtrl, *args):
 
         for i in range(len(headOffsetCtrls)):
-            CRU.lockHideCtrls(headOffsetCtrls[i][1], translate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(headOffsetCtrls[i][1], scale=True, visible=True)
 
         for i in range(len(eyeCtrlArray)):
             CRU.lockHideCtrls(eyeCtrlArray[i], scale=True, visible=True)
