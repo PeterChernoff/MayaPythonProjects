@@ -189,49 +189,7 @@ class pcCreateRig11SpaceSwitching(UI):
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
 
-    def makeLimb(self, ctrlLimb, locLimbFollowArray, listParents, enumName, enumVals, colourTU, *args):
-
-        # get the auto_ctrl of the limb
-        autoCtrlLimb = mc.listRelatives(ctrlLimb, p=True, c=False)[0]
-
-        for i in range(len(locLimbFollowArray)):
-            # creates locator, then moves to upperArm FK control
-            locName = locLimbFollowArray[i]
-
-            mc.spaceLocator(p=(0, 0, 0), name=locName)
-            locShape = mc.listRelatives(locName, s=True)[0]
-
-            mc.setAttr("{0}.localScaleX".format(locShape), 15)
-
-            mc.setAttr("{0}.localScaleY".format(locShape), 15)
-            mc.setAttr("{0}.localScaleZ".format(locShape), 15)
-
-            mc.setAttr('{0}.overrideEnabled'.format(locName), 1)
-            mc.setAttr("{0}.overrideColor".format(locName), colourTU)
-
-            toDelete = mc.parentConstraint(ctrlLimb, locName)[0]
-            mc.delete(toDelete)
-            mc.parent(locName, listParents[i])
-
-        mc.addAttr(ctrlLimb, longName=enumName, at="enum", k=True, en=enumVals)
-        # create oreient constraints for the arm locators
-        limbFollowOrntConstr = mc.orientConstraint(locLimbFollowArray, autoCtrlLimb, mo=True)[0]
-
-        limbSpaceFollow = mc.listAttr(limbFollowOrntConstr)[-4:]
-        for i in range(len(limbSpaceFollow)):
-            # set the driven key to 1 and the undriven keys to 0
-
-            CRU.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr, limbSpaceFollow[i], i, 1)
-            for i2 in range(len(limbSpaceFollow)):
-                if i2 != i:
-                    # need to have the second to last value be i, not i2
-                    CRU.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr, limbSpaceFollow[i2], i, 0)
-
-        for i in range(len(locLimbFollowArray)):
-            mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
-            CRU.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
-
-    def makeArm(self, ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU, *args):
+    def makeArmSwitch(self, ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU, *args):
         locArmFollowArray = []
         locShoulder = "LOC_" + leftRight + "armShoulderFollow"
         locArmFollowArray.append(locShoulder)
@@ -247,9 +205,9 @@ class pcCreateRig11SpaceSwitching(UI):
         enumName = "fkArmFollow"
         enumVals = "shoulder:torso:COG:world"
 
-        self.makeLimb(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
+        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
 
-    def makeLeg(self, ctrlLimb, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRight, colourTU, *args):
+    def makeLegSwitch(self, ctrlLimb, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRight, colourTU, *args):
 
         locArmFollowArray = []
         locShoulder = "LOC_" + leftRight + "legFKHipFollow"
@@ -266,7 +224,7 @@ class pcCreateRig11SpaceSwitching(UI):
         enumName = "fkLegFollow"
         enumVals = "fkHip:ikHip:COG:world"
 
-        self.makeLimb(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
+        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
 
     def tgpMakeBC(self, *args):
 
@@ -377,15 +335,15 @@ class pcCreateRig11SpaceSwitching(UI):
                     ctrlLegMirror = ctrlLeg.replace(leftRightReplace, leftRightReplaceMirror)
 
             if useArm:
-                self.makeArm(ctrlArm, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU)
+                self.makeArmSwitch(ctrlArm, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU)
 
             if useLeg:
-                self.makeLeg(ctrlLeg, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRight, colourTU)
+                self.makeLegSwitch(ctrlLeg, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRight, colourTU)
 
             if mirrorRig:
                 if useArm:
-                    self.makeArm(ctrlArmMirror, ctrlShoulderMirror, ctrlChest, ctrlCOG, grpFollow, leftRightMirror,
+                    self.makeArmSwitch(ctrlArmMirror, ctrlShoulderMirror, ctrlChest, ctrlCOG, grpFollow, leftRightMirror,
                                  colourTUMirror)
                 if useLeg:
-                    self.makeLeg(ctrlLegMirror, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRightMirror,
+                    self.makeLegSwitch(ctrlLegMirror, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRightMirror,
                                  colourTUMirror)
