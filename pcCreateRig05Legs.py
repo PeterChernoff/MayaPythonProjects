@@ -20,7 +20,7 @@ class pcCreateRig05Legs(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigLegs"
-        self.winSize = (500, 375)
+        self.winSize = (500, 475)
 
         self.createUI()
 
@@ -42,6 +42,7 @@ class pcCreateRig05Legs(UI):
         mc.text(l="")
         mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Hip", en=True, v=True)
+        mc.checkBox("selFKSwitch_cb", l="Create FK Switch", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -67,6 +68,21 @@ class pcCreateRig05Legs(UI):
 
         mc.separator(st="in", h=17, w=500)
 
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="IK Hip CTRL: ")
+        mc.textFieldButtonGrp("ctrlIKHip_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_hip")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="COG CTRL: ")
+        mc.textFieldButtonGrp("ctrlCOG_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Group LOC Follow: ")
+        mc.textFieldButtonGrp("grpLOCFollow_tfbg", cw=(1, 322), bl="  Load  ", tx="GRP_LOC_follow")
+
+        mc.setParent("..")
+
+        mc.separator(st="in", h=10, w=500)
+
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
@@ -77,6 +93,10 @@ class pcCreateRig05Legs(UI):
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("ctrlFKHipLoad_tf", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", e=True, bc=self.loadSrc3Btn)
+
+        mc.textFieldButtonGrp("ctrlIKHip_tfbg", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("ctrlCOG_tfbg", e=True, bc=self.loadSrc5Btn)
+        mc.textFieldButtonGrp("grpLOCFollow_tfbg", e=True, bc=self.loadSrc6Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -90,12 +110,30 @@ class pcCreateRig05Legs(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("ctrlFKHipLoad_tf", "nurbsCurve", "FK Hip Control", ["CTRL", "_FK_", "hip"], "control")
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlFKHipLoad_tf", "nurbsCurve", "FK Hip Control", ["CTRL", "_FK_", "hip"],
+                                         "control")
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control", ["CTRL", "fk", "ik", "Switch"], "control")
+        self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control",
+                                         ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
+
+    def loadSrc4Btn(self):
+        self.selSrc4 = self.tgpLoadTxBtn("ctrlIKHip_tfbg", "nurbsCurve", "IK Hip Control", ["CTRL", "hip", "IK"],
+                                         "control")
+        print(self.selSrc4)
+
+    def loadSrc5Btn(self):
+        self.selSrc5 = self.tgpLoadTxBtn("ctrlCOG_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
+                                         "control")
+        print(self.selSrc5)
+
+    def loadSrc6Btn(self):
+        self.selSrc6 = self.tgpLoadTxBtn("grpLOCFollow_tfbg", "transform", "World Follow Group",
+                                         ["GRP", "LOC", "follow"],
+                                         "group")
+        print(self.selSrc6)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -402,7 +440,6 @@ class pcCreateRig05Legs(UI):
             toesParent = mc.listRelatives(masterToe, p=True)[0]
             mc.parent(masterToe, w=True)
 
-
         bndJntsTemp = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
         bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
         bndJnts.append(jntLegArray[0])
@@ -427,7 +464,6 @@ class pcCreateRig05Legs(UI):
         fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
         # checking for the toes. If it exists, reparent it
         if masterToes:
-
             mc.parent(masterToe, toesParent)
 
         return bndJnts, fkJnts, ikJnts
@@ -607,6 +643,7 @@ class pcCreateRig05Legs(UI):
                 jntLegArray,
                 checkGeo, geoJntArray, colourTU, jntLegRoot,
                 ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists,
+                checkboxSwitch, ctrlIKHip, ctrlCOG, grpFollow,
                 checkboxHip, *args):
 
         # create a special control for my own preferences
@@ -644,6 +681,14 @@ class pcCreateRig05Legs(UI):
         # create the ik twist
         self.setupIkKneeLegTwist(ikOffsetCtrl, ikJnts, ikLegs, isLeft)
 
+
+        # Adding Space Switching
+        # NOTE: This is something I added from the finalizing section
+        if checkboxSwitch:
+            # self.makeArmSwitch(ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU)
+            self.makeLegSwitch(fkJntOffsetCtrls[0][1], ctrlFKHip, ctrlIKHip, ctrlCOG, grpFollow,
+                               leftRight, colourTU)
+
         # Organize the rig
         self.legCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts,
                         ikOffsetCtrl, fkJntOffsetCtrls, hipIKOffsetCtrl, ctrlFKHip,
@@ -651,6 +696,24 @@ class pcCreateRig05Legs(UI):
 
         if checkGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True)
+    def makeLegSwitch(self, ctrlLimb, ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow, leftRight, colourTU, *args):
+
+        locArmFollowArray = []
+        locShoulder = "LOC_" + leftRight + "legFKHipFollow"
+        locArmFollowArray.append(locShoulder)
+        locTorso = "LOC_" + leftRight + "legIKHipFollow"
+        locArmFollowArray.append(locTorso)
+        locCOG = "LOC_" + leftRight + "legCOGFollow"
+        locArmFollowArray.append(locCOG)
+        locWorld = "LOC_" + leftRight + "legWorldFollow"
+        locArmFollowArray.append(locWorld)
+
+        listParents = [ctrlHipFK, ctrlHipIK, ctrlCOG, grpFollow]
+
+        enumName = "fkLegFollow"
+        enumVals = "fkHip:ikHip:COG:world"
+
+        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
 
     def tgpMakeBC(self, *args):
 
@@ -660,6 +723,29 @@ class pcCreateRig05Legs(UI):
         checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+
+        checkboxSwitch = mc.checkBox("selFKSwitch_cb", q=True, v=True)
+
+        ctrlIKHip = mc.textFieldButtonGrp("ctrlIKHip_tfbg", q=True, text=True)
+        ctrlCOG = mc.textFieldButtonGrp("ctrlCOG_tfbg", q=True, text=True)
+        grpFollow = mc.textFieldButtonGrp("grpLOCFollow_tfbg", q=True, text=True)
+
+        if checkboxSwitch:
+
+            ctrlFKHip = mc.textFieldButtonGrp("ctrlFKHipLoad_tf", q=True, text=True)
+
+            if not ctrlFKHip:
+                mc.warning("You need to select the FK Hip Control")
+                return
+            if not ctrlIKHip:
+                mc.warning("You need to select the IK Hip Control")
+                return
+            if not ctrlCOG:
+                mc.warning("You need to select COG Control")
+                return
+            if not grpFollow:
+                mc.warning("You need to select the World Follow Group")
+                return
 
         self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         ctrlFKIK = mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", q=True, text=True)
@@ -740,6 +826,7 @@ class pcCreateRig05Legs(UI):
                          jntLegArray,
                          checkGeo, geoJntArray, colourTU, jntLegRoot,
                          ctrlFKIK, ctrlFKIKAttr, ctrlFKHip, checkboxTwists,
+                         checkboxSwitch, ctrlIKHip, ctrlCOG, grpFollow,
                          checkboxHip=checkboxHip)
 
             if mirrorRig:
@@ -749,4 +836,5 @@ class pcCreateRig05Legs(UI):
                              jntLegArrayMirror,
                              checkGeo, geoJntArrayMirror, colourTUMirror, jntLegRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, ctrlFKHip, checkboxTwists,
+                             checkboxSwitch, ctrlIKHip, ctrlCOG, grpFollow,
                              checkboxHip=checkboxHip)
