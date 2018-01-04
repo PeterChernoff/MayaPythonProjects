@@ -20,7 +20,7 @@ class pcCreateRig03Arms(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigArms"
-        self.winSize = (500, 375)
+        self.winSize = (500, 475)
 
         self.createUI()
 
@@ -42,6 +42,7 @@ class pcCreateRig03Arms(UI):
         mc.text(l="")
         mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=True)
+        mc.checkBox("selFKSwitch_cb", l="Create FK Switch", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -66,6 +67,20 @@ class pcCreateRig03Arms(UI):
         mc.setParent("..")
 
         mc.separator(st="in", h=17, w=500)
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="IK Chest CTRL: ")
+        mc.textFieldButtonGrp("ctrlIKChestLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_chest")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="COG CTRL: ")
+        mc.textFieldButtonGrp("ctrlCOG_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Group LOC Follow: ")
+        mc.textFieldButtonGrp("grpLOCFollow_tfbg", cw=(1, 322), bl="  Load  ", tx="GRP_LOC_follow")
+
+        mc.setParent("..")
+
+        mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
@@ -75,6 +90,10 @@ class pcCreateRig03Arms(UI):
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("jntSpineTopLoad_tf", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("ctrlFKIKSwitch_tfbg", e=True, bc=self.loadSrc3Btn)
+
+        mc.textFieldButtonGrp("ctrlIKChestLoad_tf", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("ctrlCOG_tfbg", e=True, bc=self.loadSrc5Btn)
+        mc.textFieldButtonGrp("grpLOCFollow_tfbg", e=True, bc=self.loadSrc6Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -96,6 +115,23 @@ class pcCreateRig03Arms(UI):
         self.selSrc3 = self.tgpLoadTxBtn("ctrlFKIKSwitch_tfbg", "nurbsCurve", "FK/IK Switch Control",
                                          ["CTRL", "fk", "ik", "Switch"], "control")
         print(self.selSrc3)
+
+    def loadSrc4Btn(self):
+        self.selSrc4 = self.tgpLoadJntsBtn("ctrlIKChestLoad_tf", "nurbsCurve", "IK Chest Control",
+                                           ["CTRL", "chest", "IK"],
+                                           "control")
+        print(self.selSrc4)
+
+    def loadSrc5Btn(self):
+        self.selSrc5 = self.tgpLoadTxBtn("ctrlCOG_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
+                                         "control")
+        print(self.selSrc5)
+
+    def loadSrc6Btn(self):
+        self.selSrc6 = self.tgpLoadTxBtn("grpLOCFollow_tfbg", "transform", "World Follow Group",
+                                         ["GRP", "LOC", "follow"],
+                                         "group")
+        print(self.selSrc6)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -206,11 +242,31 @@ class pcCreateRig03Arms(UI):
             str += "{0}.rotate{1} = {2}.rotate{1} * {3}.{4};\n".format(autoClav, ax, targetLimb, ctrlClav, autoClavVal)
         return str
 
+    def makeArmSwitch(self, ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU, *args):
+        locArmFollowArray = []
+        locShoulder = "LOC_" + leftRight + "armShoulderFollow"
+        locArmFollowArray.append(locShoulder)
+        locTorso = "LOC_" + leftRight + "armTorsoFollow"
+        locArmFollowArray.append(locTorso)
+        locCOG = "LOC_" + leftRight + "armCOGFollow"
+        locArmFollowArray.append(locCOG)
+        locWorld = "LOC_" + leftRight + "armWorldFollow"
+        locArmFollowArray.append(locWorld)
+
+        listParents = [ctrlShoulder, ctrlChest, ctrlCOG, grpFollow]
+
+        enumName = "fkArmFollow"
+        enumVals = "shoulder:torso:COG:world"
+
+        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
+
     def makeArm(self, isLeft, leftRight,
                 jntArmArray, jntClavicle, jntScapula,
                 colourTU, jntShoulderRoot,
                 ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
-                checkboxSpine, checkGeo, geoJntArray, *args):
+                checkboxSpine, checkGeo,
+                checkboxSwitch, ctrlIKChest, ctrlCOG, grpFollow,
+                geoJntArray, *args):
 
         # Adding the twist joints
         if checkboxTwists:
@@ -268,6 +324,12 @@ class pcCreateRig03Arms(UI):
         # Adding the Elbow Control
         elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, )
 
+        # Adding Space Switching
+        # NOTE: This is something I added from the finalizing section
+        if checkboxSwitch:
+            # self.makeArmSwitch(ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU)
+            self.makeArmSwitch(fkJntOffsetCtrls[0][1], shoulderOffsetCtrl[1], ctrlIKChest, ctrlCOG, grpFollow,
+                               leftRight, colourTU)
         # Organize the rig
         self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts,
                         jntShoulderRoot, jntScapula, jntClavicle,
@@ -430,7 +492,8 @@ class pcCreateRig03Arms(UI):
         jntClav = jointClavicle[0]
         childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
         clavLength = mc.getAttr("{0}.ty".format(childClavicle))
-        clavicleOffsetCtrl = CRU.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1))
+        clavicleOffsetCtrl = CRU.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1),
+                                             sectionsTU=6)
         mc.select(clavicleOffsetCtrl[1] + ".cv[:]")
         mc.move(clavLength * 0.5, clavLength * 0.5, 0, r=True, ls=True)
         autoAttrName = "autoClavicle"
@@ -582,6 +645,22 @@ class pcCreateRig03Arms(UI):
 
         geoJntArray = self.jointArray[:]
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+        checkboxSwitch = mc.checkBox("selFKSwitch_cb", q=True, v=True)
+
+        ctrlIKChest = mc.textFieldButtonGrp("ctrlIKChestLoad_tf", q=True, text=True)
+        ctrlCOG = mc.textFieldButtonGrp("ctrlCOG_tfbg", q=True, text=True)
+        grpFollow = mc.textFieldButtonGrp("grpLOCFollow_tfbg", q=True, text=True)
+
+        if checkboxSwitch:
+            if not ctrlIKChest:
+                mc.warning("You need to select the IK Chest Control")
+                return
+            if not ctrlCOG:
+                mc.warning("You need to select COG Control")
+                return
+            if not grpFollow:
+                mc.warning("You need to select the World Follow Group")
+                return
 
         if checkboxSpine:
             jntSpine6 = mc.textFieldButtonGrp("jntSpineTopLoad_tf", q=True, text=True)
@@ -663,7 +742,9 @@ class pcCreateRig03Arms(UI):
                          jntArmArray, jntClavicle, jntScapula,
                          colourTU, jntShoulderRoot,
                          ctrlFKIK, ctrlFKIKAttr, jntSpine6, checkboxTwists,
-                         checkboxSpine, checkGeo, geoJntArray)
+                         checkboxSpine, checkGeo,
+                         checkboxSwitch, ctrlIKChest, ctrlCOG, grpFollow,
+                         geoJntArray)
 
             if mirrorRig:
 
@@ -689,4 +770,6 @@ class pcCreateRig03Arms(UI):
                              jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
                              colourTUMirror, jntShoulderRootMirror,
                              ctrlFKIK, ctrlFKIKAttrMirror, jntSpine6, checkboxTwists,
-                             checkboxSpine, checkGeo, geoJntArrayMirror)
+                             checkboxSpine, checkGeo,
+                             checkboxSwitch, ctrlIKChest, ctrlCOG, grpFollow,
+                             geoJntArrayMirror)
