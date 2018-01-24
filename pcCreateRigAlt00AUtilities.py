@@ -55,7 +55,7 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def createCTRLs(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                     addPrefix=False, boxDimensionsLWH=None):
+                    addPrefix=False, boxDimensionsLWH=None):
         ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
                                                         addPrefix, boxDimensionsLWH)
 
@@ -100,7 +100,7 @@ class pcCreateRigUtilities:
         return ctrl
 
     @staticmethod
-    def createCTRLsFKDirect(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5,
+    def createCTRLsFKDirect(s, size=3, orientVal=(1, 0, 0), colour=5,
                             sectionsTU=None,
                             addPrefix=False, boxDimensionsLWH=None):
 
@@ -112,7 +112,13 @@ class pcCreateRigUtilities:
         mc.parent(fkShape, s, s=True, r=True)
         mc.delete(ctrlName)
         mc.rename(s, ctrlName)
-        return ctrl
+
+        try:
+            mc.setAttr('{0}.overrideEnabled'.format(ctrl), 1)
+            mc.setAttr("{0}.overrideColor".format(ctrl), colour)
+        except:
+            mc.warning('{0}.overrideEnabled is locked'.format(ctrl))
+        return ctrl, fkShape
 
     @staticmethod
     def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals=[], toHide=False, visible=False,
@@ -132,7 +138,6 @@ class pcCreateRigUtilities:
         for i in range(len(myVals)):
             mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
             if channelBox is not None:
-                print("{0}.{1}".format(s, myVals[i]))
                 mc.setAttr("{0}.{1}".format(s, myVals[i]), channelBox=channelBox)
 
     @staticmethod
@@ -148,13 +153,13 @@ class pcCreateRigUtilities:
             else:
                 modifyIn = modifyInOut[0]
                 modifyOut = modifyInOut[1]
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
+            returnVal = mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
+                                             cd='{0}.{1}'.format(driver, driverAttribute),
+                                             dv=driverValue, v=drivenValue, itt=modifyIn, ott=modifyOut)
         else:
-            mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
-                                 cd='{0}.{1}'.format(driver, driverAttribute),
-                                 dv=driverValue, v=drivenValue)
+            returnVal = mc.setDrivenKeyframe('{0}.{1}'.format(driven, drivenAttribute),
+                                             cd='{0}.{1}'.format(driver, driverAttribute),
+                                             dv=driverValue, v=drivenValue)
 
     @staticmethod
     def createLocatorToDelete(createLocator=True):
@@ -173,7 +178,9 @@ class pcCreateRigUtilities:
                 print("Setting {0}".format(geoJntArray[i]))
                 theParent = geoJntArray[i]
                 geoName = theParent.replace(setter, "GEO_")
+                print("geoName: {0}".format(geoName))
                 mc.parent(geoName, theParent)
+                print("Parenting complete")
                 pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
                 mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
                 mc.xform(geoName, ws=True, pivots=pivotTranslate)
@@ -186,6 +193,9 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def changeRotateOrder(rotateChangeList, getRotOrder, *args):
+
+        if not isinstance(rotateChangeList, list):
+            rotateChangeList = [rotateChangeList]
 
         for rotateChange in rotateChangeList:
             if (getRotOrder == "XYZ"):
@@ -219,7 +229,8 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, geoLayer=False,
-                  bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, *args):
+                  bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, newLayerName=None,
+                  *args):
         if layerVis:
             visVal = 1
         else:
@@ -240,6 +251,8 @@ class pcCreateRigUtilities:
             layerName = "geo_LYR"
         elif bodyLayer:
             layerName = "body_LYR"
+        elif newLayerName is not None:
+            layerName = newLayerName
 
         # creates the layer if it doesn't already exist
         if not mc.objExists(layerName):
@@ -329,6 +342,58 @@ class pcCreateRigUtilities:
 
         offsetCtrl = [offset, ctrl, auto]
         return offsetCtrl
+
+    @staticmethod
+    def createNailNoOffset(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, prnt=True, pnt=False, *args):
+        selname = str(s)
+        # creates a nail at the location
+        '''
+        0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
+        5 dark blue, 6 blue, 7 dark green, 8 darker purple, 9 pink
+        10 brown, 11 dark brown, 12 brownish red, 13 light red, 14 green
+        15 darkish blue, 16 white, 17 yellow, 18 cyan, 19 pale green
+        20 light pink, 21 peach, 22 other yellow, 23 turquoise, 24 light brown/orange
+        25 puke yellow, 26 puke green. 27 lightish green, 28 light blue, 29 darkish blue
+        30 dark purple, 31 magenta
+
+        0 gray, 1 black, 2 dark grey, 3 light gray, 16 white, 
+        4 red, 12 brownish red, 13 light red, 
+        5 dark blue, 6 blue, 15 darkish blue, 18 cyan, 28 light blue, 29 darkish blue
+        7 dark green, 14 green, 19 pale green, 23 turquoise, 26 puke green. 27 lightish green,
+        8 darker purple, 30 dark purple, 
+        9 pink, 20 light pink, 21 peach, 31 magenta
+        10 brown, 11 dark brown, 24 light brown/orange
+        17 yellow, 22 other yellow, 25 puke yellow,
+        '''
+        ctrlName = "CTRL_" + name
+        if not isLeft:
+            bodySize = bodySize * -1
+            headSize = headSize * -1
+        if isLeft:
+            bodySize = bodySize * -1
+            headSize = headSize * -1
+        toPass = [(0, 0, 0), (0, 0, bodySize), (0, headSize, bodySize + headSize), (0, 0, bodySize + 2 * headSize),
+                  (0, -headSize, bodySize + headSize), (0, 0, bodySize)]
+        try:
+            ctrl = mc.curve(ctrlName, r=True, d=1, p=toPass, )
+        except:
+            ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
+            # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
+
+        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
+        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+
+        if pnt:
+            todelete = mc.pointConstraint(s, ctrl)
+            mc.delete(todelete)
+        elif prnt:
+            todelete = mc.parentConstraint(s, ctrl)
+            mc.delete(todelete)
+        # parent the nail to the bone
+
+        mc.parentConstraint(selname, ctrl, mo=True)
+
+        return ctrl
 
     @staticmethod
     def makeLimbSwitch(ctrlLimb, locLimbFollowArray, listParents, enumName, enumVals, colourTU, *args):

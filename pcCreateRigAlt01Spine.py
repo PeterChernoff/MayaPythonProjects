@@ -282,7 +282,7 @@ class pcCreateRigAlt01Spine(UI):
         ctrlFKJnts = []  # keeps track of the offsets so we can parent them appropriately
         for i in range(len(ctrlFKJntsTU)):
             # Putting into a list so the CTRL sees it properly
-            ctrlFK = CRU.createCTRLsFKDirect(ctrlFKJntsTU[i], 18, orientVal=(0, 1, 0), colour=28)
+            ctrlFK, fkShape = CRU.createCTRLsFKDirect(ctrlFKJntsTU[i], 18, orientVal=(0, 1, 0), colour=28)
 
             ctrlFKJnts.append(ctrlFK)
 
@@ -341,7 +341,7 @@ class pcCreateRigAlt01Spine(UI):
 
         mc.parentConstraint(ctrlBody, grpTorso, mo=True)
 
-        grpDNT = mc.group(n="GRP_DO_NOT_TOUCH", em=True, w=True)
+        grpDNT = mc.group(n="GRP_DO_NOT_TOUCH_torso", em=True, w=True)
         mc.parent(grpDNT, grpTorso)
         mc.parent(spineIKs, crvSpine, hdlSpine, jntArray[0], grpDNT)
 
@@ -366,7 +366,7 @@ class pcCreateRigAlt01Spine(UI):
         mc.connectAttr("{0}.ox".format(globalScaleNormalizeDiv), "{0}.i1x".format(spineStretchNameDiv), f=True)
 
         # creates the control
-        ctrlRoot = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colour=13, addPrefix="CTRL")
+        ctrlRoot, fkShape = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colour=13, addPrefix="CTRL")
 
         ctrlRootRename = ctrlRoot.replace("_GRP_", "_")
         ctrlRoot = mc.rename(ctrlRoot, ctrlRootRename)

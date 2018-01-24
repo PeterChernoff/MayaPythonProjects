@@ -228,6 +228,7 @@ class pcCreateRig02Head(UI):
         eyeOffsetArray = []
 
         radiusBase = mc.getAttr("{0}.ty".format(self.jointEndArray[-1]))
+        print("self.jointEndArray[-1]: {0}".format(self.jointEndArray[-1]))
 
         for i in range(len(eyeArray)):
             # takes the eye joints, creates a corresponding locator

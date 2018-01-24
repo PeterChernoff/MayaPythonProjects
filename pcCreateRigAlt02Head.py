@@ -10,6 +10,7 @@ from functools import partial
 from tgpBaseUI import BaseUI as UI
 
 import pcCreateRigAlt00AUtilities
+
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 reload(pcCreateRigAlt00AUtilities)
@@ -20,7 +21,7 @@ class pcCreateRigAlt02Head(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigHead"
-        self.winSize = (500, 320)
+        self.winSize = (500, 400)
 
         self.createUI()
 
@@ -57,20 +58,34 @@ class pcCreateRigAlt02Head(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform Control: ")
         mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform_emma")
 
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Head Joint Extras: ")
+        mc.textFieldButtonGrp("jntHead_tfbg", cw=(1, 300), bl="  Load  ")
+
         mc.separator(st="in", h=17, w=500)
         mc.setParent("..")
 
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 400)], cs=[1, 5], rs=[1, 3])
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
         mc.setParent("..")
+        mc.separator(st="in", h=17, w=500)
+
         # Attributes
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.text(l="Extra Controls: ")
+        mc.checkBoxGrp("attrSelExtra_rbg", la2=["Jaw", "Eyes", ],
+                       ncb=2, va2=[1, 1], cw2=[70, 60])
+
+        mc.setParent("..")
+
+        mc.separator(st="in", h=20, w=500)
 
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("grpTorsoDNT_tfbg", e=True, bc=self.loadSrc3Btn)
         mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("jntHead_tfbg", e=True, bc=self.loadSrc5Btn)
 
         mc.showWindow(self.window)
 
@@ -96,6 +111,11 @@ class pcCreateRigAlt02Head(UI):
         self.selSrc4 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
                                          ["CTRL", "rootTransform"])
         print(self.selSrc4)
+
+    def loadSrc5Btn(self):
+        self.selSrc5 = self.tgpLoadJntsHeadBtnExtra("jntHead_tfbg", "joint", "Head Joint",
+                                                    ["JNT", "BND", "head"])
+        print(self.selSrc5)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -156,6 +176,42 @@ class pcCreateRigAlt02Head(UI):
 
         return self.jointArray
 
+    def tgpLoadJntsHeadBtnExtra(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+        # hierarchy
+        self.selLoad = []
+        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
+        if (len(self.selLoad) != 1):
+            mc.warning("Select only the {0}".format(objectDesc))
+            return
+        else:
+
+            selName = self.selLoad[0]
+
+            if not all(word.lower() in selName.lower() for word in keywords):
+                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+                return
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+            # get the children joints
+            self.parent = self.selLoad[0]
+            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
+            # collect the joints in an array
+            self.jointArrayHead = [self.parent]
+            # reverse the order of the children joints
+            self.child.reverse()
+
+            # add to the current list
+            self.jointArrayHead.extend(self.child)
+
+            # removes if the last joint is End
+            # checks if the last three letters are "End"
+            self.jointEndArrayHead = [x for x in self.jointArrayHead if "End" in x[-3:]]
+            self.jointArrayHead = [x for x in self.jointArrayHead if "End" not in x[-3:]]
+
+        return self.jointArrayHead
+
     def createIKSpline(self, jntStart, jntEnd, name, *args):
 
         ikSpline = mc.ikHandle(n="HDL_{0}".format(name), sj=jntStart, ee=jntEnd, sol="ikSplineSolver", numSpans=1)
@@ -176,7 +232,7 @@ class pcCreateRigAlt02Head(UI):
         noUnicode = str(ikNeckBase[0])
         mc.setAttr('{0}.radius'.format(noUnicode), jntEndSize * 3)
         ikNeckEnd = mc.duplicate(ikNeckBase, n="JNT_IK_neckEnd")
-        print(ikNeckEnd)
+
         CRU.changeRotateOrder(ikNeckEnd, "ZXY")
         neckIKs = [ikNeckBase[0], ikNeckEnd[0]]
 
@@ -299,8 +355,8 @@ class pcCreateRigAlt02Head(UI):
             mc.joint(fkJnts[i], e=True, zso=True, oj="yxz", secondaryAxisOrient="xup")
 
         # create the FK control and move it into a nice position
-        ctrlFK = CRU.createCTRLsFKDirect(fkJnts[0], 10, orientVal=(0, 1, 0), colour=28)
-        ctrlShape = mc.listRelatives(ctrlFK, s=True, )[0]
+        ctrlFK, ctrlShape = CRU.createCTRLsFKDirect(fkJnts[0], 10, orientVal=(0, 1, 0), colour=28)
+        # ctrlShape = mc.listRelatives(ctrlFK, s=True, )[0]
         fkJnts[0] = ctrlFK
 
         fkLength = mc.getAttr("{0}.ty".format(fkJnts[-1]))
@@ -443,7 +499,6 @@ class pcCreateRigAlt02Head(UI):
         headSpaceFollowPnt = mc.listAttr(headFollowPntConstr)[-4:]
         for i in range(len(headSpaceFollowOrnt)):
             # set the driven key to 1 and the undriven keys to 0
-            print("i: {0}".format(i))
 
             CRU.setDriverDrivenValues(ctrlHead, headFollowRot, headFollowOrntConstr, headSpaceFollowOrnt[i], i, 1)
             CRU.setDriverDrivenValues(ctrlHead, headFollowTrans, headFollowPntConstr, headSpaceFollowPnt[i], i, 1)
@@ -458,87 +513,65 @@ class pcCreateRigAlt02Head(UI):
         for i in range(len(headLocArray)):
             mc.setAttr("{0}.v".format(headLocArray[i]), False)
 
-    def createNeckHeadCtrls(self, jntIKShoulder, grpJntSpine, checkboxSpine, *args):
-        listCtrls = ["neck", "head", "jaw1"]
+    def createJawCtrls(self, jntArrayHead, ctrlHead, *args):
+
+        listCtrls = ["jaw1"]
         headOffsetCtrls = []
-        specVal = 0
-        for i in range(len(self.jointArray)):
-            val = str(self.jointArray[i])
+        for i in range(len(jntArrayHead)):
+            # this is an iteration due to a previous version using that, but I like to keep it flexible
+            val = str(jntArrayHead[i])
             colourTU = 17
 
-            if any(x in val for x in listCtrls):
-                # if the neck, do the following
-                if listCtrls[0] in val:
-                    sizeCtrl = 10
-                    orntVal = (0, 1, 0)
-                    headOffsetCtrls.append(
-                        CRU.createCTRLs(val, prnt=False, ornt=True, size=sizeCtrl, orientVal=orntVal, colour=colourTU))
+            if listCtrls[0] in val:
+                # if the jaw, do the following
+                sizeCtrl = 3
+                orntVal = (0, 1, 0)
+                # get the length of the bone
+                getBoneChild = mc.listRelatives(val, type="joint", ad=True)
 
-                    child = mc.listRelatives(val, c=True)[0]
-                    boneLength = mc.getAttr("{0}.ty".format(child))
+                boneLength = mc.getAttr("{0}.ty".format(getBoneChild[0]))
+                boneLength2 = mc.getAttr("{0}.ty".format(getBoneChild[1]))
+                ctrlJaw = "CTRL_jaw"
+                grpJaw = "GRP_" + ctrlJaw
 
-                    mc.select(headOffsetCtrls[specVal][1] + ".cv[:]")
-                    mc.move(boneLength * .2, z=True, r=True, os=True, wd=True)
-                elif listCtrls[1] in val:
-                    # if the head, do the following
-                    sizeCtrl = 15
-                    orntVal = (0, 1, 0)
+                mc.circle(nr=orntVal, r=sizeCtrl, n=ctrlJaw, degree=3)
+                mc.group(ctrlJaw, n=grpJaw)
 
-                    boneLength = mc.getAttr("{0}End.ty".format(val))
-                    headOffsetCtrls.append(
-                        CRU.createCTRLs(val, prnt=False, ornt=True, size=sizeCtrl, orientVal=orntVal, colour=colourTU))
-                    mc.select(headOffsetCtrls[specVal][1] + ".cv[:]")
-                    mc.move(boneLength * .65, y=True, r=True)
+                # move the GRP_CTRL into position
+                todelete = mc.parentConstraint(val, grpJaw)
+                mc.delete(todelete)
 
-                elif listCtrls[2] in val:
-                    # if the jaw, do the following
-                    sizeCtrl = 3
-                    orntVal = (0, 1, 0)
-                    # get the length of the bone
-                    getBoneChild = mc.listRelatives(val, type="joint", ad=True)
-                    boneLength = mc.getAttr("{0}.ty".format(getBoneChild[0]))
-                    boneLength2 = mc.getAttr("{0}.ty".format(getBoneChild[1]))
-                    headOffsetCtrls.append(
-                        CRU.createCTRLs(val, prnt=False, ornt=True, pnt=True, size=sizeCtrl, orientVal=orntVal,
-                                        colour=colourTU))
-                    # move the CVs into place
-                    mc.select(headOffsetCtrls[specVal][1] + ".cv[:]")
-                    mc.move(0, -boneLength2 * 2, boneLength * 1.1, r=True)
+                # move the CVs into place
+                mc.select(ctrlJaw + ".cv[:]")
+                mc.rotate(-33, x=True, r=True)
 
-                specVal += 1
+                mc.select(ctrlJaw + ".cv[:]")
+                mc.move(0, -boneLength2 * 2.65, boneLength * 1.25, r=True)
 
-        mc.parent(headOffsetCtrls[1][0], headOffsetCtrls[0][1])
-        mc.parent(headOffsetCtrls[2][0], headOffsetCtrls[1][1])
-        mc.parent(headOffsetCtrls[3][0], headOffsetCtrls[2][1])
+                mc.pointConstraint(ctrlJaw, val, mo=True)
+                mc.orientConstraint(ctrlJaw, val, mo=True)
 
-        # CTRL_neck1 point constrains JNT_neck1
-        # parent OFFSET_CTRL_neck1 under CTRL_IK_chest
-        if checkboxSpine:
-            mc.pointConstraint(headOffsetCtrls[0][1], self.jointArray[0])
-            noUnicode = str(self.jointArray[0])
-            grpHead = mc.group(n="GRP_JNT_head", w=True, em=True)
-            mc.parent(noUnicode, grpHead)
+        mc.parent(grpJaw, ctrlHead)
 
-            mc.parent(headOffsetCtrls[0][0], jntIKShoulder)
+        return grpJaw, ctrlJaw
 
-            # was originally GRP_JNT_torso, but changed to GRP_rig_torso
-            grpTorso = mc.group(n="GRP_rig_torso", w=True, em=True)
-            mc.parent(grpHead, grpJntSpine, grpTorso)
-
-        return headOffsetCtrls
-
-    def createEyeControls(self, eyeArray, headOffsetCtrls, *args):
+    def createEyeControls(self, eyeArray, ctrlHead, ctrlRootTrans, *args):
         # Create eye control
         eyeCtrlArray = []
 
-        eyeOffsetArray = []
+        eyeGrpArray = []
 
-        radiusBase = mc.getAttr("{0}.ty".format(self.jointEndArray[-1]))
+        eyeRadBase = mc.listRelatives(eyeArray[-1], type="joint")[0]
+
+        radiusBase = mc.getAttr("{0}.tz".format(eyeRadBase))
+        print("radiusBase: {0}".format(radiusBase))
 
         for i in range(len(eyeArray)):
             # takes the eye joints, creates a corresponding locator
-            eyeName = str(eyeArray[i]).replace("JNT_", "")
-            eyeCtrlArray.append(mc.spaceLocator(p=(0, 0, 0), name="CTRL_" + eyeName)[0])
+            eyeName = str(eyeArray[i]).replace("JNT_BND_", "")
+            ctrlEye = "CTRL_" + eyeName
+            grpEye = "GRP_" + ctrlEye
+            eyeCtrlArray.append(mc.spaceLocator(p=(0, 0, 0), name=ctrlEye)[0])
 
             mc.setAttr('{0}.overrideEnabled'.format(eyeCtrlArray[i]), 1)
             if "_l_" in eyeCtrlArray[i]:
@@ -547,18 +580,18 @@ class pcCreateRigAlt02Head(UI):
                 mc.setAttr("{0}.overrideColor".format(eyeCtrlArray[i]), 13)
 
             # groups them at the creation point
-            autoGrp = mc.group(eyeCtrlArray[i], name="AUTO_" + eyeName)
-            eyeOffsetArray.append(mc.group(autoGrp, name="OFFSET_" + eyeName))
+
+            eyeGrpArray.append(mc.group(ctrlEye, name=grpEye))
 
             # moves the eye into posiiton
-            todelete = mc.parentConstraint(eyeArray[i], eyeOffsetArray[i], mo=False)
+            todelete = mc.parentConstraint(eyeArray[i], eyeGrpArray[i], mo=False)
             mc.delete(todelete)
 
-            mc.move(radiusBase * 2, eyeOffsetArray[i], z=True, r=True)
+            mc.move(radiusBase * 20, eyeGrpArray[i], z=True, r=True)
 
         # Create the eyes control
         eyesCtrlName = "CTRL_eyes"
-        eyesCtrl = mc.circle(nr=(0, 1, 0), r=radiusBase * .75, n=eyesCtrlName, degree=1, sections=4)[0]
+        eyesCtrl = mc.circle(nr=(0, 1, 0), r=radiusBase * 7.5, n=eyesCtrlName, degree=1, sections=4)[0]
 
         mc.setAttr("{0}.ry".format(eyesCtrl), 45)
         mc.makeIdentity(eyesCtrl, a=True)  # freeze transform
@@ -567,14 +600,13 @@ class pcCreateRigAlt02Head(UI):
         mc.setAttr("{0}.rx".format(eyesCtrl), 90)
         mc.makeIdentity(eyesCtrl, a=True)  # freeze transform
 
-        eyesAuto = mc.group(eyesCtrl, n="AUTO_" + eyesCtrlName)
+        eyesGrp = mc.group(eyesCtrl, n="GRP_" + eyesCtrlName)
 
-        eyesOffset = mc.group(eyesAuto, n="OFFSET_" + eyesCtrlName)
-
-        todelete = mc.pointConstraint(eyeCtrlArray, eyesOffset)
+        todelete = mc.pointConstraint(eyeCtrlArray, eyesGrp)
         mc.delete(todelete)
 
-        mc.parent(eyeOffsetArray, eyesCtrl)
+        mc.parent(eyeGrpArray, eyesCtrl)
+        mc.parent(eyesGrp, ctrlRootTrans)
 
         aimArray = []
         for i in range(len(eyeArray)):
@@ -583,42 +615,42 @@ class pcCreateRigAlt02Head(UI):
         # create the eye follow settings
         eyesFollowLocArray = []
 
-        eyesFollowLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_eyesHeadFollow")[0])
-        eyesFollowLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_eyesWorldFollow")[0])
+        locFollowHead = "LOC_follow_eyesHead"
+        locFollowRoot = "LOC_follow_eyesRoot"
 
+        eyesFollowLocArray.append(mc.spaceLocator(p=(0, 0, 0), name=locFollowHead)[0])
+        eyesFollowLocArray.append(mc.spaceLocator(p=(0, 0, 0), name=locFollowRoot)[0])
+
+        # moves the locators into position
         for i in range(len(eyesFollowLocArray)):
             todelete = mc.parentConstraint(eyesCtrl, eyesFollowLocArray[i], mo=False)
             mc.delete(todelete)
-        headCtrl = ""
-        for i in range(len(headOffsetCtrls)):
-            if "head" in headOffsetCtrls[i][1]:
-                headCtrl = headOffsetCtrls[i][1]
 
-        mc.parent(eyesFollowLocArray[0], headCtrl)
+        mc.parent(eyesFollowLocArray[0], ctrlHead)
 
-        eyesCtrlPrntConst = mc.parentConstraint(eyesFollowLocArray[0], eyesFollowLocArray[1], eyesOffset)[0]
+        mc.parent(eyesFollowLocArray[-1], ctrlRootTrans)
 
-        mc.addAttr(eyesCtrl, longName='eyesFollow', at="enum", enumName="Head:World", k=True)
+        eyesCtrlPrntConst = mc.parentConstraint(eyesFollowLocArray[0], eyesFollowLocArray[1], eyesGrp)[0]
+        eyesFollow = 'eyesFollow'
+        mc.addAttr(eyesCtrl, longName=eyesFollow, at="enum", enumName="head:root", k=True)
 
         # The last two attributes would be the relevant head and eye controls
-        eyesFollow = mc.listAttr(eyesCtrlPrntConst)[-2:]
+        eyesFollowVals = mc.listAttr(eyesCtrlPrntConst)[-2:]
 
-        CRU.setDriverDrivenValues(eyesCtrl, "eyesFollow", eyesCtrlPrntConst, eyesFollow[0], 0, 1)
-        CRU.setDriverDrivenValues(eyesCtrl, "eyesFollow", eyesCtrlPrntConst, eyesFollow[0], 1, 0)
+        CRU.setDriverDrivenValues(eyesCtrl, eyesFollow, eyesCtrlPrntConst, eyesFollowVals[0], 0, 1)
+        CRU.setDriverDrivenValues(eyesCtrl, eyesFollow, eyesCtrlPrntConst, eyesFollowVals[0], 1, 0)
 
-        CRU.setDriverDrivenValues(eyesCtrl, "eyesFollow", eyesCtrlPrntConst, eyesFollow[1], 0, 0)
-        CRU.setDriverDrivenValues(eyesCtrl, "eyesFollow", eyesCtrlPrntConst, eyesFollow[1], 1, 1)
+        CRU.setDriverDrivenValues(eyesCtrl, eyesFollow, eyesCtrlPrntConst, eyesFollowVals[1], 0, 0)
+        CRU.setDriverDrivenValues(eyesCtrl, eyesFollow, eyesCtrlPrntConst, eyesFollowVals[1], 1, 1)
 
         for i in range(len(eyesFollowLocArray)):
+            # hide the eye locators
             mc.setAttr("{0}.v".format(eyesFollowLocArray[i]), False)
 
-        grpWorldFollow = mc.group(n="GRP_LOC_follow", w=True, em=True)
+        return eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp
 
-        mc.parent(eyesFollowLocArray[1], grpWorldFollow)
-
-        return headCtrl, eyeCtrlArray, eyesCtrl, grpWorldFollow
-
-    def neckCleanUp(self, jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK, ctrlHead, *args):
+    def neckCleanUp(self, jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK, ctrlHead,
+                    *args):
 
         # Make the objects invisible
         mc.setAttr("{0}.v".format(ikNeckBase), False)
@@ -627,7 +659,7 @@ class pcCreateRigAlt02Head(UI):
         mc.setAttr("{0}.v".format(crvNeck), False)
         # mc.setAttr("{0}.v".format(jntArray[0]), False)
 
-        grpHeadDNT = "GRP_DO_NOT_TOUCH_HEAD"
+        grpHeadDNT = "GRP_DO_NOT_TOUCH_head"
         mc.group(n=grpHeadDNT, w=True, em=True)
         parentFK = mc.listRelatives(jntArray[0], p=True)[0]
         mc.parent(grpHeadDNT, parentFK)
@@ -645,6 +677,39 @@ class pcCreateRigAlt02Head(UI):
         CRU.lockHideCtrls(ikNeckEnd, translate=True, rotate=True, scale=True, visible=True)
 
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True)
+        return grpHeadDNT
+
+    def neckCleanUpExtras(self, jawSel, grpJaw, ctrlJaw,
+                          eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
+                          grpHeadDNT, jntArrayHead,
+                          ikNeckEnd,
+
+                          *args):
+
+        mc.parent(jntArrayHead[0], grpHeadDNT)
+
+        if jawSel:
+            CRU.lockHideCtrls(grpJaw, translate=True, rotate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(ctrlJaw, translate=True, scale=True, visible=True)
+
+        if eyesSel:
+            # lock and hide the group values for the eyes
+            CRU.lockHideCtrls(eyesGrp, translate=True, rotate=True, scale=True, visible=True)
+            for i in range(len(eyeGrpArray)):
+                CRU.lockHideCtrls(eyeGrpArray[i], translate=True, rotate=True, scale=True, visible=True)
+
+            # lock and hide all but the translates for the individual eyes
+            for i in range(len(eyeCtrlArray)):
+                CRU.lockHideCtrls(eyeCtrlArray[i], rotate=True, scale=True, visible=True)
+
+            # lock and hide the scale and visible eyes control
+            CRU.lockHideCtrls(eyesCtrl, scale=True, visible=True)
+        # I'm just going to hardcode this bit for simplicity's sake
+
+        grpGeoHead = "GRP_GEO_head"
+        if mc.objExists(grpGeoHead):
+            mc.parentConstraint(ikNeckEnd, grpGeoHead, mo=True)
+            mc.parent(grpGeoHead, grpHeadDNT)
 
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
@@ -661,13 +726,30 @@ class pcCreateRigAlt02Head(UI):
         # make sure the selections are not empty
         checkList = [self.jntNames]
 
-        # eyeArray = [x for x in self.jointArray if "eye" in x]
+        checkList2 = []
+        jntArrayHead = None
 
         # gets us most of the geos
         jntArrayNoEnd = [x for x in self.jointArray if "End" not in x]
+        print("jntArrayNoEnd: {0}".format(jntArrayNoEnd))
         jntArray = self.jointArrayNeck
         jntEnd = jntArray[-1]
-        print(jntArray)
+
+        jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
+        eyesSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
+
+        # only include if eyes or jaws
+        if jawSel or eyesSel:
+            jntHead = mc.textFieldButtonGrp("jntHead_tfbg", q=True, text=True)
+
+            jntArrayHead = self.jointArrayHead
+            jntArrayHeadEnds = self.jointEndArrayHead
+            checkList2 = [jntHead]
+            print("jntArrayHead: {0}".format(jntArrayHead))
+
+        if eyesSel:
+            eyeArray = [x for x in jntArrayHead if "eye" in x]
+            print("eyesArray: {0}".format(eyeArray))
 
         jntArrayLen = len(jntArray)
 
@@ -681,6 +763,10 @@ class pcCreateRigAlt02Head(UI):
             if "neck1" not in checkList[0]:
                 mc.warning("Make the first selection the root neck joint")
                 return
+            if jawSel or eyesSel:
+                if "head" not in checkList2[0]:
+                    mc.warning("Make the first selection the root head joint")
+                    return
 
             CRU.createLocatorToDelete()
             hdlNeck, effNeck, crvNeck = self.createIKSpline(jntArray[0], jntEnd, "neck")
@@ -707,11 +793,34 @@ class pcCreateRigAlt02Head(UI):
             # In case we want to attach it to the body
             locConstNeckShoulder, grpNeckFK = self.createNeckShoulderLoc(checkboxSpine, jntIKShoulder, ikNeckBase,
                                                                          fkJnts, )
-
             self.createSpaceSwitching(ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT)
 
-            self.neckCleanUp(jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK, ctrlHead)
-            return
+            # attach the extra bones to the head
+            if jawSel or eyesSel:
+                mc.parentConstraint(ikNeckEnd, jntArrayHead[0], mo=True)
+
+            # we can create eyes and jaw
+            if jawSel:
+                grpJaw, ctrlJaw = self.createJawCtrls(jntArrayHead, ctrlHead)
+            else:
+                grpJaw, ctrlJaw = None, None
+
+            if eyesSel:
+                eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp, = self.createEyeControls(eyeArray, ctrlHead,
+                                                                                       ctrlRootTrans)
+            else:
+                eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp, = None, None, None, None
+
+            grpHeadDNT = self.neckCleanUp(jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK,
+                                          ctrlHead)
+
+            # it will be easier just to grab the groups above it
+            self.neckCleanUpExtras(jawSel, grpJaw, ctrlJaw,
+                                   eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
+                                   grpHeadDNT, jntArrayHead,
+                                   ikNeckEnd,
+                                   )
 
             if checkGeo:
                 CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)
+                CRU.tgpSetGeo(jntArrayHead, setLayer=True)
