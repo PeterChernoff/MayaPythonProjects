@@ -19,10 +19,10 @@ bc.tgpBlendColors()
 import pcCreateRigAlt00AUtilities
 
 reload(pcCreateRigAlt00AUtilities)
-from pcCreateRigAlt00AUtilities import pcCreateRigAlt00AUtilities as CRU
+from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateAltRig04Foot(UI):
+class pcCreateRigAlt04Feet(UI):
     def __init__(self):
 
         self.window = "bcWindow"
@@ -36,7 +36,7 @@ class pcCreateAltRig04Foot(UI):
 
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
-        mc.text(l="Select The Ankle Root: ")
+        mc.text(l="Select The Heel Locator: ")
         mc.text(l="")
         mc.separator(st="in", h=17, w=500)
         mc.setParent("..")
@@ -59,14 +59,14 @@ class pcCreateAltRig04Foot(UI):
 
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Ankle Locator: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Heel Locator: ")
         mc.textFieldButtonGrp("locLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Foot CTRL: ")
-        mc.textFieldButtonGrp("ctrlIKLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_IK_l_leg")
+        mc.textFieldButtonGrp("ctrlIKFootLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_foot")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Upper Leg Joint: ")
-        mc.textFieldButtonGrp("jntLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_upperLeg")
+        '''mc.text(bgc=(0.85, 0.65, 0.25), l="Upper Leg Joint: ")
+        mc.textFieldButtonGrp("jntLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_foot")'''
 
         mc.setParent("..")
 
@@ -76,8 +76,8 @@ class pcCreateAltRig04Foot(UI):
         #
 
         mc.textFieldButtonGrp("locLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-        mc.textFieldButtonGrp("ctrlIKLegLoad_tf", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("jntLegLoad_tf", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("ctrlIKFootLoad_tf", e=True, bc=self.loadSrc2Btn)
+        # mc.textFieldButtonGrp("jntLegLoad_tf", e=True, bc=self.loadSrc3Btn)
 
         self.selLoad = []
         self.locArray = []
@@ -87,17 +87,13 @@ class pcCreateAltRig04Foot(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadLocsBtn("locLoad_tfbg", "locator", "Ankle Locator", ["LOC", "ankle"])
+        self.selSrc1 = self.tgpLoadLocsBtn("locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("ctrlIKLegLoad_tf", "nurbsCurve", "IK Leg Control", ["CTRL", "_IK_", "leg"],
+        self.selSrc2 = self.tgpLoadTxBtn("ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control", ["CTRL", "foot"],
                                          "control")
         print(self.selSrc2)
-
-    def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadJntsLegBtn("jntLegLoad_tf", "joint", "Upper Leg Joint", ["JNT", "upper", "Leg"])
-        print(self.selSrc3)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -120,50 +116,6 @@ class pcCreateAltRig04Foot(UI):
                 return
             mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
-
-    def tgpLoadJntsLegBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-
-        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-
-            selName = self.selLoad[0]
-
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-
-            self.jointLegArray = self.getLegJnts(loadBtn, self.selLoad)
-
-        return self.jointLegArray
-
-    def getLegJnts(self, loadBtn, loadedValue):
-        selName = ', '.join(loadedValue)
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = loadedValue[0]
-        self.child = mc.listRelatives(loadedValue, ad=True, type="joint")
-        # collect the joints in an array
-        self.jointArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArray.extend(self.child)
-
-        # checks if the joints are legs but not if there's a twist in it
-        jointLegArray = [x for x in self.jointArray if ("leg" in x.lower()) and "Twist" not in x]
-        self.jointRoot = loadedValue[0]
-
-        return jointLegArray
 
     def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -207,126 +159,202 @@ class pcCreateAltRig04Foot(UI):
 
         return self.locArray
 
-    def tgpSetDriverEnumWorldFollowLeg(self, driver, driverAttr, driven, *args):
+    def createFootRollAll(self, ctrlIKFoot,
+                          locHeel, locBall, locToe,
+                          roll, bendLimitAngle, toeStraight,
+                          leftRight,
+                          *args):
+        heelRotClamp = "{0}heel_rotClamp".format(leftRight)
+        mc.shadingNode("clamp", n=heelRotClamp, au=True)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, roll), "{0}.inputR".format(heelRotClamp))
+        mc.setAttr("{0}.minR".format(heelRotClamp), self.heelMax)
+        mc.setAttr("{0}.maxR".format(heelRotClamp), 0)
+        mc.connectAttr("{0}.outputR".format(heelRotClamp), "{0}.rotateX".format(locHeel))
 
-        # sets the leg enum to shift between world follow and knee follow
-        w0w1Attr = mc.listAttr(driven)[-1:]
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 0, 1)
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], 1, 0)
+        # the foot ball clamp
+        # Ball Heel Roll
+        ballRotClampZero2B = "{0}ball_zeroToBendClamp".format(leftRight)
+        mc.shadingNode("clamp", n=ballRotClampZero2B, au=True)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, roll), "{0}.inputR".format(ballRotClampZero2B))
+        mc.setAttr("{0}.maxR".format(ballRotClampZero2B), 90)
+        '''mc.connectAttr("{0}.outputR".format(ballRotClampZero2B),
+                       "{0}.rotateX".format(locBall))  # will be undone later, but useful for testing'''
 
-    def createRotateIKFoot(self, ctrlIKLeg, locFootRoot, isLeft, leftRight, *args):
-        rotVals = ["rotX", "rotY", "rotZ"]
-        for i in range(len(rotVals)):
-            mc.addAttr(ctrlIKLeg, longName=rotVals[i], at="float", k=True)
+        # Ball Over Rotation
+        footBend2SClamp = "{0}foot_bendToStraightClamp".format(leftRight)  # bendToStraight
+        mc.shadingNode("clamp", n=footBend2SClamp, au=True)
+
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, bendLimitAngle), "{0}.minR".format(footBend2SClamp))
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, toeStraight), "{0}.maxR".format(footBend2SClamp))
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, roll), "{0}.inputR".format(footBend2SClamp))
+
+        #####
+
+        # create a set range to allow for a percentage, then set the range from 0 to 1
+        footBend2SPercent = "{0}foot_bendToStraightPercent".format(leftRight)  # bendToStraight
+        mc.shadingNode("setRange", n=footBend2SPercent, au=True)
+        mc.connectAttr("{0}.minR".format(footBend2SClamp), "{0}.oldMinX".format(footBend2SPercent))
+        mc.connectAttr("{0}.maxR".format(footBend2SClamp), "{0}.oldMaxX".format(footBend2SPercent))
+        mc.setAttr("{0}.minX".format(footBend2SPercent), 0)
+        mc.setAttr("{0}.maxX".format(footBend2SPercent), 1)
+        mc.connectAttr("{0}.inputR".format(footBend2SClamp), "{0}.valueX".format(footBend2SPercent))
+
+        # we meed a percentage to multiply now
+        footRollMult = "{0}foot_roll_MUL".format(leftRight)  # bendToStraight
+        mc.shadingNode("multiplyDivide", n=footRollMult, au=True)
+        mc.connectAttr("{0}.outValueX".format(footBend2SPercent), "{0}.input1X".format(footRollMult))
+        mc.connectAttr("{0}.inputR".format(footBend2SClamp), "{0}.input2X".format(footRollMult))
+        mc.connectAttr("{0}.outputX".format(footRollMult), "{0}.rotateX".format(locToe))
+
+        ######
+        # fixing over rotation
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, bendLimitAngle), "{0}.maxR".format(ballRotClampZero2B))
+        ballZero2BPercent = "{0}ball_zeroToBendPercent".format(leftRight)  # zeroToBendPercent
+        mc.shadingNode("setRange", n=ballZero2BPercent, au=True)
+        mc.connectAttr("{0}.minR".format(ballRotClampZero2B), "{0}.oldMinX".format(ballZero2BPercent))
+        mc.connectAttr("{0}.maxR".format(ballRotClampZero2B), "{0}.oldMaxX".format(ballZero2BPercent))
+        mc.setAttr("{0}.minX".format(ballZero2BPercent), 0)
+        mc.setAttr("{0}.maxX".format(ballZero2BPercent), 1)
+        mc.connectAttr("{0}.inputR".format(ballRotClampZero2B),
+                       "{0}.valueX".format(ballZero2BPercent))  # connects the roll value to value x
+
+        footInvertPercent = "{0}foot_invertPercentage".format(leftRight)
+        mc.shadingNode("plusMinusAverage", n=footInvertPercent, au=True)
+        mc.setAttr("{0}.operation".format(footInvertPercent), 2)
+        mc.setAttr("{0}.input1D[0]".format(footInvertPercent), 1)
+        mc.setAttr("{0}.input1D[1]".format(footInvertPercent), 1)
+        mc.connectAttr("{0}.outValueX".format(footBend2SPercent), "{0}.input1D[1]".format(footInvertPercent))
+
+        ballPercentMul = "{0}ball_percent_MUL".format(leftRight)
+        mc.shadingNode("multiplyDivide", n=ballPercentMul, au=True)
+        mc.connectAttr("{0}.outValueX".format(ballZero2BPercent), "{0}.input1X".format(ballPercentMul))
+        mc.connectAttr("{0}.output1D".format(footInvertPercent), "{0}.input2X".format(ballPercentMul))
+
+        ballRollMul = "{0}ball_roll_MUL".format(leftRight)
+        mc.shadingNode("multiplyDivide", n=ballRollMul, au=True)
+        mc.connectAttr("{0}.outputX".format(ballPercentMul), "{0}.input1X".format(ballRollMul))
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, roll), "{0}.input2X".format(ballRollMul))
+        mc.connectAttr("{0}.outputX".format(ballRollMul), "{0}.rotateX".format(locBall))
+
+    def createSideToSide(self, ctrlIKFoot, sideToSide, locInner, locOuter, leftRight, isLeft, *args):
 
         if isLeft:
-            mult = 1;
+            m = 1
         else:
-            mult = -1;
+            m = -1
 
-        # Loc_ankle.rotate is connected to CTRL_IK_Leg.rotate
-        footExpr = "{0}.rotateX = {1}.rotX;\n" \
-                   "{0}.rotateY= {1}.rotY*({2});\n" \
-                   "{0}.rotateZ = {1}.rotZ*({2});".format(locFootRoot, ctrlIKLeg, mult)
+        # CRU.setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locInner, "rotateZ", 0, 0)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locOuter, "rotateZ", 0, 0)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locInner, "rotateZ", -90, m * 90)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locOuter, "rotateZ", 90, m * -90)
 
-        xprName = "expr_" + leftRight + "footTwist"  # changes to account for the left or right
+    def createToeWiggle(self, ctrlIKFoot, toeWiggle, ikToe, locBall, locToe, leftRight, *args):
+        grpToeWiggle = "GRP_{0}toeWiggle".format(leftRight)
+        mc.group(em=True, name=grpToeWiggle, w=True)
+        ikToeParent = mc.listRelatives(ikToe, p=True)[0]
+        todelete = mc.pointConstraint(locBall, grpToeWiggle)
+        mc.delete(todelete)
 
-        mc.expression(s=footExpr, n=xprName)
+        mc.parent(grpToeWiggle, ikToeParent)
+        mc.parent(ikToe, grpToeWiggle)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, toeWiggle), "{0}.rotateX".format(grpToeWiggle))
+        mc.parent(grpToeWiggle, locToe)
 
-    def createFootRollAll(self, ctrlIKLeg, footRoll, locHeel, locBall, locToeEnd, *args):
-        footRollValues = [0, -10, 5, 10]
-        footRollValuesHeel = [0, -50, 0, 0]
-        footRollValuesBall = [0, 0, 40, 0]
-        footRollValuesEnd = [0, 0, 0, 60]
+    def createFootRollExtra(self, ctrlIKFoot, attribute, locObj, toReplace="LOC", toReplaceWith="GRP"):
+        grpObj = locObj.replace(toReplace, toReplaceWith)
 
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locHeel, footRollValuesHeel, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locBall, footRollValuesBall, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, footRoll, footRollValues, locToeEnd, footRollValuesEnd, "rotateX")
+        CRU.createParentGroup(locObj, grpObj, point=True)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, attribute), "{0}.rotateX".format(grpObj))
 
-    def createFootRollIndividual(self, ctrlIKLeg, heelOffset, ballOffset, toePivotOffset, locHeel, locBall, locToeEnd,
-                                 *args):
-        # individual values
-        footRollIndiVals = [0, 10]
-        footRollIndiValsHeel = [0, -50]
-        footRollIndiValsBall = [0, 40]
-        footRollIndiValsToeEnd = [0, 60]
-        self.setFootAttributeValues(ctrlIKLeg, heelOffset, footRollIndiVals, locHeel, footRollIndiValsHeel, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, ballOffset, footRollIndiVals, locBall, footRollIndiValsBall, "rotateX")
-        self.setFootAttributeValues(ctrlIKLeg, toePivotOffset, footRollIndiVals, locToeEnd, footRollIndiValsToeEnd,
-                                    "rotateX")
-
-    def createHeelAndToeTwists(self, ctrlIKLeg, twistValues, heelTwist, locHeel, toeTwist, locToeEnd, isLeft, *args):
-
-        # I can accidentally flip the direction of the locators, so I need to keep these values separate
-        heelTwistValues = [0, -50, 50]
-        toeTwistValues = [0, 50, -50]
-
-        self.setFootAttributeValues(ctrlIKLeg, heelTwist, twistValues, locHeel, heelTwistValues, "rotateY", isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, toeTwist, twistValues, locToeEnd, toeTwistValues, "rotateY", isLeft)
-
-    def createSideToSide(self, ctrlIKLeg, twistValues, sideToSide, locInner, locOuter, isLeft, *args):
-        sideToSideInnerValues = [0, 50, 0]
-        sideToSideOuterValues = [0, 0, -50]
-
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locInner, sideToSideInnerValues, "rotateZ",
-                                    isLeft)
-        self.setFootAttributeValues(ctrlIKLeg, sideToSide, twistValues, locOuter, sideToSideOuterValues, "rotateZ",
-                                    isLeft)
-
-    def createToeFlap(self, ctrlIKLeg, toeFlap, twistValues, locToeFlap, *args):
-
-        toeFlapValues = [0, 40, -40]
-        self.setFootAttributeValues(ctrlIKLeg, toeFlap, twistValues, locToeFlap, toeFlapValues, "rotateX")
-
-    def createAutoKneeFollow(self, locFootRoot, kneeOffsetCtrl, leftRight, *args):
-        autoKneeName = "LOC_" + leftRight + "kneeFollow"
-
-        # Moves the knee follow locator into the proper place
-        locAutoKneeFollow = mc.spaceLocator(p=(0, 0, 0), name=autoKneeName)[0]
-        toDelete = mc.parentConstraint(locFootRoot, locAutoKneeFollow)
-        mc.delete(toDelete)
-
-        # constrains the locator to the foot in point and orient
-        kneeFollowPnt = mc.pointConstraint(locFootRoot, locAutoKneeFollow)[0]
-        kneeFollowOrntY = mc.orientConstraint(locFootRoot, locAutoKneeFollow, skip=["x", "z"])[0]
-
-        kneeFollowPrnt = mc.parentConstraint(locAutoKneeFollow, kneeOffsetCtrl[0], mo=True)
-        kneeFollow = "kneeFollow"
-        mc.addAttr(kneeOffsetCtrl[1], longName=kneeFollow, at="enum", k=True, en="foot:world")
-
-        # tgpSetDriverEnumWorldFollow(driver, driverAttr, driven, numNodes)
-        # sets the autoKneeControl parent values to on or off
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowPnt)
-        self.tgpSetDriverEnumWorldFollowLeg(kneeOffsetCtrl[1], kneeFollow, kneeFollowOrntY)
-        return locAutoKneeFollow
-
-    def makeFoot(self, ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU, *args):
+    def makeFootComplete(self, ctrlIKFoot, locArray, leftRight, isLeft, *args):
 
         # gets a bunch of values for later use
-        childrenFoot = mc.listRelatives(ctrlIKLeg, ad=True, type="ikHandle")
-        ikLeg = [x for x in childrenFoot if "leg" in x][0]
-        ikBall = [x for x in childrenFoot if "ball" in x][0]
-        ikToe = [x for x in childrenFoot if "toe" in x][0]
-        legLength = mc.getAttr("{0}.ty".format(jntLegs[1])) + mc.getAttr("{0}.ty".format(jntLegs[-1]))
+        ikFootChildren = mc.listRelatives(ctrlIKFoot, ad=True, type="ikHandle")
+        ikFootPV = [x for x in ikFootChildren if "pv" in x][0]
+        ikFootNoFlip = [x for x in ikFootChildren if "noFlip" in x][0]
+        ikBall = [x for x in ikFootChildren if "ball" in x][0]
+        ikToe = [x for x in ikFootChildren if "toe" in x][0]
 
-        locToeFlap = [x for x in locArray if "toeFlap" in x][0]
-        mc.parent(ikBall, ikToe, locToeFlap)
+        # get the locators under the CTRL_l_foot
+        footChildrenAlt = mc.listRelatives(ctrlIKFoot)
+        locFootGrandhildren = mc.listRelatives(footChildrenAlt, type="locator")
+        locFootChildren = mc.listRelatives(locFootGrandhildren, p=True)
+        grpKnee = [x for x in footChildrenAlt if "knee" in x][0]
+
         locBall = [x for x in locArray if "ball" in x][0]
-        locToeEnd = [x for x in locArray if "toeEnd" in x][0]
+        locToe = [x for x in locArray if "toe" in x][0]
         locHeel = [x for x in locArray if "heel" in x][0]
         locInner = [x for x in locArray if "Inner" in x][0]
         locOuter = [x for x in locArray if "Outer" in x][0]
-        mc.parent(ikLeg, locBall)
-        mc.parent(offsetFoot, ctrlIKLeg)
+
+        #####
+        '''
+        CTRL_l_foot
+            (other stuff)
+                LOC_l_heel
+                    HDL_l_toe
+                    LOC_l_toe
+                        LOC_l_ball
+                            HDL_noFlip_l_foot
+                            HDL_pv_l_foot
+                            HDL_l_ball
+            
+                            GRP_noFlip_l_knee
+                        
+                            LOC_l_knee_to_l_footEnd				
+                            LOC_IK_pv_l_leg_lengthEnd
+                            LOC_IK_noFlip_l_leg_lengthEnd
+        '''
+        for i in range(len(locFootChildren)):
+            mc.parent(locFootChildren[i], locBall)
+
+        mc.parent(ikFootNoFlip, locBall)
+        mc.parent(ikFootPV, locBall)
+
+        mc.parent(ikBall, locBall)
+        mc.parent(grpKnee, locBall)
+
+        mc.parent(ikToe, locInner)
+
+        mc.parent(locHeel, ctrlIKFoot)
 
         # meaningless break, just for ease of use
-        mc.addAttr(ctrlIKLeg, longName="break1", nn="_____", at="enum", k=True, en="_____:_____")
+        mc.addAttr(ctrlIKFoot, longName="break1", nn="-----", at="enum", k=True, en="_____")
 
-        # Rotating the IK Foot
-        self.createRotateIKFoot(ctrlIKLeg, locFootRoot, isLeft, leftRight)
+        # add values to the ctrlIKFoot
 
-        # gets a bunch of values for later use
-        footRoll = "footRoll"
+        roll = "roll"
+        bendLimitAngle = "bendLimitAngle"
+        toeStraight = "toeStraight"
+        self.heelMax = -90
+
+        mc.addAttr(ctrlIKFoot, longName=roll, at="float", k=True, min=self.heelMax)
+        mc.addAttr(ctrlIKFoot, longName=bendLimitAngle, at="float", k=True, dv=45)
+        mc.addAttr(ctrlIKFoot, longName=toeStraight, at="float", k=True, dv=75)
+
+        mc.addAttr(ctrlIKFoot, longName="break2", nn="-----", at="enum", k=True, en="_____")
+
+        tilt = "tilt"
+        lean = "lean"
+        toeSpin = "toeSpin"
+        toeWiggle = "toeWiggle"
+
+        mc.addAttr(ctrlIKFoot, longName=tilt, at="float", k=True, min=-90, max=90)
+        mc.addAttr(ctrlIKFoot, longName=lean, at="float", k=True)
+        mc.addAttr(ctrlIKFoot, longName=toeSpin, at="float", k=True)
+        mc.addAttr(ctrlIKFoot, longName=toeWiggle, at="float", k=True)
+
+        mc.addAttr(ctrlIKFoot, longName="break3", nn="-----", at="enum", k=True, en="_____")
+
+        heelLift = "heelLift"
+        ballLift = "ballLift"
+        toeLift = "toeLift"
+
+        mc.addAttr(ctrlIKFoot, longName=heelLift, at="float", k=True, min=self.heelMax, max=0)
+        mc.addAttr(ctrlIKFoot, longName=ballLift, at="float", k=True, min=0)
+        mc.addAttr(ctrlIKFoot, longName=toeLift, at="float", k=True, min=0)
+        '''footRoll = "footRoll"
         heelOffset = "heelOffset"
         ballOffset = "ballOffset"
         toePivotOffset = "toePivotOffset"
@@ -336,150 +364,60 @@ class pcCreateAltRig04Foot(UI):
         toeFlap = "toeFlap"
 
         footAttributes = [[footRoll, -10, 10], [heelOffset, 0, 10], [ballOffset, 0, 10], [toePivotOffset, 0, 10],
-                          [heelTwist, -10, 10], [toeTwist, -10, 10], [sideToSide, -10, 10], [toeFlap, -10, 10], ]
+                          [heelTwist, -10, 10], [toeTwist, -10, 10], [sideToSide, -10, 10], [toeFlap, -10, 10], ]'''
 
-        mc.addAttr(ctrlIKLeg, longName="break2", nn="_____", at="enum", k=True, en="_____:_____")
+        '''mc.addAttr(ctrlIKFoot, longName="break2", nn="_____", at="enum", k=True, en="_____:_____")
         for i in range(len(footAttributes)):
-            mc.addAttr(ctrlIKLeg, longName=footAttributes[i][0], at="float", k=True, minValue=footAttributes[i][1],
-                       maxValue=footAttributes[i][2])
+            mc.addAttr(ctrlIKFoot, longName=footAttributes[i][0], at="float", k=True, minValue=footAttributes[i][1],
+                       maxValue=footAttributes[i][2])'''
 
         # Foot Rolling
-        self.createFootRollAll(ctrlIKLeg, footRoll, locHeel, locBall, locToeEnd)
-
-        self.createFootRollIndividual(ctrlIKLeg, heelOffset, ballOffset, toePivotOffset, locHeel, locBall, locToeEnd, )
-
-        # common values that are used
-        twistValues = [0, -10, 10]
-
-        # Heel and Toe Twist
-        self.createHeelAndToeTwists(ctrlIKLeg, twistValues, heelTwist, locHeel, toeTwist, locToeEnd, isLeft)
+        self.createFootRollAll(ctrlIKFoot, locHeel, locBall, locToe, roll, bendLimitAngle, toeStraight, leftRight)
 
         # Adding Side To Side
-        self.createSideToSide(ctrlIKLeg, twistValues, sideToSide, locInner, locOuter, isLeft)
+        self.createSideToSide(ctrlIKFoot, tilt, locInner, locOuter, leftRight, isLeft)
 
-        # Adding the toeFlap
-        self.createToeFlap(ctrlIKLeg, toeFlap, twistValues, locToeFlap)
+        # Lean and toeSpin
+        # lean is useful when your toe is planeted but you are balancing on it
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, lean), "{0}.rotateZ".format(locBall))
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, toeSpin), "{0}.rotateY".format(locToe))
+        CRU.changeRotateOrder(locToe, "ZXY")
 
-        # Adding Knee Controls
-        # I prefer creating new ones over using elbows
-        # createKnee(ikJntsDrive, leftRight, legLength, ikLeg0, isLeft):
-        kneeOffsetCtrl = self.createKnee(jntLegs, leftRight, legLength, ikLeg, isLeft)
+        self.createToeWiggle(ctrlIKFoot, toeWiggle, ikToe, locBall, locToe, leftRight)
 
-        # Auto Knee Follow
-        locAutoKneeFollow = self.createAutoKneeFollow(locFootRoot, kneeOffsetCtrl, leftRight)
+        # cleaning up
+        for i in range(len(locArray)):
+            mc.setAttr('{0}.v'.format(locArray[i]), False)
 
-        # Cleaning Up
+        self.createFootRollExtra(ctrlIKFoot, heelLift, locHeel)
+        self.createFootRollExtra(ctrlIKFoot, toeLift, locToe)
+        self.createFootRollExtra(ctrlIKFoot, ballLift, locBall)
 
-        self.footCleanUp(locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl, ctrlIKLeg, colourTU)
+        return
 
-    def footCleanUp(self, locAutoKneeFollow, leftRight, offsetFoot, kneeOffsetCtrl, ctrlIKLeg, colourTU, *args):
-        # rename the GRP_LOC_worldFollow to GRP_LOC_follow if not already
-        try:
-            grpFollowWorld = mc.ls("GRP_LOC_worldFollow")[0]
-        except:
-            try:
-                grpFollowWorld = mc.ls("GRP_LOC_follow")[0]
-            except:
-                mc.warning("Your follow locator is not properly named")
-                return
-            pass
-        # replace "GRP_LOC_worldFollow" with "GRP_LOC_follow"
-        grpFollowWorldRename = grpFollowWorld.replace("worldFollow", "follow")
-        try:
-            # rename if necessary
-            mc.rename(grpFollowWorld, grpFollowWorldRename)
-        except:
-            pass
+    def tgpCreateMirror(self, locHeel, leftRightReplace, leftRightReplaceMirror):
+        locHeelMirrorsWork = mc.duplicate(locHeel, rc=True)
 
-        # parents the follow control under the world follow group
-        mc.parent(locAutoKneeFollow, grpFollowWorldRename)
+        locHeelArrayMirror = []
 
-        # makes invisible the locator for the world follow and the locators under the foot
-        mc.setAttr("{0}.visibility".format(locAutoKneeFollow), False)
-        mc.setAttr("{0}.visibility".format(offsetFoot), False)
-
-        # groups the knee under the leg rig
-        grpRigLeg = "GRP_rig_" + leftRight + "leg"
-        mc.parent(kneeOffsetCtrl[0], grpRigLeg)
-
-        # makes our colours the corresponding side values
-        mc.setAttr('{0}.overrideEnabled'.format(kneeOffsetCtrl[0]), 1)
-        mc.setAttr("{0}.overrideColor".format(kneeOffsetCtrl[0]), colourTU)
-
-        mc.setAttr('{0}.overrideEnabled'.format(offsetFoot), 1)
-        mc.setAttr("{0}.overrideColor".format(offsetFoot), colourTU)
-
-        mc.connectAttr("{0}.v".format(ctrlIKLeg), "{0}.v".format(kneeOffsetCtrl[1]))
-
-        # lock and hide stuff at the end
-        CRU.lockHideCtrls(kneeOffsetCtrl[1], scale=True, rotate=True, visible=True)
-
-    def tgpCreateMirror(self, offsetFoot, leftRightReplace, leftRightReplaceMirror, jntLegs):
-        offsetFootStuffMirrorWork = mc.duplicate(offsetFoot, rc=True)
-        offsetFootMirrorWork = offsetFootStuffMirrorWork[0]
-        offsetFootMirror = offsetFootMirrorWork.replace(leftRightReplace, leftRightReplaceMirror)[:-1]
-
-        offsetFootStuffMirror = []
-        for i in range(len(offsetFootStuffMirrorWork)):
+        for i in range(len(locHeelMirrorsWork)):
             # switch the l/r,
-            toRename = offsetFootStuffMirrorWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
-            mc.rename(offsetFootStuffMirrorWork[i], toRename)
-            offsetFootStuffMirror.append(toRename)
-        jntLegsMirror = []
-        # get the mirror legs for future reference too
-        for i in range(len(jntLegs)):
-            jntLegsMirror.append(jntLegs[i].replace(leftRightReplace, leftRightReplaceMirror))
+            toRename = locHeelMirrorsWork[i].replace(leftRightReplace, leftRightReplaceMirror)[:-1]
+            mc.rename(locHeelMirrorsWork[i], toRename)
+            locHeelArrayMirror.append(toRename)
+        locHeelMirror = locHeelArrayMirror[0]
 
         # takes the initial offset value, duplicates it, flips the values around, then freezes the transformation
         # translates everything into place
-        mirrorXTrans = mc.getAttr("{0}.tx".format(offsetFootMirror)) * -1
-        mirrorYRot = mc.getAttr("{0}.ry".format(offsetFootMirror)) * -1
-        mirrorXScal = mc.getAttr("{0}.sx".format(offsetFootMirror)) * -1
-        mc.setAttr("{0}.tx".format(offsetFootMirror), mirrorXTrans)
-        mc.setAttr("{0}.ry".format(offsetFootMirror), mirrorYRot)
-        mc.setAttr("{0}.sx".format(offsetFootMirror), mirrorXScal)
-        mc.makeIdentity(offsetFootMirror, apply=True, scale=True)
+        mirrorXTrans = mc.getAttr("{0}.tx".format(locHeelMirror)) * -1
+        mirrorYRot = mc.getAttr("{0}.ry".format(locHeelMirror)) * -1
+        mirrorXScal = mc.getAttr("{0}.sx".format(locHeelMirror)) * -1
+        mc.setAttr("{0}.tx".format(locHeelMirror), mirrorXTrans)
+        mc.setAttr("{0}.ry".format(locHeelMirror), mirrorYRot)
+        mc.setAttr("{0}.sx".format(locHeelMirror), mirrorXScal)
+        mc.makeIdentity(locHeelMirror, apply=True, scale=True)
 
-        return offsetFootStuffMirror, offsetFootMirror, jntLegsMirror
-
-    def setFootAttributeValues(self, ctrlIKLeg, footAttribute, footAttributeValues, loc, footAttributeValuesLoc,
-                               setValue, isLeft=True):
-        # the values may need to be negative when the foot is switched, but some of the values work fine with both sides so we make it a default
-        if isLeft:
-            mult = 1
-        else:
-            mult = -1
-        for i in range(len(footAttributeValues)):
-            # def setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue):
-            CRU.setDriverDrivenValues(ctrlIKLeg, footAttribute, loc, setValue, footAttributeValues[i],
-                                      footAttributeValuesLoc[i] * mult)
-
-    def createKnee(self, ikJntsDrive, leftRight, legLength, ikLeg, isLeft, *args):
-
-        kneeName = "CTRL_" + leftRight + "knee"
-
-        kneeOffsetCtrl = []
-        kneeOffsetCtrl.append(mc.group(n="OFFSET_" + kneeName, w=True, em=True))
-        kneeOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=kneeName)[0])
-        kneeOffsetCtrl.append(mc.group(n="AUTO_" + kneeName, w=True, em=True))
-
-        mc.parent(kneeOffsetCtrl[2], kneeOffsetCtrl[0])
-        mc.parent(kneeOffsetCtrl[1], kneeOffsetCtrl[2])
-
-        toDelete = mc.pointConstraint(ikJntsDrive, kneeOffsetCtrl[0])
-        toDelete2 = mc.aimConstraint(ikJntsDrive[1], kneeOffsetCtrl[0], aim=(0, 0, 1))
-
-        mc.delete(toDelete, toDelete2)
-
-        if not isLeft:
-            legLength = -legLength
-
-        # moves along the Z axis, relative to its pre-move position, along the object space, using worldspace distance units
-        mc.move(0, 0, legLength / 2, kneeOffsetCtrl[0], r=True, os=True, wd=True)
-
-        mc.poleVectorConstraint(kneeOffsetCtrl[1], ikLeg)
-
-        return kneeOffsetCtrl
+        return locHeelArrayMirror, locHeelMirror
 
     def tgpMakeBC(self, *args):
 
@@ -487,28 +425,13 @@ class pcCreateAltRig04Foot(UI):
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
         locNames = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
 
-        ctrlIKLeg = mc.textFieldButtonGrp("ctrlIKLegLoad_tf", q=True, text=True)
-
-        jntRoot = mc.textFieldButtonGrp("jntLegLoad_tf", q=True, text=True)
-        if not jntRoot:
-            mc.warning("You need to select a root joint for the legs")
-            return
-        jntLegs = self.getLegJnts("jntLegLoad_tf", [jntRoot])
-        if not jntLegs:
-            mc.warning("You need to select leg joint")
-            return
+        ctrlIKFoot = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
 
         try:
             locFootRoot = self.locArray[0]
 
         except:
             mc.warning("No locator selected!")
-            return
-        try:
-            offsetFoot = mc.listRelatives(locFootRoot, parent=True)[0]
-        except:
-            # if this doesn't work, tell the user to check if under
-            mc.warning("Be sure the locator is under an offset group")
             return
         locArray = self.locArray
 
@@ -542,31 +465,26 @@ class pcCreateAltRig04Foot(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            # CRU.createLocatorToDelete()
+            CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, locFootRoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side for the locator")
                 return
 
-            if not (CRU.checkLeftRight(isLeft, ctrlIKLeg)):
+            if not (CRU.checkLeftRight(isLeft, ctrlIKFoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side for the IK leg control")
                 return
 
-            if not (CRU.checkLeftRight(isLeft, jntLegs[0])):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the leg joint")
-                return
-
             if mirrorRig:
                 # we want to get the foot before we add anything to it. When doing this programmatically, it's easier
-                offsetFootStuffMirror, offsetFootMirror, jntLegsMirror = self.tgpCreateMirror(offsetFoot,
-                                                                                              leftRightReplace,
-                                                                                              leftRightReplaceMirror,
-                                                                                              jntLegs)
+                self.tgpCreateMirror(locFootRoot,
+                                     leftRightReplace,
+                                     leftRightReplaceMirror,
+                                     )
 
-            # makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft)
-            self.makeFoot(ctrlIKLeg, offsetFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft, colourTU)
+            # makeFootComplete(ctrlIKFoot, locFootRoot, jntLegs, locArray, leftRight, isLeft)
+            self.makeFootComplete(ctrlIKFoot, locArray, leftRight, isLeft)
 
             if mirrorRig:
 
@@ -574,11 +492,10 @@ class pcCreateAltRig04Foot(UI):
 
                 isLeftMirror = not isLeft
 
-                ctrlIKLegMirror = ctrlIKLeg.replace(leftRightReplace, leftRightReplaceMirror)
+                ctrlIKFootMirror = ctrlIKFoot.replace(leftRightReplace, leftRightReplaceMirror)
                 locFootRootMirror = locFootRoot.replace(leftRightReplace, leftRightReplaceMirror)
                 locArrayMirror = []
                 for i in range(len(locArray)):
                     locArrayMirror.append(locArray[i].replace(leftRightReplace, leftRightReplaceMirror))
 
-                self.makeFoot(ctrlIKLegMirror, offsetFootMirror, locFootRootMirror, jntLegsMirror, locArrayMirror,
-                              leftRightMirror, isLeftMirror, colourTUMirror)
+                self.makeFootComplete(ctrlIKFootMirror, locArrayMirror, leftRightMirror, isLeftMirror)
