@@ -732,7 +732,7 @@ class pcCreateRigAlt02Head(UI):
         # gets us most of the geos
         jntArrayNoEnd = [x for x in self.jointArray if "End" not in x]
         print("jntArrayNoEnd: {0}".format(jntArrayNoEnd))
-        jntArray = self.jointArrayNeck
+        jntArray = self.jointArrayNeck[:]
         jntEnd = jntArray[-1]
 
         jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
@@ -742,8 +742,8 @@ class pcCreateRigAlt02Head(UI):
         if jawSel or eyesSel:
             jntHead = mc.textFieldButtonGrp("jntHead_tfbg", q=True, text=True)
 
-            jntArrayHead = self.jointArrayHead
-            jntArrayHeadEnds = self.jointEndArrayHead
+            jntArrayHead = self.jointArrayHead[:]
+            jntArrayHeadEnds = self.jointEndArrayHead[:]
             checkList2 = [jntHead]
             print("jntArrayHead: {0}".format(jntArrayHead))
 

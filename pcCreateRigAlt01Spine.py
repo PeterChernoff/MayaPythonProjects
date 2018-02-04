@@ -426,7 +426,7 @@ class pcCreateRigAlt01Spine(UI):
         else:
             CRU.createLocatorToDelete()
             # create the IK base controls
-            jntArray = self.jointArray
+            jntArray = self.jointArray[:]
             jntStart = jntArray[0]
             jntEnd = jntArray[-1]
 
