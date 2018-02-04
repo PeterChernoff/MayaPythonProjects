@@ -4,7 +4,7 @@ import maya.cmds as mc
 class pcCreateRigUtilities:
     @staticmethod
     def setupCtrl(s, size=3, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                  addPrefix=False, boxDimensionsLWH=None):
+                  addPrefix=False, boxDimensionsLWH=None, override=True):
         selname = str(s)
         '''
         0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
@@ -48,9 +48,9 @@ class pcCreateRigUtilities:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName, degree=1, sections=sectionsTU)[0]
             else:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+        if override:
+            mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
+            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
         return ctrl, ctrlName
 
     @staticmethod
@@ -102,7 +102,7 @@ class pcCreateRigUtilities:
     @staticmethod
     def createCTRLsFKDirect(s, size=3, orientVal=(1, 0, 0), colour=5,
                             sectionsTU=None,
-                            addPrefix=False, boxDimensionsLWH=None):
+                            addPrefix=False, boxDimensionsLWH=None, override=True):
 
         ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
                                                         addPrefix, boxDimensionsLWH)
@@ -114,8 +114,9 @@ class pcCreateRigUtilities:
         mc.rename(s, ctrlName)
 
         try:
-            mc.setAttr('{0}.overrideEnabled'.format(ctrl), 1)
-            mc.setAttr("{0}.overrideColor".format(ctrl), colour)
+            if override:
+                mc.setAttr('{0}.overrideEnabled'.format(ctrl), 1)
+                mc.setAttr("{0}.overrideColor".format(ctrl), colour)
         except:
             mc.warning('{0}.overrideEnabled is locked'.format(ctrl))
         return ctrl, fkShape
@@ -170,17 +171,23 @@ class pcCreateRigUtilities:
             mc.setAttr("{0}.overrideColor".format(toDelete), 13)
 
     @staticmethod
-    def tgpSetGeo(geoJntArray, setter="JNT_BND_", setLayer=False, *args):
-        print(geoJntArray)
+    def tgpSetGeo(geoJntArray, setter="JNT_BND_", setLayer=False, printOut=False, *args):
+        if printOut:
+            print(geoJntArray)
 
         for i in range(len(geoJntArray)):
             try:
-                print("Setting {0}".format(geoJntArray[i]))
+                if printOut:
+                    print("Setting {0}".format(geoJntArray[i]))
+
                 theParent = geoJntArray[i]
+
                 geoName = theParent.replace(setter, "GEO_")
-                print("geoName: {0}".format(geoName))
+                if printOut:
+                    print("geoName: {0}".format(geoName))
                 mc.parent(geoName, theParent)
-                print("Parenting complete")
+                if printOut:
+                    print("Parenting complete")
                 pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
                 mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
                 mc.xform(geoName, ws=True, pivots=pivotTranslate)
@@ -188,8 +195,119 @@ class pcCreateRigUtilities:
                     pcCreateRigUtilities.layerEdit([geoName], geoLayer=True, noRecurse=True)
 
             except:
-                mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
-                mc.warning("===========")
+                if printOut:
+                    mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
+                    mc.warning("===========")
+
+    @staticmethod
+    def tgpSetGeoManualStretch(geoJntArray, setter="JNT_BND_", setLayer=False, printOut=False, keyWord=None, *args):
+
+        for i in range(len(geoJntArray)):
+            try:
+                if printOut:
+                    print("^^^^^^")
+                    print("Setting {0}".format(geoJntArray[i]))
+
+                theParent = geoJntArray[i]
+
+                if keyWord in geoJntArray[i]:
+                    # if the keyword is in here, we need to get the bone parent
+                    grandparent = mc.listRelatives(geoJntArray[i], type="joint", p=True)[0]
+                    parents = mc.listRelatives(grandparent, type="joint")
+                    theChild = [x for x in parents if keyWord not in x][0]
+
+                else:
+                    theChild = mc.listRelatives(geoJntArray[i], type="joint")[0]
+
+                geoName = theParent.replace(setter, "GEO_")
+                if printOut:
+                    print("geoName: {0}".format(geoName))
+
+                if printOut:
+                    print("Parenting complete")
+                pcCreateRigUtilities.tgpCreateStretchMultNode(theChild, geoName, theParent,
+                                                              printOut, )
+
+
+
+
+
+            except:
+                if printOut:
+                    mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
+                    mc.warning("===========")
+
+    @staticmethod
+    def tgpCreateStretchMultNode(theChild, geoName, theParent,
+                                 printOut, ):
+        # takes the joint, the connects it to the geometry, and uses theChild for length
+
+        rotateOrder = mc.getAttr("{0}.rotateOrder".format(theParent))
+        mc.setAttr("{0}.rotateOrder".format(geoName), rotateOrder)
+
+        mdLimbSetup = geoName
+        mdLimb = "{0}_normalize_DIV".format(mdLimbSetup)
+        if printOut:
+            print("mdLimb: {0}".format(mdLimb))
+        mc.shadingNode("multiplyDivide", n=mdLimb, au=True)
+        mc.connectAttr("{0}.translateX".format(theChild), "{0}.input1X".format(mdLimb))
+        getLen = mc.getAttr("{0}.translateX".format(theChild))
+        mc.setAttr("{0}.input2X".format(mdLimb), getLen)
+
+        mc.setAttr("{0}.operation".format(mdLimb), 2)  # set the operation to divide
+        mc.connectAttr("{0}.outputX".format(mdLimb), "{0}.scaleX".format(geoName))
+
+    @staticmethod
+    def tgpSetGeoSpecial(geoJntArray, setter="JNT_BND_", setLayer=False, printOut=False, keyWord=None, stretch=False,
+                         *args):
+        if printOut:
+            print(geoJntArray)
+
+        for i in range(len(geoJntArray)):
+
+            try:
+
+                if printOut:
+                    print("Setting {0}".format(geoJntArray[i]))
+
+                theParent = geoJntArray[i]
+                theChild = mc.listRelatives(geoJntArray[i], type="joint")[0]
+                geoName = theParent.replace(setter, "GEO_")
+                geoNameSpecial = "{0}{1}".format(geoName, keyWord)
+                listNames = mc.ls("{0}*".format(geoNameSpecial), type="transform")
+                # listNames.append(geoName)
+                if printOut:
+                    print("geoName: {0}".format(geoName))
+                mc.parent(listNames, theParent)
+                if printOut:
+                    print("Parenting complete")
+                pivotTranslate = mc.xform(theParent, q=True, ws=True, rotatePivot=True)
+
+                if printOut:
+                    print("pivotTranslate: {0}".format(pivotTranslate))
+
+                if printOut:
+                    print("Making Identity: {0}".format(geoName))
+
+                if printOut:
+                    print("make Identity complete")
+                mc.xform(geoName, ws=True, pivots=pivotTranslate)
+                mc.makeIdentity(geoName, a=True, t=True, r=True)  # the scale should be locked already at this point
+                for j in range(len(listNames)):
+                    print("listName[{0}]: {1}".format(j, listNames[j]))
+                    mc.xform(listNames[j], ws=True, pivots=pivotTranslate)
+                    mc.makeIdentity(listNames[j], a=True, t=True, r=True, s=True)
+                    if stretch:
+                        pcCreateRigUtilities.tgpCreateStretchMultNode(theChild, listNames[j], theParent,
+                                                                      printOut)
+
+                if setLayer:
+                    pcCreateRigUtilities.layerEdit(listNames, geoLayer=True, noRecurse=True)
+
+            except:
+                if printOut:
+                    mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
+                    mc.warning("===========")
 
     @staticmethod
     def changeRotateOrder(rotateChangeList, getRotOrder, *args):
@@ -230,6 +348,7 @@ class pcCreateRigUtilities:
     @staticmethod
     def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, geoLayer=False,
                   bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, newLayerName=None,
+                  printout=False,
                   *args):
         if layerVis:
             visVal = 1
@@ -258,6 +377,8 @@ class pcCreateRigUtilities:
         if not mc.objExists(layerName):
             mc.createDisplayLayer(n=layerName, e=True)
         # adds the objects to the layer
+        if printout:
+            print("objectsToLoad: {0}".format(objectsToLoad))
         mc.editDisplayLayerMembers(layerName, objectsToLoad, nr=noRecurse)
 
         # sets the layer to the state we want
@@ -295,7 +416,7 @@ class pcCreateRigUtilities:
             return mc.objectType(val)
 
     @staticmethod
-    def createNail(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, *args):
+    def createNail(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, override=True, *args):
         selname = str(s)
         # creates a nail at the location
         '''
@@ -327,9 +448,9 @@ class pcCreateRigUtilities:
         except:
             ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
             # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
-
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+        if override:
+            mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
+            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
 
         auto = mc.group(ctrl, n="AUTO_" + ctrl)
         offset = mc.group(auto, n="OFFSET_" + ctrl)
@@ -344,7 +465,8 @@ class pcCreateRigUtilities:
         return offsetCtrl
 
     @staticmethod
-    def createNailNoOffset(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, prnt=True, pnt=False, *args):
+    def createNailNoOffset(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, prnt=True, pnt=False, override=True,
+                           *args):
         selname = str(s)
         # creates a nail at the location
         '''
@@ -380,8 +502,9 @@ class pcCreateRigUtilities:
             ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
             # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
 
-        mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-        mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+        if override:
+            mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
+            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
 
         if pnt:
             todelete = mc.pointConstraint(s, ctrl)
@@ -396,7 +519,7 @@ class pcCreateRigUtilities:
         return ctrl
 
     @staticmethod
-    def makeLimbSwitch(ctrlLimb, locLimbFollowArray, listParents, enumName, enumVals, colourTU, *args):
+    def makeLimbSwitch(ctrlLimb, locLimbFollowArray, listParents, enumName, enumVals, colourTU, override=True, *args):
 
         # get the auto_ctrl of the limb
         autoCtrlLimb = mc.listRelatives(ctrlLimb, p=True, c=False)[0]
@@ -413,8 +536,9 @@ class pcCreateRigUtilities:
             mc.setAttr("{0}.localScaleY".format(locShape), 15)
             mc.setAttr("{0}.localScaleZ".format(locShape), 15)
 
-            mc.setAttr('{0}.overrideEnabled'.format(locName), 1)
-            mc.setAttr("{0}.overrideColor".format(locName), colourTU)
+            if override:
+                mc.setAttr('{0}.overrideEnabled'.format(locName), 1)
+                mc.setAttr("{0}.overrideColor".format(locName), colourTU)
 
             toDelete = mc.parentConstraint(ctrlLimb, locName)[0]
             mc.delete(toDelete)
@@ -439,3 +563,23 @@ class pcCreateRigUtilities:
         for i in range(len(locLimbFollowArray)):
             mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
             pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
+
+    @staticmethod
+    def createParentGroup(objToGrp, grpName, point=False, orient=False, parent=False):
+        mc.group(n=grpName, em=True, w=True)
+        if parent:
+            todelete = mc.parentConstraint(objToGrp, grpName)
+            mc.delete(todelete)
+        else:
+            if point:
+                todelete = mc.pointConstraint(objToGrp, grpName)
+                mc.delete(todelete)
+            if orient:
+                todelete = mc.orientConstraint(objToGrp, grpName)
+                mc.delete(todelete)
+        parentObj = mc.listRelatives(objToGrp, p=True)
+        if parentObj is not None:
+            # if there is a parent, do something
+            mc.parent(grpName, parentObj[0])
+
+        mc.parent(objToGrp, grpName)
