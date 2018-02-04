@@ -34,15 +34,16 @@ class pcCreateRigAlt03Legs(UI):
         mc.text(l="")
         mc.separator(st="in", h=17, w=500)
         mc.setParent("..")
-        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
+        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 125), (3, 200)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
         mc.text(l="Mirror Leg As Well?")
         # mc.setParent("..")
-        mc.radioButtonGrp("selLegMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=1, cw2=[50, 50], )
+        mc.radioButtonGrp("selLegMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
-        mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=False)
+        mc.checkBox("selCreateTwists_cb", l="Create Twists", en=True, v=True)
         mc.checkBox("selSpineEnd_cb", l="Connect To Hip", en=True, v=True)
+        mc.checkBox("selAnkleTwist_cb", l="Includes Ankle Twist Bones", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -187,12 +188,20 @@ class pcCreateRigAlt03Legs(UI):
 
         return self.jointArray
 
-    def makeTwists(self, numTwists, leftRight, jntLegArray, geoJntArray, footOffsetCtrl, *args):
+    def makeTwists(self, numTwists, jntLegArray, geoJntArray, ctrlFootSettings,
+                   leftRight, *args):
         # colourTU and isLeft is for a special part of the code which lets us create a foot control
         numTwistsPlus1 = numTwists + 1
         twists = numTwists
         twistJnts = []
         twistExpression = ""
+        breakVal = "_{0}".format(leftRight)
+
+        self.lowerTwistVal = "lowerLegTwist"
+        self.upperTwistVal = "upperLegTwist"
+
+        mc.addAttr(ctrlFootSettings, longName=self.lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
+        mc.addAttr(ctrlFootSettings, longName=self.upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
 
         for i in range(len(jntLegArray)):
             twistJntsSubgroup = []
@@ -203,14 +212,14 @@ class pcCreateRigAlt03Legs(UI):
                 nextJntVal = nextJnt
             else:
                 nextJnts = mc.listRelatives(val, c=True, type="joint", ad=True)
-                nextJnt = nextJnts[-2]
+                nextJnt = nextJnts[-1]
                 nextJntVal = nextJnts[-1]
 
                 # with the ankle, we can create the control
 
-            nextJntYVal = mc.getAttr("{0}.ty".format(nextJntVal))
-            nextJntIncrement = nextJntYVal / (numTwistsPlus1)
-            twistJnt = mc.duplicate(val, po=True, n="ToDelete")
+            nextJntXVal = mc.getAttr("{0}.tx".format(nextJntVal))
+            nextJntIncrement = nextJntXVal / (numTwistsPlus1)
+            twistJnt = mc.duplicate(val, po=True, n="ToDelete")  # duplicate the joint only
 
             # create the joint twists at the proper location
 
@@ -230,11 +239,13 @@ class pcCreateRigAlt03Legs(UI):
                 valx = x + 1
                 twistTempName = "{0}Twist{1}".format(val, valx)
 
+                # names the multiplication node
+                nameValMul = "{0}{1}".format(leftRight, twistTempName.split(leftRight)[1])
+                # print("nameVal: {0}".format(nameValMul))
+
                 twistTemp = mc.duplicate(twistJnt, n=twistTempName)
 
                 mc.parent(twistTemp, jntLegArray[i])
-                mc.setAttr("{0}.ty".format(twistTempName), nextJntIncrement * valx)
-                twistJntsSubgroup.append(twistTemp[0])
 
                 twistInverse = 1.0 / (numTwistsPlus1)
                 '''
@@ -243,15 +254,47 @@ class pcCreateRigAlt03Legs(UI):
                     twistInverse = 1.0 / (numTwistsPlus1)
                 else:
                     twistInverse = -1.0 / (numTwistsPlus1)'''
+                multNodeTX = "{0}_TRANS_MUL".format(nameValMul)  # note: this is a test name
+                mc.shadingNode("multiplyDivide", n=multNodeTX, au=True)
+                mc.setAttr("{0}.operation".format(multNodeTX), 1)
+                mc.setAttr("{0}.input2X".format(multNodeTX), valx * twistInverse)
+                # print("nextJnt: {0}".format(nextJnt))
+                mc.connectAttr("{0}.tx".format(nextJnt), "{0}.input1X".format(multNodeTX))
+                mc.connectAttr("{0}.outputX".format(multNodeTX), "{0}.translateX".format(twistTempName))
 
-                if "upper" in nextJnt:
+                if "foot" in nextJnt:
+                    if not self.checkAnkleTwist:
+                        rotVal = "Z"
+                    else:
+                        rotVal = "X"
+                    m = -1
+                else:
+                    rotVal = "X"
+                    m = 1
+                multNodeRX = "{0}_ROT_MUL".format(nameValMul)  # note: this is a test name
+                mc.shadingNode("multiplyDivide", n=multNodeRX, au=True)
+                mc.setAttr("{0}.operation".format(multNodeRX), 1)
+                mc.setAttr("{0}.input2X".format(multNodeRX), valx * twistInverse * m)
+                mc.connectAttr("{0}.rotate{1}".format(nextJnt, rotVal), "{0}.input1X".format(multNodeRX))
+
+                if "upper" in val:
                     legType = self.upperTwistVal
-                elif "lower" in nextJnt:
+                elif "lower" in val:
                     legType = self.lowerTwistVal
 
-                twistExpression += "{0}.rotateY = {1}.rotateY * {2}*{3}.{4};\n".format(twistTempName, nextJnt,
+                multNodeTwist = "{0}_TWIST_MUL".format(nameValMul)  # note: this is a test name
+                mc.shadingNode("multiplyDivide", n=multNodeTwist, au=True)
+                mc.setAttr("{0}.operation".format(multNodeTwist), 1)
+                mc.connectAttr("{0}.{1}".format(ctrlFootSettings, legType), "{0}.input1X".format(multNodeTwist))
+                mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodeTwist))
+
+                mc.connectAttr("{0}.outputX".format(multNodeTwist), "{0}.rotateX".format(twistTempName))
+
+                twistJntsSubgroup.append(twistTemp[0])
+
+                '''twistExpression += "{0}.rotateX = {1}.rotateX * {2}*{3}.{4};\n".format(twistTempName, nextJnt,
                                                                                        valx * twistInverse,
-                                                                                       footOffsetCtrl[1], legType)
+                                                                                       ctrlFootSettings, legType)'''
                 geoJntArray.append(twistTempName)
 
             mc.delete(twistJnt)
@@ -260,11 +303,7 @@ class pcCreateRigAlt03Legs(UI):
 
             twistExpression += "\n"
 
-            # change to account for the limb
-        xprNameTwist = "expr_" + leftRight + "legTwist"  # changes to account for the left or right
-
-        mc.expression(s=twistExpression, n=xprNameTwist)
-        return xprNameTwist, twistExpression, geoJntArray
+        return geoJntArray
 
     def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
                               renameThis=True, addToEnd="", *args):
@@ -291,33 +330,49 @@ class pcCreateRigAlt03Legs(UI):
                     mc.delete(toTest)
         return jntsReturn
 
-    def makeBlend(self, jntsSrc1, jntsSrc2, jntsTgt, ctrl, ctrlAttr, rotate, translate, override=False, *args):
+    def makeBlendBasic(self, jntsSrc1, jntsSrc2, jntsTgt, ctrl, ctrlAttr, rotate, translate, override=False, *args):
 
         blndNodeTrans = []
         blndNodeRot = []
+        # colour2 is at 0, colour1 is at 1
+
         for i in range(len(jntsSrc1)):
-            print("======")
-            print("jntsSrc1[{0}]: {1}".format(i, jntsSrc1[i]))
-            print("jntsSrc2[{0}]: {1}".format(i, jntsSrc2[i]))
-            print("jntsTgt[{0}]: {1}".format(i, jntsTgt[i]))
-            print("ctrl: {0}".format(ctrl))
-            print("ctrlAttr: {0}".format(ctrlAttr))
             name = jntsTgt[i]
             if translate:
                 val = ".translate"
                 blndNodeTrans.append(mc.shadingNode("blendColors", au=True, name="{0}_trans_BCN###".format(name)))
-                mc.connectAttr(jntsSrc1[i] + val, blndNodeTrans[i] + ".color1")
-                mc.connectAttr(jntsSrc2[i] + val, blndNodeTrans[i] + ".color2")
-                mc.connectAttr(blndNodeTrans[i] + ".output", jntsTgt[i] + "{0}".format(val))
+                mc.connectAttr(jntsSrc1[i] + val + "X", blndNodeTrans[i] + ".color2R")
+                mc.connectAttr(jntsSrc1[i] + val + "Y", blndNodeTrans[i] + ".color2G")
+                mc.connectAttr(jntsSrc1[i] + val + "Z", blndNodeTrans[i] + ".color2B")
+
+                mc.connectAttr(jntsSrc2[i] + val + "X", blndNodeTrans[i] + ".color1R")
+                mc.connectAttr(jntsSrc2[i] + val + "Y", blndNodeTrans[i] + ".color1G")
+                mc.connectAttr(jntsSrc2[i] + val + "Z", blndNodeTrans[i] + ".color1B")
+
+                mc.connectAttr(blndNodeTrans[i] + ".outputR", jntsTgt[i] + "{0}".format(val + "X"))
+                mc.connectAttr(blndNodeTrans[i] + ".outputG", jntsTgt[i] + "{0}".format(val + "Y"))
+                mc.connectAttr(blndNodeTrans[i] + ".outputB", jntsTgt[i] + "{0}".format(val + "Z"))
                 blndName = "{0}.{1}".format(ctrl, ctrlAttr)
                 mc.connectAttr(blndName, blndNodeTrans[i] + ".blender", f=True)
 
             if rotate:
                 val = ".rotate"
                 blndNodeRot.append(mc.shadingNode("blendColors", au=True, name="{0}_rot_BCN###".format(name)))
-                mc.connectAttr(jntsSrc1[i] + val, blndNodeRot[i] + ".color1")
-                mc.connectAttr(jntsSrc2[i] + val, blndNodeRot[i] + ".color2")
-                mc.connectAttr(blndNodeRot[i] + ".output", jntsTgt[i] + "{0}".format(val))
+
+                mc.connectAttr(jntsSrc1[i] + val + "X", blndNodeRot[i] + ".color2R")
+                mc.connectAttr(jntsSrc1[i] + val + "Y", blndNodeRot[i] + ".color2G")
+                mc.connectAttr(jntsSrc1[i] + val + "Z", blndNodeRot[i] + ".color2B")
+
+                mc.connectAttr(jntsSrc2[i] + val + "X", blndNodeRot[i] + ".color1R")
+                mc.connectAttr(jntsSrc2[i] + val + "Y", blndNodeRot[i] + ".color1G")
+                mc.connectAttr(jntsSrc2[i] + val + "Z", blndNodeRot[i] + ".color1B")
+
+                '''mc.connectAttr(jntsSrc1[i] + val, blndNodeRot[i] + ".color2")
+                mc.connectAttr(jntsSrc2[i] + val, blndNodeRot[i] + ".color1")'''
+
+                mc.connectAttr(blndNodeRot[i] + ".outputR", jntsTgt[i] + "{0}".format(val + "X"))
+                mc.connectAttr(blndNodeRot[i] + ".outputG", jntsTgt[i] + "{0}".format(val + "Y"))
+                mc.connectAttr(blndNodeRot[i] + ".outputB", jntsTgt[i] + "{0}".format(val + "Z"))
                 blndName = "{0}.{1}".format(ctrl, ctrlAttr)
                 mc.connectAttr(blndName, blndNodeRot[i] + ".blender", f=True)
 
@@ -341,42 +396,62 @@ class pcCreateRigAlt03Legs(UI):
                 jntsReturn.append(toRename)
         return jntsReturn
 
-    def createFKCtrls(self, fkJnts, colourTU, *args):
+    def createFKCtrls(self, fkJnts, colourTU, leftRight, *args):
+
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+        set = False
         for i in range(len(fkJnts[:-1])):
             fkJnt = fkJnts[i]
-            print(fkJnt)
+
             if "Leg" in fkJnt:
-                legChild = mc.listRelatives(fkJnt, typ="joint")[0]
-                legLen = mc.getAttr("{0}.translateX".format(legChild))
-                print(legLen)
-                if i == 0:
-                    sizeTU = 13
+                if "End" in fkJnt:
+                    pass
                 else:
-                    sizeTU = 11
-                ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(1, 0, 0), colour=colourTU, )
-                fkJnts[i] = ctrl
 
-                mc.select(ctrlShape + ".cv[:]")
+                    legChild = mc.listRelatives(fkJnt, typ="joint")[0]
+                    legLen = mc.getAttr("{0}.translateX".format(legChild))
+                    if i == 0:
+                        sizeTU = 13
+                    else:
+                        sizeTU = 11
+                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(1, 0, 0), colour=colourTU,
+                                                              override=False)
+                    fkJnts[i] = ctrl
 
-                mc.move(legLen * 0.5, 0, -legLen * 0.05, r=True, os=True)
+                    mc.select(ctrlShape + ".cv[:]")
+
+                    mc.move(legLen * 0.5, 0, -legLen * 0.05, r=True, os=True)
+                    set = True
             else:
-
-                if "foot" in fkJnt:
+                if self.checkAnkleTwist:
+                    footJnt = "ankleTwist"
+                else:
+                    footJnt = "foot"
+                if footJnt in fkJnt:
                     sizeTU = 12
                     ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(0, 1, 0),
-                                                              colour=colourTU, )
+                                                              colour=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[:]")
                     mc.rotate(0, 0, 90, ws=True)
-                else:
+
+                    set = True
+                elif "ball" in fkJnt:
+
                     sizeTU = 7
-                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(1, 0, 0),
-                                                              colour=colourTU, )
+                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(m * 1, 0, 0),
+                                                              colour=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[5:7]")
                     mc.select(ctrlShape + ".cv[0:1]", add=True)
                     mc.scale(0, cp=True, z=True)
+                    set = True
+            if set:
                 fkJnts[i] = ctrl
+                set = False
 
         return fkJnts
 
@@ -406,14 +481,22 @@ class pcCreateRigAlt03Legs(UI):
         return ctrlFKLengthKeyArray
 
     def createIKLegs(self, ikJnts, newLayerNameIK, leftRight, *args):
+        if self.checkAnkleTwist:
+            ikJntAnkle = [x for x in ikJnts if "ankleTwist" in x[-10:]][0]
+            ikJntEnd = [x for x in ikJnts if "legEnd" in x[-6:]][0]
         ikJntFoot = [x for x in ikJnts if "foot" in x[-4:]][0]
         ikJntBall = [x for x in ikJnts if "ball" in x[-4:]][0]
         ikJntToe = [x for x in ikJnts if "toe" in x][0]
 
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+
         size = mc.getAttr("{0}.tx".format(ikJnts[-1]))
         ctrlName = "CTRL_{0}foot".format(leftRight)
-        orientVal = [0, 1, 0]
-        ctrlIKFoot = mc.circle(r=size, n=ctrlName, nr=orientVal)[0]
+        orientVal = [0, m * 1, 0]
+        ctrlIKFoot = mc.circle(r=size, n=ctrlName, nr=orientVal, sections=10)[0]
         todelete = mc.pointConstraint(ikJntFoot, ctrlIKFoot)
         mc.delete(todelete)
 
@@ -421,16 +504,25 @@ class pcCreateRigAlt03Legs(UI):
         mc.select("{0}.cv[:]".format(ctrlIKFoot))
         mc.move(0, moveY=True, ws=True)
         mc.move(2.6, moveZ=True, r=True)
+
         mc.scale(.8, xz=True)
-        mc.select("{0}.cv[3:7]".format(ctrlIKFoot))
-        mc.move(size * 1.4, moveZ=True, r=True)
+        mc.scale(1.2, z=True)
+        mc.select("{0}.cv[3:8]".format(ctrlIKFoot))
+        mc.move(m * size * 1.4, moveZ=True, r=True)
+
+        mc.select("{0}.cv[3]".format(ctrlIKFoot))
+        mc.move(size * .2, moveX=True, r=True)
         mc.makeIdentity(ctrlIKFoot, apply=True)
         mc.select(cl=True)
 
         CRU.layerEdit(ctrlIKFoot, newLayerName=newLayerNameIK)
         CRU.changeRotateOrder(ctrlIKFoot, "ZXY")
 
-        jntsToUseFoot = [ikJnts[0], ikJntFoot]
+        if self.checkAnkleTwist:
+            ikJntFootUse = ikJntEnd
+        else:
+            ikJntFootUse = ikJntFoot
+        jntsToUseFoot = [ikJnts[0], ikJntFootUse]
         ikSolver = "ikRPsolver"
 
         ikLegs = self.createIKVal(jntsToUseFoot, leftRight, "foot", ikSolver, )
@@ -461,8 +553,18 @@ class pcCreateRigAlt03Legs(UI):
         return ikLegs
 
     def makeIKStretch(self, ikJnts, leftRight, ctrlIKFoot, *args):
+
+        if leftRight == self.valLeft:
+            # need to make adjustments for the values making a mirror
+            m = 1
+        else:
+            m = -1
         # creates locators that measure distance for the leg
-        ikJntFoot = [x for x in ikJnts if "foot" in x[-4:]][0]
+        if self.checkAnkleTwist:
+            ikJntFoot = [x for x in ikJnts if "legEnd" in x[-6:]][0]
+        else:
+            ikJntFoot = [x for x in ikJnts if "foot" in x[-4:]][0]
+
         # create the starting space locator for the distance node
         locIKLegLenStart = "LOC_IK_{0}leg_lengthStart".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locIKLegLenStart)
@@ -475,20 +577,15 @@ class pcCreateRigAlt03Legs(UI):
         mc.delete(todelete)
 
         disIKLeg = "LEN_IK_{0}leg".format(leftRight)
-        disIKLegShape = self.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg)
+        disIKLegShape = self.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
         mc.parent(locIKLegLenEnd, ctrlIKFoot)
 
         driverAttr = "distance"
-        driverLen = mc.getAttr("{0}.{1}".format(disIKLegShape, driverAttr))
+        driverLen = mc.getAttr("{0}.{1}".format(disIKLegShape, driverAttr)) * m
 
         upperLegLen = mc.getAttr("{0}.translateX".format(ikJnts[1]))
         lowerLegLen = mc.getAttr("{0}.translateX".format(ikJntFoot))
-        sumLegLen = upperLegLen + lowerLegLen
-
-        print("driverLen: {0}".format(driverLen))
-        print("upperLegLen: {0}".format(upperLegLen))
-        print("lowerLegLen: {0}".format(lowerLegLen))
-        print("totalLegLen: {0}".format(sumLegLen))
+        sumLegLen = (upperLegLen + lowerLegLen) * m
 
         drivenAttr = "translateX"
 
@@ -517,7 +614,7 @@ class pcCreateRigAlt03Legs(UI):
 
         return locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray
 
-    def createDistanceDimensionNode(self, startLoc, endLoc, lenNodeName):
+    def createDistanceDimensionNode(self, startLoc, endLoc, lenNodeName, toHide=False):
 
         distDimShape = mc.distanceDimension(sp=(0, 0, 0), ep=(0, 0, 0))
         mc.connectAttr("{0}.worldPosition".format(startLoc), "{0}.startPoint".format(distDimShape), f=True)
@@ -525,15 +622,23 @@ class pcCreateRigAlt03Legs(UI):
         distDimParent = mc.listRelatives(distDimShape, p=True)
         mc.rename(distDimParent, lenNodeName)
         lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
+        if toHide:
+            mc.setAttr("{0}.visibility".format(startLoc), False)
+            mc.setAttr("{0}.visibility".format(endLoc), False)
+            mc.setAttr("{0}.visibility".format(lenNodeName), False)
         return lenNodeNameShape
 
     def createNoFlipIKLeg(self, ikJnts, ctrlIKFoot, ikLegs, leftRight, *args):
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
 
         locKnee = "LOC_{0}knee".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locKnee)
         todelete = mc.pointConstraint(ikJnts[1], locKnee)
         mc.delete(todelete)
-        legLen = mc.getAttr("{0}.translateX".format(ikJnts[1]))
+        legLen = mc.getAttr("{0}.translateX".format(ikJnts[1])) * m
         mc.move(legLen, locKnee, r=True, moveZ=True)
         mc.makeIdentity(locKnee, apply=True)
 
@@ -543,6 +648,7 @@ class pcCreateRigAlt03Legs(UI):
         # point snap the loc_knee to the JNT_IK_foot (or CTRL_foot since they're the same location)
         todelete = mc.pointConstraint(ctrlIKFoot, locKnee)
         mc.move(legLen, locKnee, r=True, moveX=True)
+        # the leftRight mirroring affect the twist value determines
         mc.setAttr("{0}.twist".format(ikLegs[0]), 90)
         mc.delete(todelete)
 
@@ -557,6 +663,7 @@ class pcCreateRigAlt03Legs(UI):
         mc.parent(grpNoFlipKnee, ctrlIKFoot)
         mc.makeIdentity(grpNoFlipKnee, apply=True)
         mc.parent(locKnee, grpNoFlipKnee)
+        mc.addAttr(ctrlIKFoot, longName="blank", niceName="-----", at="enum", en="____", k=True)
 
         kneeTwist = "kneeTwist"
         mc.addAttr(ctrlIKFoot, longName=kneeTwist, at="float", k=True)
@@ -566,18 +673,24 @@ class pcCreateRigAlt03Legs(UI):
 
     def createDualKnee(self, ikJnts, ctrlIKFoot, ikLegs, grpNoFlipKnee, locIKLegLenEnd, locIKLegLenStart,
                        ctrlFootSettings, leftRight, newLayerNameIK, *args):
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
 
         # get the noFlip values
         dupsNoFlip = mc.duplicate(ctrlIKFoot, ic=True, un=True, rc=True)
         leftRightVal = "_{0}".format(leftRight)
-        print("dupsNoFlip: {0}".format(dupsNoFlip))
 
         mc.delete(ikLegs[0], locIKLegLenStart, locIKLegLenEnd, grpNoFlipKnee)
 
-        dupsTrackNoFlip, dupsMoveNoFlip, returnLegNoFlip = self.duplicateNoFlipOrPV(locIKLegLenEnd, grpNoFlipKnee,
-                                                                                    ikLegs, ctrlIKFoot,
-                                                                                    dupsNoFlip, leftRightVal,
-                                                                                    prefix="noFlip")
+        dupsTrackNoFlip, dupsMoveNoFlip, returnLegNoFlip, animCrvNoFlip, locStartArrayNoFlip, lenArrayNoFlip = self.duplicateNoFlipOrPV(
+            locIKLegLenEnd, grpNoFlipKnee,
+            ikLegs, ctrlIKFoot,
+            dupsNoFlip, leftRightVal,
+            prefix="noFlip")
+        lenNoFlip = lenArrayNoFlip[0]
+        locStartNoFlip = locStartArrayNoFlip[0]
 
         # the duplicated noFlip group should have the same name as before
         kneeTwist = "kneeTwist"
@@ -594,29 +707,32 @@ class pcCreateRigAlt03Legs(UI):
         # get the nodes we will move
         dupsPVHDL = [x for x in dupsMoveNoFlip if "HDL" in x]
         dupsPVLocEnd = [x for x in dupsMoveNoFlip if "lengthEnd" in x][0]
-        print("dupsPVHDL: {0}".format(dupsPVHDL))
-        print("dupsPVLocEnd: {0}".format(dupsPVLocEnd))
-        dupsTrackPV, dupsMovePV, returnLegPV = self.duplicateNoFlipOrPV(dupsPVLocEnd, grpNoFlipKnee, dupsPVHDL,
-                                                                        ctrlIKFoot,
-                                                                        dupsPV, leftRightVal, prefix="pv",
-                                                                        altPrefixReplace="noFlip", )
+        dupsTrackPV, dupsMovePV, returnLegPV, animCrvPV, locStartArrayPV, lenArrayPV = self.duplicateNoFlipOrPV(
+            dupsPVLocEnd, grpNoFlipKnee,
+            dupsPVHDL,
+            ctrlIKFoot,
+            dupsPV, leftRightVal,
+            prefix="pv",
+            altPrefixReplace="noFlip", )
+
+        lenPV = lenArrayPV[0]
+        locStartPV = locStartArrayPV[0]
+
         mc.delete(dupsPVToDelete)
         dupsPVgrpLoc = [x for x in dupsMovePV if "GRP" in x]
-        print("dupsPVgrpLoc: {0}".format(dupsPVgrpLoc))
         locPVKnee = mc.listRelatives(dupsPVgrpLoc)[0]
-        print("locPVKnee: {0}".format(locPVKnee))
         mc.parent(locPVKnee, w=True)
         mc.delete(dupsPVgrpLoc)
         dupsPVHDL = [x for x in dupsMovePV if "HDL" in x][0]
-        print("dupsPVHDL: {0}".format(dupsPVHDL))
         mc.setAttr("{0}.twist".format(dupsPVHDL), 0)
         mc.move(0, 0, 0, locPVKnee, os=True)
 
         # blend the auto/manual leg control
-        longName = "autoManualKneeBlend"
-        niceName = "Auto (noFlip) / Manual (PV) Knee Blend"
-        # note: we se DV to 0.5 for testing purposes
-        mc.addAttr(ctrlFootSettings, longName=longName, niceName=niceName, at="float", k=True, min=0, max=1, dv=0.5)
+        autoManualLN = "autoManualKneeBlend"
+        autoManualNiceName = "Auto (noFlip) / Manual (PV) Knee Blend"
+        # note: we set DV to 0.5 for testing purposes
+        mc.addAttr(ctrlIKFoot, longName=autoManualLN, niceName=autoManualNiceName, at="float", k=True,
+                   min=0, max=1, dv=1)
 
         ikJntsPV = mc.listRelatives(returnLegPV, type="joint", ad=True)
         ikJntsPV.append(returnLegPV)
@@ -626,16 +742,17 @@ class pcCreateRigAlt03Legs(UI):
         ikJntsNoFlip.append(returnLegNoFlip)
         ikJntsNoFlip.reverse()
 
-        self.makeBlend(ikJntsPV, ikJntsNoFlip, ikJnts, ctrlFootSettings, longName, rotate=True, translate=False)
+        self.makeBlendBasic(ikJntsNoFlip, ikJntsPV, ikJnts, ctrlIKFoot, autoManualLN, rotate=True,
+                            translate=True)
 
         # hide values
         mc.setAttr("{0}.v".format(ikJntsPV[0]), False)
         mc.setAttr("{0}.v".format(ikJntsNoFlip[0]), False)
-        # note: I am keeping this visible for testing purposes
-        # mc.setAttr("{0}.v".format(ikJntsPV[0]), False)
+        # note: I am keeping this visible for testing purposes. If it is not visible, I am not testing it.
+        mc.setAttr("{0}.v".format(ikJnts[0]), False)
 
         # create a pyramid
-        boxDimensionsLWH = [2, 2, 4]
+        boxDimensionsLWH = [2, 2, 8]
         x = boxDimensionsLWH[0]
         y = boxDimensionsLWH[1]
         z = boxDimensionsLWH[2]
@@ -656,12 +773,17 @@ class pcCreateRigAlt03Legs(UI):
         mc.parent(locPVKnee, ctrlKnee)
         CRU.layerEdit(ctrlKnee, newLayerName=newLayerNameIK)
 
+        return ikJntsPV, ikJntsNoFlip, ctrlKnee, animCrvPV, animCrvNoFlip, autoManualLN, locStartNoFlip, lenNoFlip, locStartPV, lenPV
+
     def duplicateNoFlipOrPV(self, locIKLegLenEnd, grpNoFlipKnee, ikLegs, ctrlIKFoot, dups, leftRightVal, prefix,
                             altPrefixReplace=None, *args):
         dupsTrack = []
         dupsMove = []
         checkToMove = [locIKLegLenEnd, grpNoFlipKnee, ikLegs[0]]
         toDelete = []
+        animationCurves = []
+        locStartArray = []
+        lenArray = []
         for i in range(len(dups)):
 
             if leftRightVal in dups[i]:
@@ -679,382 +801,501 @@ class pcCreateRigAlt03Legs(UI):
                     dupsMove.append(dupReplace)
                 dups[i] = dupReplace
                 dupsTrack.append(dupReplace)
-                if "CTRL" in dupReplace or "ball" in dupReplace:
+
+                if "CTRL" in dupReplace:
                     toDelete.append(dupReplace)
+                if self.checkAnkleTwist:
+                    if "ankleTwist" in dupReplace:
+                        toDelete.append(dupReplace)
+                else:
+                    if "ball" in dupReplace:
+                        toDelete.append(dupReplace)
+
                 if "upperLeg" in dupReplace:
                     returnLeg = dupReplace
+                if "_translate" in dupReplace:
+                    animationCurves.append(dupReplace)
+                if "lengthStart" in dupReplace:
+                    locStartArray.append(dupReplace)
+                if "LEN_" in dupReplace[:4]:
+                    lenArray.append(dupReplace)
 
         mc.parent(dupsMove, ctrlIKFoot)
         mc.delete(toDelete)
-        print("returnLeg: {0}".format(returnLeg))
-        return dupsTrack, dupsMove, returnLeg
+        return dupsTrack, dupsMove, returnLeg, animationCurves, locStartArray, lenArray
 
-    def tgpSetDriverLegFKIKSwitch(self, driver, driverAttr, driven, *args):
-        w0w1Attr = mc.listAttr(driven)[-2:]
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
-                                  modifyBoth="linear")
-
-    def attachLegToHip(self, fkJnts, ikJnts, bndJnts, ikJntsDrive, fkJntOffsetCtrls, leftRight,
-                       *args):
-        # Constraining the bind joints to the fk and ik
-        bndPntConstraint = mc.pointConstraint(fkJnts[0], ikJnts[0], bndJnts[0])[0]
-        self.tgpSetDriverLegFKIKSwitch(ctrlFKIK, ctrlFKIKAttr, bndPntConstraint)
-
-        # Constraining the ik joints to the ik drive
-        ikPntConstraint = mc.pointConstraint(ikJntsDrive[0], ikJnts[0])[0]
-
-        # creating the hip attachment and attaching the IK and IKdrive
-        hipIKOffsetCtrl = self.createHip(leftRight, ikJnts, ikJntsDrive)
-
-        # Constraining the upperLeg FK control to the upperLeg JNT
-        mc.pointConstraint(fkJntOffsetCtrls[0][1], fkJnts[0])
-
-        return hipIKOffsetCtrl
-
-    def addFootCtrl(self, geoJntArray, isLeft, leftRight, colourTU, *args):
-
-        ankleTwist = [x for x in geoJntArray if "ankleTwist" in x][0]
-
-        self.lowerTwistVal = "lowerLegTwist"
-        self.upperTwistVal = "upperLegTwist"
-
-        # creates the control next to ankleTwist
-        footCtrlsOffsetCtrl = CRU.createNail(ankleTwist, isLeft, leftRight + "footCtrls", bodySize=12, headSize=2,
-                                             colour=colourTU)
-        mc.addAttr(footCtrlsOffsetCtrl[1], longName=self.lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
-        mc.addAttr(footCtrlsOffsetCtrl[1], longName=self.upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
-
-        return footCtrlsOffsetCtrl
-
-    def addIKFKCreateFKCtrl(self, jntLegArray, colourTU, isLeft, *args):
-        bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntLegArray)
-
-        fkLen = len(fkJnts)
-        ikLen = len(ikJnts)
-        bndLen = len(bndJnts)
-
-        if bndLen != fkLen or bndLen != ikLen:
-            mc.warning("Your leg joints are somehow not equal")
-            return
+    def createSnappableKnee(self, ikJntsPV, ctrlKnee, leftRight, ctrlIKFoot, animCrvPV, *args):
+        if leftRight == self.valLeft:
+            m = 1
         else:
-            ikFkJntConstraints = []
-            # we want to constrain upperLeg, lowerLeg, ankleTwist, ball
-            specVals = [0, 1, -4, -2]
-            for sv in specVals:
-                temp = mc.orientConstraint(fkJnts[sv], ikJnts[sv], bndJnts[sv])[0]
-                ikFkJntConstraints.append(temp)
+            m = -1
 
-        fkJntsToUse = [fkJnts[0], fkJnts[1], fkJnts[-4], fkJnts[-2]]
+        toHide = []
+        # create a thigh to knee distance locator
+        locSnapUpperToKneeStart = "LOC_{0}upperLeg_to_{0}kneeStart".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locSnapUpperToKneeStart)
+        todelete = mc.pointConstraint(ikJntsPV[0], locSnapUpperToKneeStart)
+        mc.delete(todelete)
 
-        # we want to create FK controls for the limbs except the end
-        sizeVals = [12.5, 12.5, 11, 7.5]
-        fkJntOffsetCtrls = self.createLegFKs(fkJntsToUse, colourTU, isLeft, sizeVals)
+        locSnapUpperToKneeEnd = "LOC_{0}upperLeg_to_{0}kneeEnd".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locSnapUpperToKneeEnd)
+        todelete = mc.pointConstraint(ctrlKnee, locSnapUpperToKneeEnd)
+        mc.delete(todelete)
 
-        return bndJnts, fkJnts, ikJnts, ikFkJntConstraints, fkJntOffsetCtrls
+        disSnapUpper = "DIST_{0}upperLeg_to_{0}knee".format(leftRight)
+        disSnapUpperShape = self.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
+                                                             disSnapUpper)
+        toHide.append(locSnapUpperToKneeEnd)
+        toHide.append(locSnapUpperToKneeStart)
+        toHide.append(disSnapUpper)
 
-    def createIKCtrlsAndDrive(self, ikJnts, leftRight, colourTU, *args):
-        # create the IKs
-        # we make the JNT IK Drive earlier than in the notes
-        ikJntsDrive = self.createLegIKDrive(ikJnts)
+        ##################################
+        # create a knee to foot distance locator
+        locSnapKneeToFootStart = "LOC_{0}knee_to_{0}footStart".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locSnapKneeToFootStart)
+        todelete = mc.pointConstraint(ctrlKnee, locSnapKneeToFootStart)
+        mc.delete(todelete)
 
-        ikJntsToUse = [ikJnts[0], ikJnts[2]]
-        ikJntsDriveToUse = [ikJntsDrive[0], ikJntsDrive[2]]
-        # The first is a Rotate Plane solver, the rest are Single Chain solvers
-        # createLegOrFootIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl):
-        ikLegs, ikLegSide, ikOffsetCtrl = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU,
-                                                                 "leg",
-                                                                 True, "ikRPsolver")
+        locSnapKneeToFootEnd = "LOC_{0}knee_to_{0}footEnd".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locSnapKneeToFootEnd)
+        todelete = mc.pointConstraint(ikJntsPV[-1], locSnapKneeToFootEnd)
+        mc.delete(todelete)
 
-        ikJntsToUse = [ikJnts[-4], ikJnts[-2]]
-        ikJntsDriveToUse = [ikJntsDrive[-4], ikJntsDrive[-2]]
-        ikBall, ikBallSide = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "ball", False,
-                                                    "ikSCsolver")
+        disSnapLower = "DIST_{0}knee_to_{0}foot".format(leftRight)
+        disSnapLowerShape = self.createDistanceDimensionNode(locSnapKneeToFootStart, locSnapKneeToFootEnd, disSnapLower)
+        toHide.append(locSnapKneeToFootStart)
+        toHide.append(locSnapKneeToFootEnd)
+        toHide.append(disSnapLower)
+        ##################################
+        mc.parent(locSnapKneeToFootStart, locSnapUpperToKneeEnd, ctrlKnee)
+        mc.parent(locSnapKneeToFootEnd, ctrlIKFoot)
+        # print("ikJntsPV: {0}".format(ikJntsPV))
 
-        ikJntsToUse = [ikJnts[-2], ikJnts[-1]]
-        ikJntsDriveToUse = [ikJntsDrive[-2], ikJntsDrive[-1]]
-        ikToe, ikToeSide = self.createLegOrFootIK(ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, "toe", False,
-                                                  "ikSCsolver")
+        # snappable knee
+        # create custom control on knee
+        longName = "kneeSnap"
+        # note: set dv to 0.5 for testing purposes
+        mc.addAttr(ctrlKnee, longName=longName, at="float", k=True, min=0, max=1, dv=0)
+        blndNdUpperStretchChoice = "{0}upperLeg_pv_stretchChoice".format(leftRight)
+        src1Upper = "{0}.distance".format(disSnapUpperShape)
+        src2Upper = "{0}.output".format(animCrvPV[0])
+        tgtUpper = "{0}.translateX".format(ikJntsPV[1])
 
-        mc.parent(ikLegs[0], ikBall[0], ikToe[0], ikOffsetCtrl[1])
-        # [0, 1, -4, -2]
+        blndNdLowerStretchChoice = "{0}lowerLeg_pv_stretchChoice".format(leftRight)
+        src1Lower = "{0}.distance".format(disSnapLowerShape)
+        src2Lower = "{0}.output".format(animCrvPV[-1])
+        tgtLower = "{0}.translateX".format(ikJntsPV[-1])
 
-        return ikJntsDrive, ikOffsetCtrl, ikLegs
+        self.makeBlendStretch(src1Upper, src2Upper, tgtUpper, ctrlKnee, longName, blndNdUpperStretchChoice, m,
+                              leftRight)
 
-    def orientConstrainThenRotateOrder(self, ikJnts, ikJntsDrive, bndJnts, fkJnts, fkJntOffsetCtrls, *args):
-        listVals = [0, 1, -4, -2]
-        skipYVals = [1]
-        self.orientConstrainSkipY(ikJnts, ikJntsDrive, listVals, skipYVals)
+        self.makeBlendStretch(src1Lower, src2Lower, tgtLower, ctrlKnee, longName, blndNdLowerStretchChoice, m)
 
-        # change the rotation order
-        rotationChange = [bndJnts[1], fkJnts[1], ikJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
+        for i in range(len(toHide)):
+            mc.setAttr("{0}.v".format(toHide[i]), False)
+        return locSnapUpperToKneeStart, disSnapUpper, disSnapLower, blndNdUpperStretchChoice, blndNdLowerStretchChoice
 
-        CRU.changeRotateOrder(rotationChange, "YZX")
+    def makeBlendStretch(self, src1, src2, tgt, ctrl, ctrlAttr, blendNodeName, mult, *args):
+        multValName = "{0}_MUL".format(blendNodeName)
+        mc.shadingNode("multiplyDivide", n=multValName, au=True)
+        mc.setAttr("{0}.operation".format(multValName), 1)
+        mc.setAttr("{0}.input2X".format(multValName), mult)
 
-    def createHip(self, leftRight, ikJnts, ikJntsDrive, *args):
-        # create a locator
-        hipName = "CTRL_IK_" + leftRight + "hip"
-        hipIKOffsetCtrl = []
-        hipIKOffsetCtrl.append(mc.group(n="OFFSET_" + hipName, w=True, em=True))
-        hipIKOffsetCtrl.append(mc.spaceLocator(p=(0, 0, 0), name=hipName)[0])
-        hipIKOffsetCtrl.append(mc.group(n="AUTO_" + hipName, w=True, em=True))
-        setSize = 20
-        mc.setAttr("{0}.localScaleX".format(hipIKOffsetCtrl[1]), setSize)
-        mc.setAttr("{0}.localScaleY".format(hipIKOffsetCtrl[1]), setSize)
-        mc.setAttr("{0}.localScaleZ".format(hipIKOffsetCtrl[1]), setSize)
+        # this lets us invert the numbers when we need to, like when we are working with the right side vs the left side
+        mc.connectAttr(src1, multValName + ".input1X")
 
-        mc.parent(hipIKOffsetCtrl[2], hipIKOffsetCtrl[0])
-        mc.parent(hipIKOffsetCtrl[1], hipIKOffsetCtrl[2])
-        # position and orient the offset
-        toDelete = mc.parentConstraint(ikJnts[0], hipIKOffsetCtrl[0])
-        mc.delete(toDelete)
-        # hip control point constrains the ikDrive joint
-        mc.pointConstraint(hipIKOffsetCtrl[1], ikJntsDrive[0])
-        mc.setAttr("{0}.visibility".format(hipIKOffsetCtrl[1]), False)
-        # we parent the hip locators in our clean up
+        mc.shadingNode("blendColors", au=True, name=blendNodeName)
+        mc.connectAttr("{0}.outputX".format(multValName), blendNodeName + ".color1R")
+        mc.connectAttr(src2, blendNodeName + ".color2R")
+        mc.connectAttr(blendNodeName + ".outputR", tgt, f=True)
+        blndName = "{0}.{1}".format(ctrl, ctrlAttr)
+        mc.connectAttr(blndName, blendNodeName + ".blender", f=True)
 
-        return hipIKOffsetCtrl
+        return
 
-    def getBndFkIkJnts(self, jntLegArray, *args):
-        bndJntsTempToes = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
+    def createNonUniformStretchNoFlip(self, ctrlIKFoot, leftRight, animCrvNoFlip, ikJntsNoFlip, *args):
 
-        # checking for the toes. If it exists, unparent it
-        masterToes = [x for x in bndJntsTempToes if "masterToes" in x]
-        if masterToes:
-            masterToe = masterToes[0]
-            toesParent = mc.listRelatives(masterToe, p=True)[0]
-            mc.parent(masterToe, w=True)
+        akUpperLegLen = "autoKneeUpperLegLength"
+        mc.addAttr(ctrlIKFoot, longName=akUpperLegLen, at="float", k=True, min=0, dv=1)
+        akLowerLegLen = "autoKneeLowerLegLength"
+        mc.addAttr(ctrlIKFoot, longName=akLowerLegLen, at="float", k=True, min=0, dv=1)
+        multNoFlipScaleUpperLeg = "{0}upperLeg_noFlipScale_MULT".format(leftRight)
+        multNoFlipScaleLowerLeg = "{0}lowerLeg_noFlipScale_MULT".format(leftRight)
 
-        bndJntsTemp = mc.listRelatives(jntLegArray[0], type="joint", ad=True)
-        bndJnts = self.tgpCreateLimbFKIFList(bndJntsTemp, deleteThis=False, renameThis=False)
-        bndJnts.append(jntLegArray[0])
-        bndJnts.reverse()
+        mc.shadingNode("multiplyDivide", n=multNoFlipScaleUpperLeg, au=True)
+        mc.shadingNode("multiplyDivide", n=multNoFlipScaleLowerLeg, au=True)
 
-        ikJntsTemp = mc.duplicate(jntLegArray[0], rc=True)
-        ikJntRoot = ikJntsTemp[0]
+        # Connect the CTRL_l_foot.autoKneeThighLength to l_upperLeg_noFlipScale_MULT.input1X
+        # Connect the translateXanimation.output to l_upperLeg_noFlipScale_MULT.input2X
+        # Connect the l_upperLeg_noFlipScale_MULT.outputX into the JNT_IK_noFlip_l_lowerLeg.TranslateX
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, akUpperLegLen), "{0}.input1X".format(multNoFlipScaleUpperLeg))
+        mc.connectAttr("{0}.output".format(animCrvNoFlip[0]), "{0}.input2X".format(multNoFlipScaleUpperLeg))
+        mc.connectAttr("{0}.outputX".format(multNoFlipScaleUpperLeg),
+                       "{0}.translateX".format(ikJntsNoFlip[1]), f=True)
 
-        # We already made unique
-        ikJntsTempDesc = mc.listRelatives(ikJntRoot, ad=True)
-        ikJntsTempDesc.append(ikJntRoot)
+        # repeat for the lower leg
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, akLowerLegLen), "{0}.input1X".format(multNoFlipScaleLowerLeg))
+        mc.connectAttr("{0}.output".format(animCrvNoFlip[-1]), "{0}.input2X".format(multNoFlipScaleLowerLeg))
+        mc.connectAttr("{0}.outputX".format(multNoFlipScaleLowerLeg),
+                       "{0}.translateX".format(ikJntsNoFlip[-1]), f=True)
 
-        # remove non-IK related joints
-        ikJnts = self.tgpCreateLimbFKIFList(ikJntsTempDesc, "JNT_", "JNT_IK_", 1)
+    def toggleFKIKVisibility(self, ctrlFootSettings, ctrlIKFoot, ctrlKnee, fkJnts, fkikBlendName, autoManualLN,
+                             leftRight, *args):
+        # connect the visibility of the controllers
+        fkVis = "FK_visibility"
+        ikVis = "IK_visibility"
+        kneeVis = "knee_visibility"
 
-        ikJnts.reverse()
+        mc.addAttr(ctrlFootSettings, longName=fkVis, at="bool", k=True)
+        mc.addAttr(ctrlFootSettings, longName=ikVis, at="bool", k=True)
+        mc.addAttr(ctrlFootSettings, longName=kneeVis, at="bool", k=True)
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkVis), "{0}.visibility".format(fkJnts[0]))
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ikVis), "{0}.visibility".format(ctrlIKFoot))
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, kneeVis), "{0}.visibility".format(ctrlKnee))
 
-        # create the FK Joints
-
-        fkJntsTemp = mc.duplicate(ikJnts[0], rc=True)
-
-        fkJnts = self.tgpCreateLimbFKIFList(fkJntsTemp, "JNT_IK_", "JNT_FK_", 1)
-        # checking for the toes. If it exists, reparent it
-        if masterToes:
-            mc.parent(masterToe, toesParent)
-
-        return bndJnts, fkJnts, ikJnts
-
-    def setupIkKneeLegTwist(self, ikOffsetCtrl, ikJnts, ikLegs, isLeft, *args):
-        kneeTwistAttr = "kneeTwist"
-        mc.addAttr(ikOffsetCtrl[1], longName=kneeTwistAttr, at="float", k=True)
-
-        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl[1], kneeTwistAttr), ikJnts[1] + ".rotateY")
-        # We don't work with the leg twist yet
-
-        legTwistAttr = "legTwist"
-        mc.addAttr(ikOffsetCtrl[1], longName=legTwistAttr, at="float", k=True)
-
-        # Finishing the Leg, Leg IK Twist
-        # we are connecting the leg twist in the IK. We want the leg twist to aim inward in negative.
-        ikCtrlLegTwistNode = "{0}_LegTwist_MD".format(ikOffsetCtrl[1])
-        mc.shadingNode("multiplyDivide", n=ikCtrlLegTwistNode, au=True)
-        # We want the
-        if isLeft:
-            mult = -1
-        else:
-            mult = 1
-        mc.setAttr("{0}.operation".format(ikCtrlLegTwistNode), 2)
-        mc.setAttr("{0}.i2x".format(ikCtrlLegTwistNode), mult)
-        mc.connectAttr("{0}.{1}".format(ikOffsetCtrl[1], "legTwist"), ikCtrlLegTwistNode + ".i1x")
-
-        mc.connectAttr("{0}.ox".format(ikCtrlLegTwistNode), ikLegs[0] + ".twist")
-
-    def createLegFKs(self, fkJnts, colourTU, isLeft, sizeVals=None, *args):
-        # we want to create FK controls for the limbs except the end
-        if sizeVals == None:
-            sizeToUse = 10
-        fkJntOffsetCtrls = []
-        for i in range(len(fkJnts)):
-            temp = fkJnts[i]
-            try:
-                sizeToUse = sizeVals[i]
-            except:
-                sizeToUse = 10
-            # createCTRLs(self, s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sections=None):
-            fkJntOffsetCtrls.append(
-                CRU.createCTRLs(temp, size=sizeToUse, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-            # checks if the object is the ball or the lowerleg. The ball because it has no value in front of it in the fkJnts, and lowerleg because the value in front of it in fkJnts
-            checkers = ["ball", "lower", "ankle"]
-            # checks if ball or lower leg
-            if any(checker in fkJnts[i] for checker in checkers[:-1]):
-                legLength = mc.getAttr("{0}.ty".format(mc.listRelatives(fkJnts[i], c=True, typ="joint")[0]))
-            else:
-                legLength = mc.getAttr("{0}.ty".format(fkJnts[i + 1]))
-            # check if the lowerleg or ankle
-
-            # only change the thigh location
-            if not any(checker in fkJnts[i] for checker in checkers):
-                mc.select(fkJntOffsetCtrls[i][1] + ".cv[:]")
-                mc.move(0, legLength * 0.5, 0, r=True, ls=True)
-
-            # if the ball, modify to prettify
-            if checkers[0] in fkJnts[i]:
-                if isLeft:
-                    mc.select(fkJntOffsetCtrls[i][1] + ".cv[4:6]")
-                    # mc.move(0, 0, -sizeToUse, r=True, ls=True)
-                else:
-                    mc.select(fkJntOffsetCtrls[i][1] + ".cv[0:2]")
-                # scale to the center
-                mc.scale(1, 1, 0, p=(0, 0, 0))
-
-                mc.move(0, 0, legLength * 0.15, r=True, ls=True)
-
-        # parent the fk lower leg controls under the fk upper leg controls
-        for i in range(len(fkJntOffsetCtrls[:-1])):
-            mc.parent(fkJntOffsetCtrls[i + 1][0], fkJntOffsetCtrls[i][1])
-
-        return fkJntOffsetCtrls
-
-    def createLegIKDrive(self, ikJnts, *args):
-
-        ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
-        ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
-
-        return ikJntsDrive
-
-    def createLegOrFootIKNew(self, ikJntsToUse, leftRight, ikSuffix, ikSolver, createCtrl=False, colourTU=0,
-                             *args):
-        ikSide = leftRight + ikSuffix
-
-        ikLegName = "IK_" + ikSide
-        effLegName = "EFF_" + ikSide
-        ikLegs = mc.ikHandle(n=ikLegName, sj=ikJntsToUse[0], ee=ikJntsToUse[-1], sol=ikSolver)
-        mc.rename(ikLegs[1], effLegName)
-
-        # we are going to hide this eventually anyways
-        mc.setAttr("{0}.v".format(ikLegName), False)
-        mc.setAttr("{0}.v".format(effLegName), False)
-
-        # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-        ikOffsetCtrl = None
-        if createCtrl:
-            # We just want to create a control at the location, we'll be parenting it.
-            ikOffsetCtrl = CRU.createCTRLs(ikLegs[0], 9, pnt=False, ornt=False, prnt=False, colour=colourTU,
-                                           addPrefix=True, orientVal=(0, 1, 0), boxDimensionsLWH=[6, 6, 6])
-            return ikLegs, ikSide, ikOffsetCtrl
-
-        return ikLegs, ikSide
-
-    def createLegOrFootIK(self, ikJntsToUse, ikJntsDriveToUse, leftRight, colourTU, ikSuffix, createCtrl, ikSolver,
-                          *args):
-        ikSide = leftRight + ikSuffix
-
-        ikLegName = "IK_" + ikSide
-        effLegName = "EFF_" + ikSide
-        ikLegs = mc.ikHandle(n=ikLegName, sj=ikJntsDriveToUse[0], ee=ikJntsDriveToUse[-1], sol=ikSolver)
-        mc.rename(ikLegs[1], effLegName)
-
-        # we are going to hide this eventually anyways
-        mc.setAttr("{0}.v".format(ikLegName), False)
-        mc.setAttr("{0}.v".format(effLegName), False)
-
-        # fkJntOffsetCtrls.append(self.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-        ikOffsetCtrl = None
-        if createCtrl:
-            # We just want to create a control at the location, we'll be parenting it.
-            ikOffsetCtrl = CRU.createCTRLs(ikLegs[0], 9, pnt=False, ornt=False, prnt=False, colour=colourTU,
-                                           addPrefix=True, orientVal=(0, 1, 0), boxDimensionsLWH=[6, 6, 6])
-            return ikLegs, ikSide, ikOffsetCtrl
-
-        return ikLegs, ikSide
-
-    def orientConstrainSkipY(self, ikJnts, ikJntsDrive, listVals, skipYVals, *args):
-        for i in listVals:
-            if i in skipYVals:
-                mc.orientConstraint(ikJntsDrive[i], ikJnts[i], skip="y")
-            else:
-                mc.orientConstraint(ikJntsDrive[i], ikJnts[i])
-
-    def legCleanUp(self, fkJnts, ikJnts, ikJntsDrive, bndJnts,
-                   ikOffsetCtrl, fkJntOffsetCtrls, hipIKOffsetCtrl, ctrlFKHip,
-                   leftRight, ctrlFKIK, ctrlFKIKAttr, checkboxHip, footCtrlsOffsetCtrl, *args):
-
-        # group the root leg joints and the IK control
-        grpLegRigName = "GRP_rig_" + leftRight + "leg"
-        grpLegJntName = "GRP_JNT_" + leftRight + "leg"
-
-        grpLegRig = mc.group(n=grpLegRigName, w=True, em=True)
-        grpLegJnt = mc.group(n=grpLegJntName, w=True, em=True)
-
-        mc.parent(fkJnts[0], ikJnts[0], ikJntsDrive[0], bndJnts[0], grpLegJnt)
-        mc.parent(grpLegJnt, ikOffsetCtrl[0], footCtrlsOffsetCtrl[0], grpLegRig)
-
-        # attach objects to the hip
-        if checkboxHip:
-            mc.parent(fkJntOffsetCtrls[0][0], hipIKOffsetCtrl[0], ctrlFKHip)
-
-        # Hiding the visibility of the joints
-        mc.setAttr("{0}.visibility".format(ikJnts[0]), False)
-        mc.setAttr("{0}.visibility".format(ikJntsDrive[0]), False)
-        mc.setAttr("{0}.visibility".format(fkJnts[0]), False)
-        mc.setAttr("{0}.visibility".format(hipIKOffsetCtrl[1]), False)
-
-        # locking and hiding the IK controls
-
-        # my custom control shouldn't be moved by the animator
-        CRU.lockHideCtrls(footCtrlsOffsetCtrl[1], translate=True, rotate=True, scale=True, visible=True)
-
-        # locking and hiding the CTRL_IK_l_hip
-        CRU.lockHideCtrls(hipIKOffsetCtrl[1], scale=True, visible=True)
-
-        # set the FK to visible when not ctrlFKIK not 1 for leg attribute
-
-        tangentToUse = ["linear", "step"]
         visMin = 0.001
-
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                  driverValue=0, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=True,
-                                  driverValue=1 - visMin, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fkJntOffsetCtrls[0][1], "visibility", drivenValue=False,
-                                  driverValue=1, modifyInOut=tangentToUse)
-
         tangentToUse = ["linear", "step"]
-        # set the IK to visible when not ctrlFKIK not 0 for leg attribute
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=False,
+        # set the FK
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, fkVis, drivenValue=True,
                                   driverValue=0, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
-                                  driverValue=visMin, modifyInOut=tangentToUse)
-        CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, ikOffsetCtrl[1], "visibility", drivenValue=True,
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, fkVis, drivenValue=True,
+                                  driverValue=1 - visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, fkVis, drivenValue=False,
                                   driverValue=1, modifyInOut=tangentToUse)
 
-        CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
-        CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
-        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
-        CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
+        # set the IK
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, ikVis, drivenValue=False,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, ikVis, drivenValue=True,
+                                  driverValue=visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, ctrlFootSettings, ikVis, drivenValue=True,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
-        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
+        # set the knee
+        CRU.setDriverDrivenValues(ctrlIKFoot, autoManualLN, ctrlFootSettings, kneeVis, drivenValue=False,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlIKFoot, autoManualLN, ctrlFootSettings, kneeVis, drivenValue=True,
+                                  driverValue=visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlIKFoot, autoManualLN, ctrlFootSettings, kneeVis, drivenValue=True,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
-        for fkOC in fkJntOffsetCtrls:
-            CRU.lockHideCtrls(fkOC[1], translate=True, scale=True, visible=True)
+        grpKnee = "GRP_{0}knee".format(leftRight)
+        mc.group(n=grpKnee, w=True, em=True)
+        mc.parent(ctrlKnee, grpKnee)
+        # knee shouldn't appear when FK is only on
+        vis = "visibility"
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, grpKnee, vis, drivenValue=False,
+                                  driverValue=0, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, grpKnee, vis, drivenValue=True,
+                                  driverValue=visMin, modifyInOut=tangentToUse)
+        CRU.setDriverDrivenValues(ctrlFootSettings, fkikBlendName, grpKnee, vis, drivenValue=True,
+                                  driverValue=1, modifyInOut=tangentToUse)
 
-    def makeLeg(self, bndJnts,
-                colourTU,
-                leftRight, isLeft, *args):
+        return grpKnee
+
+    def organizeLeg(self, grpKnee,
+                    bndJnts, ikJnts, ikJntsPV, ikJntsNoFlip,
+                    fkJnts, ctrlIKFoot,
+                    locStartNoFlip, lenNoFlip, locStartPV, lenPV, locSnapUpperToKneeStart,
+                    disSnapUpper, disSnapLower,
+                    leftRight,
+                    ctrlRootTrans, *args):
+
+        # move the objects into a grp_leg
+        grpLeg = "GRP_{0}leg".format(leftRight)
+        mc.group(n=grpLeg, w=True, em=True)
+        mc.parent(grpLeg, ctrlRootTrans)
+
+        # create an BND Const group
+        grpBNDConst = "GRP_BNDConst_{0}leg".format(leftRight)
+        mc.group(n=grpBNDConst, w=True, em=True)
+        todelete = mc.pointConstraint(bndJnts[0], grpBNDConst)
+        mc.delete(todelete)
+        mc.makeIdentity(grpBNDConst, a=True)
+        mc.parent(bndJnts[0], grpBNDConst)
+
+        # create an IK Const group
+        grpIKConst = "GRP_IKConst_{0}leg".format(leftRight)
+        mc.group(n=grpIKConst, w=True, em=True)
+        todelete = mc.pointConstraint(bndJnts[0], grpIKConst)
+        mc.delete(todelete)
+        mc.makeIdentity(grpIKConst, a=True)
+        mc.parent(locStartPV, locStartNoFlip, ikJnts[0], ikJntsNoFlip[0], ikJntsPV[0], locSnapUpperToKneeStart,
+                  grpIKConst)
+
+        # I create this earlier than my notes for simplicity's sake
+        grpFKConst = "GRP_FKConst_{0}leg".format(leftRight)
+        mc.group(n=grpFKConst, w=True, em=True)
+        todelete = mc.pointConstraint(bndJnts[0], grpFKConst)
+        mc.delete(todelete)
+        mc.makeIdentity(grpFKConst, a=True)
+        mc.parent(fkJnts[0], grpFKConst)
+
+        # create a DO_NOT_TOUCH group
+        grpDNTLeg = "GRP_DO_NOT_TOUCH_{0}leg".format(leftRight)
+        mc.group(n=grpDNTLeg, w=True, em=True)
+
+        mc.parent(lenNoFlip, lenPV, grpBNDConst, grpIKConst,
+                  disSnapUpper, disSnapLower, grpDNTLeg)
+
+        # parent the knee, fkConstr group and DNT under the grpLeg
+        mc.parent(grpKnee, ctrlIKFoot, grpFKConst, grpDNTLeg, grpLeg)
+
+        return grpIKConst, grpBNDConst, grpFKConst
+
+    def hipSetup(self, grpBNDConst, grpIKConst, grpFKConst,
+                 jntIKHip, checkboxHip,
+                 grpDNTTorso, ctrlRootTrans,
+                 ctrlFootSettings,
+                 leftRight, *args):
+
+        locHipSpace = "LOC_hipSpace_{0}leg".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locHipSpace)
+        todelete = mc.pointConstraint(grpBNDConst, locHipSpace)
+        mc.delete(todelete)
+
+        mc.pointConstraint(locHipSpace, grpBNDConst)
+        mc.pointConstraint(locHipSpace, grpIKConst)
+        mc.pointConstraint(locHipSpace, grpFKConst)
+
+        if checkboxHip:
+            locArray = []
+
+            # Set up the hip space stuff
+            locBodySpace = "LOC_bodySpace_{0}leg".format(leftRight)
+            locRootSpace = "LOC_rootSpace_{0}leg".format(leftRight)
+
+            locArray = [locHipSpace, locBodySpace, locRootSpace]
+            mc.duplicate(locHipSpace, n=locBodySpace)
+            mc.duplicate(locHipSpace, n=locRootSpace)
+
+            mc.parent(locHipSpace, jntIKHip)
+            mc.parent(locBodySpace, grpDNTTorso)
+            mc.parent(locRootSpace, ctrlRootTrans)
+
+            orntCnstrFK = mc.orientConstraint(locHipSpace, locBodySpace, locRootSpace, grpFKConst)[0]
+            orntCnstrBND = mc.orientConstraint(locHipSpace, locBodySpace, locRootSpace, grpBNDConst)[0]
+
+            fkRotSpace = "FK_rotationSpace"
+            enumVals = "hip:upperBody:root"
+            mc.addAttr(ctrlFootSettings, longName=fkRotSpace, at="enum", k=True, en=enumVals)
+
+            self.setOrientLegDriver(ctrlFootSettings, fkRotSpace, orntCnstrFK, locArray)
+            self.setOrientLegDriver(ctrlFootSettings, fkRotSpace, orntCnstrBND, locArray)
+
+        return
+
+    def setOrientLegDriver(self, ctrlLimb, enumName, driven, locArray, *args):
+
+        rangeVal = len(locArray)
+        rangeValNeg = rangeVal * -1
+        w0w1Attr = mc.listAttr(driven)[rangeValNeg:]
+
+        for i in range(len(w0w1Attr)):
+            # set the driven key to 1 and the undriven keys to 0
+
+            CRU.setDriverDrivenValues(ctrlLimb, enumName, driven, w0w1Attr[i], i,
+                                      1)
+            for i2 in range(len(locArray)):
+                if i2 != i:
+                    # need to have the second to last value be i, not i2
+                    CRU.setDriverDrivenValues(ctrlLimb, enumName, driven,
+                                              w0w1Attr[i2], i, 0)
+
+        for i in range(len(locArray)):
+            # unlocks then locks
+            check = mc.getAttr("{0}.visibility".format(locArray[i]), l=True)
+            if not check:
+                mc.setAttr("{0}.visibility".format(locArray[i]), False)
+                CRU.lockHideCtrls(locArray[i], scale=True, visible=True)
+
+    def fkHipTwistFix(self, grpBNDConst, ctrlFootSettings, fkikBlendName, leftRight, *args):
+
+        blndOrntChoice = "{0}leg_BNDOrientChoice".format(leftRight)
+        mc.shadingNode("blendColors", au=True, name=blndOrntChoice)
+        orntConst = mc.listRelatives(grpBNDConst, type="orientConstraint")[0]
+        mc.connectAttr("{0}.constraintRotateX".format(orntConst), "{0}.color2R".format(blndOrntChoice))
+        mc.connectAttr("{0}.constraintRotateY".format(orntConst), "{0}.color2G".format(blndOrntChoice))
+        mc.connectAttr("{0}.constraintRotateZ".format(orntConst), "{0}.color2B".format(blndOrntChoice))
+        mc.setAttr("{0}.color1R".format(blndOrntChoice), 0)
+        mc.setAttr("{0}.color1G".format(blndOrntChoice), 0)
+        mc.setAttr("{0}.color1B".format(blndOrntChoice), 0)
+
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkikBlendName), "{0}.blender".format(blndOrntChoice))
+
+        mc.connectAttr("{0}.outputR".format(blndOrntChoice), "{0}.rotateX".format(grpBNDConst), f=True)
+        mc.connectAttr("{0}.outputG".format(blndOrntChoice), "{0}.rotateY".format(grpBNDConst), f=True)
+        mc.connectAttr("{0}.outputB".format(blndOrntChoice), "{0}.rotateZ".format(grpBNDConst), f=True)
+
+        return
+
+    def legIKScaleFix(self, lenPV, lenNoFlip,
+                      animCrvPV, animCrvNoFlip,
+                      ctrlRootTrans,
+                      disSnapUpper, disSnapLower,
+                      blndNdUpperStretchChoice, blndNdLowerStretchChoice,
+                      leftRight, *args):
+
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+
+        gsLegNoFlipNormalizeDiv = "globalScale_{0}leg_noFlipNormalize_DIV".format(leftRight)
+        gsLegPVNormalizeDiv = "globalScale_{0}leg_pvNormalize_DIV".format(leftRight)
+        lenNoFlipShape = mc.listRelatives(lenNoFlip, s=True)[0]
+        lenPVShape = mc.listRelatives(lenPV, s=True)[0]
+
+        mc.shadingNode("multiplyDivide", n=gsLegNoFlipNormalizeDiv, au=True)
+        mc.shadingNode("multiplyDivide", n=gsLegPVNormalizeDiv, au=True)
+
+        mc.setAttr("{0}.operation".format(gsLegNoFlipNormalizeDiv), 2)
+        mc.setAttr("{0}.operation".format(gsLegPVNormalizeDiv), 2)
+
+        mc.connectAttr("{0}.distance".format(lenNoFlipShape), "{0}.input1X".format(gsLegNoFlipNormalizeDiv))
+        mc.connectAttr("{0}.distance".format(lenPVShape), "{0}.input1X".format(gsLegPVNormalizeDiv))
+
+        mc.connectAttr("{0}.scaleY".format(ctrlRootTrans), "{0}.input2X".format(gsLegNoFlipNormalizeDiv))
+        mc.connectAttr("{0}.scaleY".format(ctrlRootTrans), "{0}.input2X".format(gsLegPVNormalizeDiv))
+
+        # connect the normalized distance into the leg, forcing if necessary
+        for i in range(len(animCrvPV)):
+            mc.connectAttr("{0}.outputX".format(gsLegPVNormalizeDiv), "{0}.input".format(animCrvPV[i]), f=True)
+
+        for i in range(len(animCrvPV)):
+            mc.connectAttr("{0}.outputX".format(gsLegNoFlipNormalizeDiv), "{0}.input".format(animCrvNoFlip[i]), f=True)
+
+        # fixing the knee control
+        gScaleUpLegToKneeDiv = "globalScale_{0}upperLeg_to_kneeNormalize_DIV".format(leftRight)
+        gScaleKneeToFootDiv = "globalScale_{0}knee_to_footNormalize_DIV".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=gScaleUpLegToKneeDiv, au=True)
+        mc.shadingNode("multiplyDivide", n=gScaleKneeToFootDiv, au=True)
+
+        mc.setAttr("{0}.operation".format(gScaleUpLegToKneeDiv), 2)
+        mc.setAttr("{0}.operation".format(gScaleKneeToFootDiv), 2)
+
+        # create inversions for left right (or rather, multiply by -1 if right, 1 if normal)
+        gScaleUpLegToKneeINV = "globalScale_{0}upperLeg_to_kneeInvert_MUL".format(leftRight)
+        gScaleKneeToFootINV = "globalScale_{0}knee_to_footInvert_MUL".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=gScaleUpLegToKneeINV, au=True)
+        mc.setAttr("{0}.operation".format(gScaleUpLegToKneeINV), 1)
+        mc.setAttr("{0}.input2X".format(gScaleUpLegToKneeINV), m)
+
+        mc.shadingNode("multiplyDivide", n=gScaleKneeToFootINV, au=True)
+        mc.setAttr("{0}.operation".format(gScaleKneeToFootINV), 1)
+        mc.setAttr("{0}.input2X".format(gScaleKneeToFootINV), m)
+        ########
+
+        disSnapUpperShape = mc.listRelatives(disSnapUpper, s=True)[0]
+        disSnapLowerShape = mc.listRelatives(disSnapLower, s=True)[0]
+
+        mc.connectAttr("{0}.distance".format(disSnapUpperShape), "{0}.input1X".format(gScaleUpLegToKneeINV))
+        mc.connectAttr("{0}.distance".format(disSnapLowerShape), "{0}.input1X".format(gScaleKneeToFootINV))
+
+        mc.connectAttr("{0}.outputX".format(gScaleUpLegToKneeINV), "{0}.input1X".format(gScaleUpLegToKneeDiv))
+        mc.connectAttr("{0}.outputX".format(gScaleKneeToFootINV), "{0}.input1X".format(gScaleKneeToFootDiv))
+
+        mc.connectAttr("{0}.scaleY".format(ctrlRootTrans), "{0}.input2X".format(gScaleUpLegToKneeDiv))
+        mc.connectAttr("{0}.scaleY".format(ctrlRootTrans), "{0}.input2X".format(gScaleKneeToFootDiv))
+
+        mc.connectAttr("{0}.outputX".format(gScaleUpLegToKneeDiv), "{0}.color1R".format(blndNdUpperStretchChoice),
+                       f=True)
+        mc.connectAttr("{0}.outputX".format(gScaleKneeToFootDiv), "{0}.color1R".format(blndNdLowerStretchChoice),
+                       f=True)
+
+        return
+
+    def cleanLeg(self, ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts, *args):
+        CRU.lockHideCtrls(ctrlFootSettings, translate=True, rotate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(ctrlIKFoot, visible=True, scale=True)
+        CRU.lockHideCtrls(ctrlKnee, rotate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(grpKnee, rotate=True, scale=True, translate=True, visible=True)
+
+        for i in range(len(fkJnts)):
+            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJnts[i], theVals=["radi"], channelBox=False)
+
+        return
+
+    def setIKStretchOption(self, ctrlIKFoot, ikJntsPV, ikJntsNoFlip, legLens,
+                           leftRight, *args):
+
+        # this is a test for personal expansion ideas
+        # this needs to be later on, so we put this at the end
+        ikStretchBool = "IK_Stretch"
+        mc.addAttr(ctrlIKFoot, longName=ikStretchBool, at="bool", k=True, dv=True)
+        mc.setAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), True)
+
+        self.createStretchIKCond(ikJntsPV, legLens, ctrlIKFoot, ikStretchBool, leftRight, "pv_")
+        self.createStretchIKCond(ikJntsNoFlip, legLens, ctrlIKFoot, ikStretchBool, leftRight, "noFlip_")
+
+        return
+
+    def createStretchIKCond(self, ikJnts, legLens, ctrlIKFoot, ikStretchBool, leftRight, type, *args):
+        lowerLegStretchCond = "{0}lowerLeg_{1}stretch_COND".format(leftRight, type)
+
+        mc.shadingNode("condition", n=lowerLegStretchCond, au=True)
+        mc.setAttr("{0}.colorIfFalse".format(lowerLegStretchCond), legLens[0], 0, 0)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), "{0}.firstTerm".format(lowerLegStretchCond))
+        mc.setAttr("{0}.secondTerm".format(lowerLegStretchCond), 1)
+        mc.setAttr("{0}.operation".format(lowerLegStretchCond), 0)
+
+        lowerLegStretchBlnd = []
+        myNode = "blendColors"
+        # we are doing this because for some reason, using Source=false doesn't work
+        test = mc.listConnections('{0}.tx'.format(ikJnts[1]), d=True, s=False, p=True, type=myNode)
+
+        lowerLegStretchBlnd.append(
+            mc.listConnections('{0}.tx'.format(ikJnts[1]), d=True, s=False, p=True, type=myNode)[0])
+        lowerLegStretchBlnd.append(
+            mc.listConnections('{0}.ty'.format(ikJnts[1]), d=True, s=False, p=True, type=myNode)[0])
+        lowerLegStretchBlnd.append(
+            mc.listConnections('{0}.tz'.format(ikJnts[1]), d=True, s=False, p=True, type=myNode)[0])
+
+        mc.connectAttr("{0}.translateX".format(ikJnts[1]), "{0}.colorIfTrueR".format(lowerLegStretchCond))
+        mc.connectAttr("{0}.translateY".format(ikJnts[1]), "{0}.colorIfTrueG".format(lowerLegStretchCond))
+        mc.connectAttr("{0}.translateZ".format(ikJnts[1]), "{0}.colorIfTrueB".format(lowerLegStretchCond))
+
+        mc.connectAttr("{0}.outColorR".format(lowerLegStretchCond), "{0}".format(lowerLegStretchBlnd[0]), f=True)
+        mc.connectAttr("{0}.outColorG".format(lowerLegStretchCond), "{0}".format(lowerLegStretchBlnd[1]), f=True)
+        mc.connectAttr("{0}.outColorB".format(lowerLegStretchCond), "{0}".format(lowerLegStretchBlnd[2]), f=True)
+
+        #####
+
+        footStretchCond = "{0}foot_{1}stretch_COND".format(leftRight, type)
+        mc.shadingNode("condition", n=footStretchCond, au=True)
+        mc.setAttr("{0}.colorIfFalse".format(footStretchCond), legLens[1], 0, 0)
+        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), "{0}.firstTerm".format(footStretchCond))
+        mc.setAttr("{0}.secondTerm".format(footStretchCond), 1)
+        mc.setAttr("{0}.operation".format(footStretchCond), 0)
+
+        footStretchBlnd = []
+        footStretchBlnd.append(mc.listConnections('{0}.tx'.format(ikJnts[2]), d=True, s=False, p=True, type=myNode)[0])
+        footStretchBlnd.append(mc.listConnections('{0}.ty'.format(ikJnts[2]), d=True, s=False, p=True, type=myNode)[0])
+        footStretchBlnd.append(mc.listConnections('{0}.tz'.format(ikJnts[2]), d=True, s=False, p=True, type=myNode)[0])
+
+        mc.connectAttr("{0}.translateX".format(ikJnts[2]), "{0}.colorIfTrueR".format(footStretchCond))
+        mc.connectAttr("{0}.translateY".format(ikJnts[2]), "{0}.colorIfTrueG".format(footStretchCond))
+        mc.connectAttr("{0}.translateZ".format(ikJnts[2]), "{0}.colorIfTrueB".format(footStretchCond))
+
+        mc.connectAttr("{0}.outColorR".format(footStretchCond), "{0}".format(footStretchBlnd[0]), f=True)
+        mc.connectAttr("{0}.outColorG".format(footStretchCond), "{0}".format(footStretchBlnd[1]), f=True)
+        mc.connectAttr("{0}.outColorB".format(footStretchCond), "{0}".format(footStretchBlnd[2]), f=True)
+
+
+
+
+    def makeLegComplete(self, bndJnts,
+                        colourTU,
+                        leftRight, isLeft,
+                        ctrlRootTrans,
+                        jntIKHip, checkboxHip,
+                        grpDNTTorso,
+                        geoJntArray,
+                        jntLegArray,
+                        *args):
 
         # create the FK and IK joints
         jntsTemp = mc.duplicate(bndJnts[0], rc=True)
@@ -1065,6 +1306,9 @@ class pcCreateRigAlt03Legs(UI):
         jntsTemp = mc.duplicate(bndJnts[0], rc=True)
         ikJnts = self.renameIKFKLimbs(jntsTemp, textToReplace="_BND_", textReplacement="_IK_", stripLastVal=1,
                                       renameThis=True, addToEnd="", )
+        ikLegStretchLens = []
+        ikLegStretchLens.append(mc.getAttr("{0}.translateX".format(ikJnts[1])))
+        ikLegStretchLens.append(mc.getAttr("{0}.translateX".format(ikJnts[2])))
 
         newLayerNameIK = "{0}leg_IK_LYR".format(leftRight)
 
@@ -1079,6 +1323,7 @@ class pcCreateRigAlt03Legs(UI):
         mc.setAttr("{0}.overrideColorRGB".format(newLayerNameIK), clrRGB[0], clrRGB[1], clrRGB[2])
         mc.setAttr("{0}.overrideRGBColors".format(newLayerNameIK), 1)
 
+        # print("bndJnts: {0}".format(bndJnts))
         CRU.layerEdit(bndJnts, bndLayer=True)
 
         CRU.changeRotateOrder(bndJnts, "XZY")
@@ -1086,7 +1331,10 @@ class pcCreateRigAlt03Legs(UI):
         CRU.changeRotateOrder(ikJnts, "XZY")
 
         # creates the foot settings control
-        jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
+        if self.checkAnkleTwist:
+            jntFoot = [x for x in bndJnts if "ankleTwist" in x][0]
+        else:
+            jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
         name = "settings_" + leftRight + "leg"
         ctrlFootSettings = CRU.createNailNoOffset(jntFoot, isLeft, name, bodySize=15, headSize=2, colour=colourTU,
                                                   pnt=True)
@@ -1096,7 +1344,6 @@ class pcCreateRigAlt03Legs(UI):
             mc.group(n=grpSettings, w=True, em=True)
         mc.parent(ctrlFootSettings, grpSettings)
         CRU.layerEdit(grpSettings, newLayerName="settings_LYR", colourTU=9)
-
         # creates the FKIK blend control
 
         fkikBlendName = "fkik_blend"
@@ -1105,15 +1352,31 @@ class pcCreateRigAlt03Legs(UI):
         mc.addAttr(ctrlFootSettings, longName=fkikBlendName, niceName=fkikBlendNiceName, at="float", k=True, min=0,
                    max=1, dv=1)
 
-        self.makeBlend(fkJnts, ikJnts, bndJnts, ctrlFootSettings, fkikBlendName, rotate=True, translate=True)
+        self.makeBlendBasic(fkJnts, ikJnts, bndJnts, ctrlFootSettings, fkikBlendName, rotate=True, translate=True)
+        if self.checkboxTwists:
+            geoJntArray = self.makeTwists(3, bndJnts[:2], geoJntArray, ctrlFootSettings, leftRight)
 
-        fkJnts = self.createFKCtrls(fkJnts, colourTU)
+        if self.checkGeo:
+            CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
 
+            jntLegs = [x for x in geoJntArray if "Leg" in x[-3:] or "legtwist" in x.lower()]
+            # print("jntLegs: {0}".format(jntLegs))
+
+            CRU.tgpSetGeoManualStretch(jntLegs, keyWord="LegTwist")
+
+            if not self.checkboxTwists:
+                jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
+                # print("jntLegsNoTwist: {0}".format(jntLegsNoTwist))
+                CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Twist", stretch=True)
+                # CRU.tgpSetGeoSpecial()
+
+        fkJnts = self.createFKCtrls(fkJnts, colourTU, leftRight)
+
+        # print("fkJnts: {0}".format(fkJnts))
         # Stretch FK
         ctrlFKLengthKeyArray = self.makeFKStretch(fkJnts)
 
         # IK Setup
-        # ctrlIKFoot, ikLegs, ikBall, ikToe = self.createIKLegs(ikJnts, newLayerNameIK, leftRight)
         ctrlIKFoot, ikLegs, ikBall, ikToe = self.createIKLegs(ikJnts, newLayerNameIK, leftRight)
 
         # IK Stretch
@@ -1125,100 +1388,76 @@ class pcCreateRigAlt03Legs(UI):
         # pole vector
         grpNoFlipKnee, locKnee = self.createNoFlipIKLeg(ikJnts, ctrlIKFoot, ikLegs, leftRight)
 
-        self.createDualKnee(ikJnts, ctrlIKFoot, ikLegs, grpNoFlipKnee, locIKLegLenEnd, locIKLegLenStart,
-                            ctrlFootSettings, leftRight, newLayerNameIK)
+        cDKList = self.createDualKnee(
+            ikJnts, ctrlIKFoot, ikLegs, grpNoFlipKnee,
+            locIKLegLenEnd, locIKLegLenStart,
+            ctrlFootSettings, leftRight, newLayerNameIK)
+        ikJntsPV, ikJntsNoFlip, ctrlKnee, animCrvPV, animCrvNoFlip, autoManualLN, locStartNoFlip, lenNoFlip, locStartPV, lenPV = cDKList
 
+        cSKList = self.createSnappableKnee(ikJntsPV, ctrlKnee, leftRight, ctrlIKFoot, animCrvPV)
+
+        locSnapUpperToKneeStart, disSnapUpper, disSnapLower, blndNdUpperStretchChoice, blndNdLowerStretchChoice = cSKList
+        self.createNonUniformStretchNoFlip(ctrlIKFoot, leftRight, animCrvNoFlip, ikJntsNoFlip)
+
+        grpKnee = self.toggleFKIKVisibility(ctrlFootSettings, ctrlIKFoot, ctrlKnee, fkJnts, fkikBlendName,
+                                            autoManualLN, leftRight)
+
+        grpIKConst, grpBNDConst, grpFKConst = self.organizeLeg(grpKnee,
+                                                               bndJnts, ikJnts, ikJntsPV, ikJntsNoFlip,
+                                                               fkJnts, ctrlIKFoot,
+                                                               locStartNoFlip, lenNoFlip, locStartPV, lenPV,
+                                                               locSnapUpperToKneeStart,
+                                                               disSnapUpper, disSnapLower,
+                                                               leftRight,
+                                                               ctrlRootTrans)
+
+        self.hipSetup(grpBNDConst, grpIKConst, grpFKConst,
+                      jntIKHip, checkboxHip,
+                      grpDNTTorso, ctrlRootTrans,
+                      ctrlFootSettings,
+                      leftRight)
+        self.fkHipTwistFix(grpBNDConst, ctrlFootSettings, fkikBlendName, leftRight)
+
+        self.legIKScaleFix(lenPV, lenNoFlip,
+                           animCrvPV, animCrvNoFlip,
+                           ctrlRootTrans,
+                           disSnapUpper, disSnapLower,
+                           blndNdUpperStretchChoice, blndNdLowerStretchChoice,
+                           leftRight)
+        self.cleanLeg(ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts)
         return
+        # creates the ability to turn on and off the stretch
+        self.setIKStretchOption(ctrlIKFoot, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
 
-        # create a special control for my own preferences
-        footCtrlsOffsetCtrl = self.addFootCtrl(geoJntArray, isLeft, leftRight, colourTU)
-
-        # Create the joint twists
-        # Adding the twist joint (does this at the same time)
-        # Twist Joints and low-res Mesh
-        if checkboxTwists:
-            xprNameTwist, twistExpression, geoJntArray = self.makeTwists(3, leftRight, jntLegArray, geoJntArray,
-                                                                         footCtrlsOffsetCtrl)
-
-        # for testing purposes only, setting the IK to active:
-        mc.setAttr("{0}.{1}".format(ctrlFKIK, ctrlFKIKAttr), 0.5)
-
-        # Adding the IK and FK and creating the FK Controls
-        bndJnts, fkJnts, ikJnts, ikFkJntConstraints, fkJntOffsetCtrls = self.addIKFKCreateFKCtrl(jntLegArray, colourTU,
-                                                                                                 isLeft)
-
-        # IK Leg Control Part 1
-        ikJntsDrive, ikOffsetCtrl, ikLegs = self.createIKCtrlsAndDrive(ikJnts, leftRight, colourTU)
-
-        # IK Leg Control Part 2
-        self.orientConstrainThenRotateOrder(ikJnts, ikJntsDrive, bndJnts, fkJnts, fkJntOffsetCtrls)
-
-        # FK IK Switching
-        # Adding the IK and FK and creating the FK Controls
-        for i in range(len(ikFkJntConstraints)):
-            self.tgpSetDriverLegFKIKSwitch(ctrlFKIK, ctrlFKIKAttr, ikFkJntConstraints[i])
-
-        # Attaching the Leg to the Hip
-        hipIKOffsetCtrl = self.attachLegToHip(fkJnts, ikJnts, bndJnts, ctrlFKIK, ctrlFKIKAttr, ikJntsDrive,
-                                              fkJntOffsetCtrls, leftRight)
-
-        # create the ik twist
-        self.setupIkKneeLegTwist(ikOffsetCtrl, ikJnts, ikLegs, isLeft)
-
-        # Adding Space Switching
-        # NOTE: This is something I added from the finalizing section
-        # self.makeArmSwitch(ctrlLimb, ctrlShoulder, ctrlChest, ctrlBody, ctrlRootTrans, leftRight, colourTU)
-        self.makeLegSwitch(fkJntOffsetCtrls[0][1], ctrlFKHip, jntIKHip, ctrlBody, ctrlRootTrans,
-                           leftRight, colourTU)
-
-        # Organize the rig
-        self.legCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts,
-                        ikOffsetCtrl, fkJntOffsetCtrls, hipIKOffsetCtrl, ctrlFKHip,
-                        leftRight, ctrlFKIK, ctrlFKIKAttr, checkboxHip, footCtrlsOffsetCtrl)
-
-        if checkGeo:
-            CRU.tgpSetGeo(geoJntArray, setLayer=True)
-
-    def makeLegSwitch(self, ctrlLimb, ctrlHipFK, ctrlHipIK, ctrlBody, ctrlRootTrans, leftRight, colourTU, *args):
-
-        locArmFollowArray = []
-        locShoulder = "LOC_" + leftRight + "legFKHipFollow"
-        locArmFollowArray.append(locShoulder)
-        locTorso = "LOC_" + leftRight + "legIKHipFollow"
-        locArmFollowArray.append(locTorso)
-        locCOG = "LOC_" + leftRight + "legCOGFollow"
-        locArmFollowArray.append(locCOG)
-        locWorld = "LOC_" + leftRight + "legWorldFollow"
-        locArmFollowArray.append(locWorld)
-
-        listParents = [ctrlHipFK, ctrlHipIK, ctrlBody, ctrlRootTrans]
-
-        enumName = "fkLegFollow"
-        enumVals = "fkHip:ikHip:COG:world"
-
-        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
+        # return
 
     def tgpMakeBC(self, *args):
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
-        print("check left: {0}".format(checkSelLeft))
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
-        print("check mirror: {0}".format(mirrorSel))
-        checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
-        print("check twists: {0}".format(checkboxTwists))
+        self.checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
+        self.checkAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
+        self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        print("check geo: {0}".format(checkGeo))
+        '''
+        print("check left: {0}".format(checkSelLeft))
+        print("check mirror: {0}".format(mirrorSel))
+        print("check twists: {0}".format(self.checkboxTwists))
+        print("Ankle twists: {0}".format(self.checkAnkleTwist))
+        print("check geo: {0}".format(self.checkGeo ))
+        '''
 
         jntIKHip = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
         grpDNTTorso = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
         ctrlBody = mc.textFieldButtonGrp("ctrlBody_tfbg", q=True, text=True)
         ctrlRootTrans = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
 
-        print("jntIKHip: {0}".format(jntIKHip))
+        self.valLeft = "l_"
+        self.valRight = "r_"
+        '''print("jntIKHip: {0}".format(jntIKHip))
         print("grpDNTTorso: {0}".format(grpDNTTorso))
         print("ctrlBody: {0}".format(ctrlBody))
-        print("ctrlRootTrans: {0}".format(ctrlRootTrans))
+        print("ctrlRootTrans: {0}".format(ctrlRootTrans))'''
 
         if not jntIKHip:
             mc.warning("You need to select the IK Hip Control")
@@ -1234,13 +1473,14 @@ class pcCreateRigAlt03Legs(UI):
             return
 
         jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        print("jntNames: {0}".format(jntNames))
+        # print("jntNames: {0}".format(jntNames))
 
-        geoJntArray = self.jointArray
-        bndJnts = self.jointArray
-        print("geoJntArray: {0}".format(geoJntArray))
+        geoJntArray = self.jointArray[:]
+        bndJnts = self.jointArray[:]
+
+        # print("geoJntArray: {0}".format(geoJntArray))
         checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
-        print("checkboxHip: {0}".format(checkboxHip))
+        # print("checkboxHip: {0}".format(checkboxHip))
 
         try:
             jntLegRoot = self.jointArray[0]
@@ -1255,21 +1495,22 @@ class pcCreateRigAlt03Legs(UI):
 
         if checkSelLeft == 1:
             isLeft = True
-            leftRight = "l_"
-            leftRightMirror = "r_"
+            leftRight = self.valLeft
+            leftRightMirror = self.valRight
             colourTU = 14
             colourTUMirror = 13
         else:
             isLeft = False
-            leftRight = "r_"
-            leftRightMirror = "l_"
+            leftRight = self.valRight
+            leftRightMirror = self.valLeft
             colourTU = 13
             colourTUMirror = 14
 
+        CRU.checkLeftRight(isLeft, bndJnts[0])
         jntLegArray = self.jntLegArray
-        print("jntLegArray: {0}".format(jntLegArray))
+        # print("jntLegArray: {0}".format(jntLegArray))
         jntLegFoot = [x for x in bndJnts if "Leg" in x[-3:] or "foot" in x[-4:]]
-        print("jntLegFoot: {0}".format(jntLegFoot))
+        # print("jntLegFoot: {0}".format(jntLegFoot))
 
         # make sure the selections are not empty
         checkList = [jntNames]
@@ -1288,14 +1529,15 @@ class pcCreateRigAlt03Legs(UI):
                 toReplace = "_" + leftRight
                 toReplaceWith = "_" + leftRightMirror
                 geoJntArrayMirror = []
-                mirrorBase = mc.mirrorJoint(jntLegRoot, mirrorYZ=True, mirrorBehavior=True,
-                                            searchReplace=[toReplace, toReplaceWith])
-                jntLegRootMirror = mirrorBase[0]
+                bndJntsMirror = mc.mirrorJoint(jntLegRoot, mirrorYZ=True, mirrorBehavior=True,
+                                               searchReplace=[toReplace, toReplaceWith])
+                # print("mirrorBase: {0}".format(bndJntsMirror))
+                jntLegRootMirror = bndJntsMirror[0]
                 try:
                     mc.parent(jntLegRootMirror, w=True)
                 except:
                     pass
-                for mb in mirrorBase:
+                for mb in bndJntsMirror:
                     if mc.objectType(mb) == "joint":
                         geoJntArrayMirror.append(mb)
                 isLeftMirror = not isLeft
@@ -1304,15 +1546,12 @@ class pcCreateRigAlt03Legs(UI):
                 for jntAA in jntLegArray:
                     jntLegArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
 
-            self.makeLeg(bndJnts, colourTU, leftRight, isLeft)
-            return
+            self.makeLegComplete(bndJnts, colourTU, leftRight, isLeft, ctrlRootTrans, jntIKHip, checkboxHip,
+                                 grpDNTTorso, geoJntArray, jntLegArray)
 
             if mirrorRig:
                 print("Mirroring")
 
-                self.makeLeg(isLeftMirror, leftRightMirror,
-                             jntLegArrayMirror,
-                             checkGeo, geoJntArrayMirror, colourTUMirror, jntLegRootMirror,
-                             ctrlFKIK, ctrlFKIKAttrMirror, ctrlFKHip, checkboxTwists,
-                             checkboxSwitch, jntIKHip, ctrlBody, ctrlRootTrans,
-                             checkboxHip=checkboxHip)
+                self.makeLegComplete(bndJntsMirror, colourTUMirror, leftRightMirror, isLeftMirror, ctrlRootTrans,
+                                     jntIKHip, checkboxHip,
+                                     grpDNTTorso, geoJntArrayMirror, jntLegArrayMirror)
