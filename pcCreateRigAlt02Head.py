@@ -470,10 +470,10 @@ class pcCreateRigAlt02Head(UI):
 
         # creates the head follow attributes
         headLocArray = []
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headNeck")[0])
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headShoulder")[0])
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headBody")[0])
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headRoot")[0])
+        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_neckSpace_head")[0])
+        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_shoulderSpace_head")[0])
+        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_bodySpace_head")[0])
+        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_rootSpace_head")[0])
 
         # moves these to the head
         for i in range(len(headLocArray)):

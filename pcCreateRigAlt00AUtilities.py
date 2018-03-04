@@ -583,3 +583,86 @@ class pcCreateRigUtilities:
             mc.parent(grpName, parentObj[0])
 
         mc.parent(objToGrp, grpName)
+
+
+
+    @staticmethod
+    def makeBlendBasic(jntsSrc1, jntsSrc2, jntsTgt, ctrl, ctrlAttr, rotate, translate, override=False, *args):
+
+        blndNodeTrans = []
+        blndNodeRot = []
+        # colour2 is at 0, colour1 is at 1
+
+        for i in range(len(jntsSrc1)):
+            name = jntsTgt[i]
+            if translate:
+                val = ".translate"
+                blndNodeTrans.append(mc.shadingNode("blendColors", au=True, name="{0}_trans_BCN###".format(name)))
+                mc.connectAttr(jntsSrc1[i] + val + "X", blndNodeTrans[i] + ".color2R")
+                mc.connectAttr(jntsSrc1[i] + val + "Y", blndNodeTrans[i] + ".color2G")
+                mc.connectAttr(jntsSrc1[i] + val + "Z", blndNodeTrans[i] + ".color2B")
+
+                mc.connectAttr(jntsSrc2[i] + val + "X", blndNodeTrans[i] + ".color1R")
+                mc.connectAttr(jntsSrc2[i] + val + "Y", blndNodeTrans[i] + ".color1G")
+                mc.connectAttr(jntsSrc2[i] + val + "Z", blndNodeTrans[i] + ".color1B")
+
+                mc.connectAttr(blndNodeTrans[i] + ".outputR", jntsTgt[i] + "{0}".format(val + "X"))
+                mc.connectAttr(blndNodeTrans[i] + ".outputG", jntsTgt[i] + "{0}".format(val + "Y"))
+                mc.connectAttr(blndNodeTrans[i] + ".outputB", jntsTgt[i] + "{0}".format(val + "Z"))
+                blndName = "{0}.{1}".format(ctrl, ctrlAttr)
+                mc.connectAttr(blndName, blndNodeTrans[i] + ".blender", f=True)
+
+            if rotate:
+                val = ".rotate"
+                blndNodeRot.append(mc.shadingNode("blendColors", au=True, name="{0}_rot_BCN###".format(name)))
+
+                mc.connectAttr(jntsSrc1[i] + val + "X", blndNodeRot[i] + ".color2R")
+                mc.connectAttr(jntsSrc1[i] + val + "Y", blndNodeRot[i] + ".color2G")
+                mc.connectAttr(jntsSrc1[i] + val + "Z", blndNodeRot[i] + ".color2B")
+
+                mc.connectAttr(jntsSrc2[i] + val + "X", blndNodeRot[i] + ".color1R")
+                mc.connectAttr(jntsSrc2[i] + val + "Y", blndNodeRot[i] + ".color1G")
+                mc.connectAttr(jntsSrc2[i] + val + "Z", blndNodeRot[i] + ".color1B")
+
+                '''mc.connectAttr(jntsSrc1[i] + val, blndNodeRot[i] + ".color2")
+                mc.connectAttr(jntsSrc2[i] + val, blndNodeRot[i] + ".color1")'''
+
+                mc.connectAttr(blndNodeRot[i] + ".outputR", jntsTgt[i] + "{0}".format(val + "X"))
+                mc.connectAttr(blndNodeRot[i] + ".outputG", jntsTgt[i] + "{0}".format(val + "Y"))
+                mc.connectAttr(blndNodeRot[i] + ".outputB", jntsTgt[i] + "{0}".format(val + "Z"))
+                blndName = "{0}.{1}".format(ctrl, ctrlAttr)
+                mc.connectAttr(blndName, blndNodeRot[i] + ".blender", f=True)
+
+        return
+
+
+    @staticmethod
+    def createDistanceDimensionNode(startLoc, endLoc, lenNodeName, toHide=False):
+
+        distDimShape = mc.distanceDimension(sp=(0, 0, 0), ep=(0, 0, 0))
+        mc.connectAttr("{0}.worldPosition".format(startLoc), "{0}.startPoint".format(distDimShape), f=True)
+        mc.connectAttr("{0}.worldPosition".format(endLoc), "{0}.endPoint".format(distDimShape), f=True)
+        distDimParent = mc.listRelatives(distDimShape, p=True)
+        mc.rename(distDimParent, lenNodeName)
+        lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
+        if toHide:
+            mc.setAttr("{0}.visibility".format(startLoc), False)
+            mc.setAttr("{0}.visibility".format(endLoc), False)
+            mc.setAttr("{0}.visibility".format(lenNodeName), False)
+        return lenNodeNameShape
+
+    @staticmethod
+    def createIKVal(ikStartJoint, ikEndJoint, leftRight, ikSuffix, ikSolver, *args):
+        ikSide = leftRight + ikSuffix
+
+        ikHdlName = "HDL_" + ikSide
+        effName = "EFF_" + ikSide
+        ikVals = mc.ikHandle(n=ikHdlName, sj=ikStartJoint, ee=ikEndJoint, sol=ikSolver)
+        mc.rename(ikVals[1], effName)
+        ikVals[1] =  effName
+
+        # we are going to hide this eventually anyways
+        mc.setAttr("{0}.v".format(ikHdlName), False)
+        mc.setAttr("{0}.v".format(effName), False)
+
+        return ikVals

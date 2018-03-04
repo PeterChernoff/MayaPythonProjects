@@ -576,7 +576,7 @@ class pcCreateRigAlt03Legs(UI):
         todelete = mc.pointConstraint(ikJntFoot, locIKLegLenEnd)
         mc.delete(todelete)
 
-        disIKLeg = "LEN_IK_{0}leg".format(leftRight)
+        disIKLeg = "DIST_IK_{0}leg_length".format(leftRight)
         disIKLegShape = self.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
         mc.parent(locIKLegLenEnd, ctrlIKFoot)
 
@@ -817,7 +817,7 @@ class pcCreateRigAlt03Legs(UI):
                     animationCurves.append(dupReplace)
                 if "lengthStart" in dupReplace:
                     locStartArray.append(dupReplace)
-                if "LEN_" in dupReplace[:4]:
+                if "DIST_" in dupReplace[:5]:
                     lenArray.append(dupReplace)
 
         mc.parent(dupsMove, ctrlIKFoot)
@@ -842,7 +842,7 @@ class pcCreateRigAlt03Legs(UI):
         todelete = mc.pointConstraint(ctrlKnee, locSnapUpperToKneeEnd)
         mc.delete(todelete)
 
-        disSnapUpper = "DIST_{0}upperLeg_to_{0}knee".format(leftRight)
+        disSnapUpper = "DIST_{0}upperLeg_to_{0}knee_length".format(leftRight)
         disSnapUpperShape = self.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
                                                              disSnapUpper)
         toHide.append(locSnapUpperToKneeEnd)
@@ -861,7 +861,7 @@ class pcCreateRigAlt03Legs(UI):
         todelete = mc.pointConstraint(ikJntsPV[-1], locSnapKneeToFootEnd)
         mc.delete(todelete)
 
-        disSnapLower = "DIST_{0}knee_to_{0}foot".format(leftRight)
+        disSnapLower = "DIST_{0}knee_to_{0}foot_length".format(leftRight)
         disSnapLowerShape = self.createDistanceDimensionNode(locSnapKneeToFootStart, locSnapKneeToFootEnd, disSnapLower)
         toHide.append(locSnapKneeToFootStart)
         toHide.append(locSnapKneeToFootEnd)
