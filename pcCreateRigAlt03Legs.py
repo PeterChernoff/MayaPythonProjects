@@ -832,17 +832,17 @@ class pcCreateRigAlt03Legs(UI):
 
         toHide = []
         # create a thigh to knee distance locator
-        locSnapUpperToKneeStart = "LOC_{0}upperLeg_to_{0}kneeStart".format(leftRight)
+        locSnapUpperToKneeStart = "LOC_{0}upperLeg_to_kneeStart".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locSnapUpperToKneeStart)
         todelete = mc.pointConstraint(ikJntsPV[0], locSnapUpperToKneeStart)
         mc.delete(todelete)
 
-        locSnapUpperToKneeEnd = "LOC_{0}upperLeg_to_{0}kneeEnd".format(leftRight)
+        locSnapUpperToKneeEnd = "LOC_{0}upperLeg_to_kneeEnd".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locSnapUpperToKneeEnd)
         todelete = mc.pointConstraint(ctrlKnee, locSnapUpperToKneeEnd)
         mc.delete(todelete)
 
-        disSnapUpper = "DIST_{0}upperLeg_to_{0}knee_length".format(leftRight)
+        disSnapUpper = "DIST_{0}upperLeg_to_knee_length".format(leftRight)
         disSnapUpperShape = self.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
                                                              disSnapUpper)
         toHide.append(locSnapUpperToKneeEnd)
@@ -851,17 +851,17 @@ class pcCreateRigAlt03Legs(UI):
 
         ##################################
         # create a knee to foot distance locator
-        locSnapKneeToFootStart = "LOC_{0}knee_to_{0}footStart".format(leftRight)
+        locSnapKneeToFootStart = "LOC_{0}knee_to_footStart".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locSnapKneeToFootStart)
         todelete = mc.pointConstraint(ctrlKnee, locSnapKneeToFootStart)
         mc.delete(todelete)
 
-        locSnapKneeToFootEnd = "LOC_{0}knee_to_{0}footEnd".format(leftRight)
+        locSnapKneeToFootEnd = "LOC_{0}knee_to_footEnd".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locSnapKneeToFootEnd)
         todelete = mc.pointConstraint(ikJntsPV[-1], locSnapKneeToFootEnd)
         mc.delete(todelete)
 
-        disSnapLower = "DIST_{0}knee_to_{0}foot_length".format(leftRight)
+        disSnapLower = "DIST_{0}knee_to_foot_length".format(leftRight)
         disSnapLowerShape = self.createDistanceDimensionNode(locSnapKneeToFootStart, locSnapKneeToFootEnd, disSnapLower)
         toHide.append(locSnapKneeToFootStart)
         toHide.append(locSnapKneeToFootEnd)

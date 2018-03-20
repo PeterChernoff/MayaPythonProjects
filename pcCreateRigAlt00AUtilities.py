@@ -652,6 +652,18 @@ class pcCreateRigUtilities:
         return lenNodeNameShape
 
     @staticmethod
+    def constrainMove(constrainer, constrainee, point = False, orient = False, parent=False):
+        if point:
+            toDelete  = mc.pointConstraint(constrainer, constrainee)
+            mc.delete(toDelete)
+        if orient:
+            toDelete  = mc.orientConstraint(constrainer, constrainee)
+            mc.delete(toDelete)
+        if parent:
+            toDelete  = mc.parentConstraint(constrainer, constrainee)
+            mc.delete(toDelete)
+
+    @staticmethod
     def createIKVal(ikStartJoint, ikEndJoint, leftRight, ikSuffix, ikSolver, *args):
         ikSide = leftRight + ikSuffix
 
