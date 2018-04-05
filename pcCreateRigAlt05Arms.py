@@ -1,3 +1,4 @@
+# coding=utf-8
 '''
 Created on May 30, 2014
 for Tin Girl Book and game project
@@ -31,7 +32,7 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
 
-        mc.text(l="Select The Shoulder Root: ")
+        mc.text(l="Select The Arm Root: ")
         mc.text(l="")
         mc.separator(st="in", h=17, w=500)
         mc.setParent("..")
@@ -40,9 +41,9 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.text(l="Mirror Arm As Well?")
         # mc.setParent("..")
-        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=1, cw2=[50, 50], )
+        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
         mc.text(l="")
-        mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=False)
+        mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -59,32 +60,37 @@ class pcCreateRigAlt05Arms(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Joint: ")
         mc.textFieldButtonGrp("jointArmsLoad_tfbg", cw=(1, 322), bl="  Load  ")
 
-        '''mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder Joint: ")
-        mc.textFieldButtonGrp("jointShoulderLoad_tfbg", cw=(1, 322), bl="  Load  ")'''
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder Joint: ")
+        mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_shoulderBase")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder IK Joint: ")
-        mc.textFieldButtonGrp("jntIKShoulderLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_spine_6")
+        mc.textFieldButtonGrp("jntIKShoulderLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_shoulder")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Torso Do Not Touch: ")
+        mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", cw=(1, 322), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
 
         mc.setParent("..")
 
         mc.separator(st="in", h=17, w=500)
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="COG CTRL: ")
-        mc.textFieldButtonGrp("ctrlCOG_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_COG")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Root Control: ")
+        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform_emma")
 
         mc.setParent("..")
 
         mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
 
         # load buttons
         mc.textFieldButtonGrp("jointArmsLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-        # mc.textFieldButtonGrp("jointShoulderLoad_tfbg", e=True, bc=self.loadSrc2Btn)
+        mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc3Btn)
+        mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc5Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -99,7 +105,7 @@ class pcCreateRigAlt05Arms(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.se2Src2 = self.tgpLoadJntsBtn("jointShoulderLoad_tfbg", "joint", "Root Shoulder Joint",
+        self.selSrc2 = self.tgpLoadJntsBtn("jointShoulderJntLoad_tfbg", "joint", "Root Shoulder Joint",
                                            ["JNT", "BND", "shoulder"])
         print(self.selSrc2)
 
@@ -108,14 +114,14 @@ class pcCreateRigAlt05Arms(UI):
                                          ["JNT", "_IK_", "shoulder"])
         print(self.selSrc3)
 
-    '''def loadSrc4Btn(self):
-        self.selSrc4 = self.tgpLoadJntsBtn("ctrlIKChestLoad_tf", "nurbsCurve", "IK Chest Control",
-                                           ["CTRL", "chest", "IK"],
-                                           "control")
-        print(self.selSrc4)'''
+    def loadSrc4Btn(self):
+        self.selSrc4 = self.tgpLoadTxBtn("jntTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
+                                         ["GRP", "DO_NOT_TOUCH", "torso"],
+                                         "Group")
+        print(self.selSrc4)
 
     def loadSrc5Btn(self):
-        self.selSrc5 = self.tgpLoadTxBtn("ctrlCOG_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
+        self.selSrc5 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Control", ["CTRL", "rootTransform"],
                                          "control")
         print(self.selSrc5)
 
@@ -177,69 +183,6 @@ class pcCreateRigAlt05Arms(UI):
 
         return self.jointArray
 
-    def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
-                              renameThis=True, addToEnd="", *args):
-        jntsReturn = []
-        # creates a set of values. Normally, we want to delete, but we can also create a list from the values that simply don't include problematic node
-        stripLastVal1 = stripLastVal * (-1)
-        for i in range(len(jntsTemp)):
-            toTest = jntsTemp[i]
-            if mc.objectType(toTest) == "joint":
-                if "Twist" in toTest:
-                    if deleteThis:
-                        mc.delete(toTest)
-                else:
-                    if stripLastVal1 == 0:
-                        temp = toTest
-                    else:
-                        temp = toTest[:stripLastVal1]
-                    toRename = temp.replace(textToReplace, textReplacement) + addToEnd  # strip off the last character
-                    if renameThis:
-                        mc.rename(toTest, toRename)
-                    jntsReturn.append(toRename)
-            else:
-                if deleteThis:
-                    mc.delete(toTest)
-
-        return jntsReturn
-
-    def tgpSetDriverArmFKIKSwitch(self, driver, driverAttr, driven, *args):
-        w0w1Attr = mc.listAttr(driven)[-2:]
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=0,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=0,
-                                  modifyBoth="linear")
-        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=1,
-                                  modifyBoth="linear")
-
-    def tgpAutoClavicleRotate(self, autoClav, targetLimb, ctrlClav, autoClavVal, *args):
-        str = ""
-        axes = ["X", "Y", "Z"]
-        for ax in axes:
-            # AUTO_CTRL_l_clavicle.rotateX = JNT_l_upperArm.rotateX * CTRL_l_clavicle.autoClavicle;
-            str += "{0}.rotate{1} = {2}.rotate{1} * {3}.{4};\n".format(autoClav, ax, targetLimb, ctrlClav, autoClavVal)
-        return str
-
-    def makeArmSwitch(self, ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU, *args):
-        locArmFollowArray = []
-        locShoulder = "LOC_" + leftRight + "armShoulderFollow"
-        locArmFollowArray.append(locShoulder)
-        locTorso = "LOC_" + leftRight + "armTorsoFollow"
-        locArmFollowArray.append(locTorso)
-        locCOG = "LOC_" + leftRight + "armCOGFollow"
-        locArmFollowArray.append(locCOG)
-        locWorld = "LOC_" + leftRight + "armWorldFollow"
-        locArmFollowArray.append(locWorld)
-
-        listParents = [ctrlShoulder, ctrlChest, ctrlCOG, grpFollow]
-
-        enumName = "fkArmFollow"
-        enumVals = "shoulder:torso:COG:world"
-
-        CRU.makeLimbSwitch(ctrlLimb, locArmFollowArray, listParents, enumName, enumVals, colourTU)
-
     def createSettings(self, jntArmArray, isLeft, name, colourTU, fkJnts, ikJnts, bndJnts, ctrlIKArm, *args):
         ctrlArmSettings = CRU.createNailNoOffset(jntArmArray[-2], isLeft, name, bodySize=15, headSize=2,
                                                  colour=colourTU,
@@ -257,7 +200,7 @@ class pcCreateRigAlt05Arms(UI):
         fkikBlendNiceName = "FK / IK Blend"
         # NOTE: we make the default value 0.5 for testing purposes
         mc.addAttr(ctrlArmSettings, longName=fkikBlendName, niceName=fkikBlendNiceName, at="float", k=True, min=0,
-                   max=1, dv=0.5)
+                   max=1, dv=1)
 
         CRU.makeBlendBasic(fkJnts, ikJnts, bndJnts, ctrlArmSettings, fkikBlendName, rotate=True, translate=True)
         # connect the visibility of the controllers
@@ -266,10 +209,14 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.addAttr(ctrlArmSettings, longName=fkVis, at="bool", k=True)
         mc.addAttr(ctrlArmSettings, longName=ikVis, at="bool", k=True)
-        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkVis), "{0}.visibility".format(fkJnts[0]))
-        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ikJnts[0]))
-        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ctrlIKArm)) # this may need to be edited
 
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkVis), "{0}.visibility".format(fkJnts[0]))
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ikJnts[0]))
+        ####
+        # we reroute this in a later part, might as well skip it here.
+        # mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ctrlIKArm))
+        ####
         mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkVis), True)
         mc.setAttr("{0}.{1}".format(ctrlArmSettings, ikVis), True)
 
@@ -280,6 +227,10 @@ class pcCreateRigAlt05Arms(UI):
         bindJntTwistStart = "JNT_{0}arm_bindStart".format(leftRight)
         bindJntTwistMid = "JNT_{0}arm_bindMid".format(leftRight)
         bindJntTwistEnd = "JNT_{0}arm_bindEnd".format(leftRight)
+        cycleVis = []
+        cycleVis.append(bindJntTwistStart, )
+        cycleVis.append(bindJntTwistMid)
+        cycleVis.append(bindJntTwistEnd)
 
         mc.duplicate(twistJntsArrayOfArrays[0][0], n=bindJntTwistStart, po=True)
         if mc.listRelatives(bindJntTwistStart, p=True) is not None:
@@ -298,14 +249,14 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr("{0}.radius".format(bindJntTwistMid), 1.5 * jntRad)
         mc.setAttr("{0}.radius".format(bindJntTwistEnd), 1.5 * jntRad)
 
-        ###########
+        ##########
         # bind the curves to the twists
         crvUpperArm = ikArms[0][2]
         crvLowerArm = ikArms[1][2]
 
         self.bindTwistControls(crvUpperArm, bindJntTwistStart, bindJntTwistMid)
         self.bindTwistControls(crvLowerArm, bindJntTwistMid, bindJntTwistEnd)
-        ###########
+        ##########
         # activate the advanced Twist Control
 
         hdlUpperArm = ikArms[0][0]
@@ -313,7 +264,10 @@ class pcCreateRigAlt05Arms(UI):
 
         self.advancedTwistControls(hdlUpperArm, bindJntTwistStart, bindJntTwistMid)
         self.advancedTwistControls(hdlLowerArm, bindJntTwistMid, bindJntTwistEnd)
-        ###########
+        ##########
+
+        for i in range(len(cycleVis)):
+            mc.setAttr("{0}.visibility".format(cycleVis[i]), False)
 
         return bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd
 
@@ -325,7 +279,7 @@ class pcCreateRigAlt05Arms(UI):
         # mc.skinCluster (ikHip, ikShoulder, crvSpine, sm=0, nw = 1)
 
         scls = mc.skinCluster(endJnt, startJnt, crvToUse, name=skinName, toSelectedBones=True,
-                              bindMethod=0, skinMethod=0, normalizeWeights=1, maximumInfluences=2)[0]
+                              bindMethod=0, skinMethod=0, nw=1, maximumInfluences=2)[0]
 
     def advancedTwistControls(self, hdlArm, startJnt, endJnt):
 
@@ -355,19 +309,21 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.setAttr('{0}.dTwistValueType'.format(hdlArm), 0)
 
-
-    def makeFKStretch(self, fkJnts, *args):
+    def makeFKStretchJnt(self, fkJnts, limbName, add=True, *args):
 
         ctrlFKLengthKeyArray = []
+        endVal = len(limbName) * -1
         for i in range(len(fkJnts)):
             fkJnt = fkJnts[i]
-            if "Arm" in fkJnt[-3:]:
+            if limbName in fkJnt[endVal:]:
+                # print("fkJnt: {0}".format(fkJnt))
                 drivenAttr = "translateX"
                 limbChild = mc.listRelatives(fkJnt, typ="joint")[0]
                 legLen = mc.getAttr("{0}.{1}".format(limbChild, drivenAttr))
                 length = "length"
                 driverValue = 1
-                mc.addAttr(fkJnt, longName=length, at="float", k=True, min=0, dv=1)
+                if add:
+                    mc.addAttr(fkJnt, longName=length, at="float", k=True, min=0, dv=1)
                 CRU.setDriverDrivenValues(fkJnt, length, limbChild, drivenAttr, drivenValue=legLen,
                                           driverValue=driverValue,
                                           modifyBoth="spline")
@@ -381,49 +337,50 @@ class pcCreateRigAlt05Arms(UI):
 
         return ctrlFKLengthKeyArray
 
-    def makeFKStretchGeo(self, bndJnt, crvArm, twistJnts):
+    def makeFKStretchTwists(self, bndJnt, crvArm, twistJnts):
         nameEdit = bndJnt.replace("JNT_BND_", "")
 
-        crvInfo = nameEdit +"Info"
-        armNormalizeDiv = nameEdit + "normalize_DIV"
+        crvInfo = nameEdit + "Info"
+        armNrmlzDiv = nameEdit + "_normalize_DIV"
         mc.shadingNode("curveInfo", n=crvInfo, au=True)
-        mc.shadingNode("multiplyDivide", n=armNormalizeDiv, au=True)
-
+        mc.shadingNode("multiplyDivide", n=armNrmlzDiv, au=True)
 
         crvArmShape = mc.listRelatives(crvArm, s=True)[0]
         mc.connectAttr("{0}.worldSpace".format(crvArmShape), "{1}.inputCurve".format(crvArmShape, crvInfo))
 
-        mc.setAttr("{0}.operation".format(armNormalizeDiv), 2)
-        mc.connectAttr("{0}.arcLength".format(crvInfo), "{0}.input1X".format(armNormalizeDiv))
+        mc.setAttr("{0}.operation".format(armNrmlzDiv), 2)
+        mc.connectAttr("{0}.arcLength".format(crvInfo), "{0}.input1X".format(armNrmlzDiv))
 
-        armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0])) # get the joint child
+        armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0]))  # get the joint child
         # divide arm length by its base length
-        mc.setAttr("{0}.input2X".format(armNormalizeDiv),armLen)
+        mc.setAttr("{0}.input2X".format(armNrmlzDiv), armLen)
 
         # connect to the segments' scaleX
-        for i in range(len(twistJnts)-1):
-            mc.connectAttr("{0}.outputX".format(armNormalizeDiv), "{0}.scaleX".format(twistJnts[i]))
+        for i in range(len(twistJnts) - 1):
+            mc.connectAttr("{0}.outputX".format(armNrmlzDiv), "{0}.scaleX".format(twistJnts[i]))
+
+        return crvInfo, armNrmlzDiv
 
     def makeIKHandle(self, ctrlIKArm, ikJnts, leftRight):
-        mc.rotate( 0, 5, 0, ikJnts[1], r=True)
-        mc.joint(ikJnts[1], e=True, spa=True) # set the preferred angle
+        mc.rotate(0, 5, 0, ikJnts[1], r=True)
+        mc.joint(ikJnts[1], e=True, spa=True)  # set the preferred angle
 
-        mc.rotate( 0, -5, 0, ikJnts[1], r=True)
+        mc.rotate(0, -5, 0, ikJnts[1], r=True)
 
         ikSolver = "ikRPsolver"
         ikSuffix = "arm"
-        ikArms = CRU.createIKVal(ikJnts[0], ikJnts[-2], leftRight, ikSuffix, ikSolver) # create the IK arms
+        ikArms = CRU.createIKVal(ikJnts[0], ikJnts[-2], leftRight, ikSuffix, ikSolver)  # create the IK arms
 
         ikSolver = "ikSCsolver"
         ikSuffix = "hand"
-        ikHands = CRU.createIKVal(ikJnts[-2], ikJnts[-1], leftRight, ikSuffix, ikSolver) # create the IK hand
+        ikHands = CRU.createIKVal(ikJnts[-2], ikJnts[-1], leftRight, ikSuffix, ikSolver)  # create the IK hand
 
         mc.parent(ikArms[0], ikHands[0], ctrlIKArm)
 
-        mc.nodePreset(save=(ctrlIKArm, "smithers"))
-
+        # mc.nodePreset(save=(ctrlIKArm, "smithers"))
 
         return ikArms, ikHands
+
     def makeIKStretch(self, bindJntTwistStart, bindJntTwistEnd, ikJnts, ctrlIKArm, leftRight):
 
         if leftRight == self.valLeft:
@@ -432,11 +389,13 @@ class pcCreateRigAlt05Arms(UI):
         else:
             m = -1
 
-        locIKDistStart = "loc_{0}arm_IK_lengthStart".format(leftRight)
-        locIKDistEnd = "loc_{0}arm_IK_lengthEnd".format(leftRight)
-        distIKLen= "dist_{0}arm_IK_length".format(leftRight)
-
-
+        locIKDistStart = "LOC_{0}arm_IK_lengthStart".format(leftRight)
+        locIKDistEnd = "LOC_{0}arm_IK_lengthEnd".format(leftRight)
+        distIKLen = "DIST_{0}arm_IK_length".format(leftRight)
+        cycleVis = []
+        cycleVis.append(locIKDistStart, )
+        cycleVis.append(locIKDistEnd)
+        cycleVis.append(distIKLen)
 
         mc.spaceLocator(p=(0, 0, 0), name=locIKDistStart)
         mc.spaceLocator(p=(0, 0, 0), name=locIKDistEnd)
@@ -482,16 +441,25 @@ class pcCreateRigAlt05Arms(UI):
         mc.selectKey(ikJntHand, add=True, k=sumLegLen * 2, attribute=drivenAttr)
         mc.setInfinity(poi='cycleRelative')
         ctrlIKLengthKeyArray.append("{0}_{1}".format(ikJntHand, drivenAttr))
+        for i in range(len(cycleVis)):
+            mc.setAttr("{0}.visibility".format(cycleVis[i]), False)
 
         return locIKDistStart, locIKDistEnd, distIKLen, distIKLenShape, ctrlIKLengthKeyArray
 
-    def makeElbowCtrl(self, leftRight, ikJnts, *args):
-        locElbow = "loc_{0}elbow".format(leftRight)
+    def makeElbowCtrl(self, leftRight, ikJnts, hdlArm, *args):
+        if leftRight == self.valLeft:
+            m = -1
+        else:
+            m = 1
+        locElbow = "LOC_{0}elbow".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locElbow)[0]
         toDelete = mc.pointConstraint(ikJnts[1], locElbow)
         mc.delete(toDelete)
         armLength = mc.getAttr("{0}.tx".format(ikJnts[1]))
-        mc.move(-armLength/2, locElbow, z=True, os=True)
+        mc.move(m * armLength / 2, locElbow, z=True, os=True)
+
+        # polevector constrain
+        mc.poleVectorConstraint(locElbow, hdlArm)
 
         # create a pyramid
         boxDimensionsLWH = [2, 2, -8]
@@ -515,24 +483,649 @@ class pcCreateRigAlt05Arms(UI):
         mc.makeIdentity(ctrlElbow, a=True)
         mc.parent(locElbow, ctrlElbow)
 
+        mc.setAttr("{0}.visibility".format(locElbow), False)
+
         return locElbow, ctrlElbow
+
+    def makeElbowSnap(self, ikJnts, ctrlIKArm, ctrlElbow, leftRight):
+        cycleVis = []
+        # create locators for distance nodes at the arm ik to the elbow
+        locDistArmElbowStart = "LOC_{0}upperArm_to_elbow_lengthStart".format(leftRight)
+        locDistArmElbowEnd = "LOC_{0}upperArm_to_elbow_lengthEnd".format(leftRight)
+        distArmElbow = "DIST_{0}upperArm_to_elbow_length".format(leftRight)
+        cycleVis.append(locDistArmElbowStart)
+        cycleVis.append(locDistArmElbowEnd)
+        cycleVis.append(distArmElbow)
+
+        mc.spaceLocator(p=(0, 0, 0), name=locDistArmElbowStart)
+        mc.spaceLocator(p=(0, 0, 0), name=locDistArmElbowEnd)
+
+        CRU.constrainMove(ikJnts[0], locDistArmElbowStart, point=True)
+        CRU.constrainMove(ctrlElbow, locDistArmElbowEnd, point=True)
+        distArmElbowShape = CRU.createDistanceDimensionNode(locDistArmElbowStart, locDistArmElbowEnd, distArmElbow)
+
+        ##########
+
+        # create locators for distance nodes at the elbow control to the hand control
+        locDistElbowHandStart = "LOC_{0}elbow_to_hand_lengthStart".format(leftRight)
+        locDistElbowHandEnd = "LOC_{0}elbow_to_hand_lengthEnd".format(leftRight)
+        distElbowHand = "DIST_{0}elbow_to_hand_length".format(leftRight)
+
+        cycleVis.append(locDistElbowHandStart)
+        cycleVis.append(locDistElbowHandEnd)
+        cycleVis.append(distElbowHand)
+
+        mc.spaceLocator(p=(0, 0, 0), name=locDistElbowHandStart)
+        mc.spaceLocator(p=(0, 0, 0), name=locDistElbowHandEnd)
+
+        CRU.constrainMove(ctrlElbow, locDistElbowHandStart, point=True)
+        CRU.constrainMove(ctrlIKArm, locDistElbowHandEnd, point=True)
+        distElbowHandShape = CRU.createDistanceDimensionNode(locDistElbowHandStart, locDistElbowHandEnd, distElbowHand)
+
+        ##########
+        # parent them appropriately
+        mc.parent(locDistArmElbowEnd, ctrlElbow)
+        mc.parent(locDistElbowHandStart, ctrlElbow)
+
+        mc.parent(locDistElbowHandEnd, ctrlIKArm)
+
+        ##########
+        # Add elbow snap
+        elbowSnapAttr = "elbowSnap"
+        mc.addAttr(ctrlElbow, longName=elbowSnapAttr, at="float", k=True, min=0, max=1, dv=0)
+
+        blndUpperArmStretchChoice = "{0}upperArm_stretchChoice".format(leftRight)
+        mc.shadingNode("blendColors", au=True, name=blndUpperArmStretchChoice)
+
+        mc.connectAttr("{0}.{1}".format(ctrlElbow, elbowSnapAttr), "{0}.blender".format(blndUpperArmStretchChoice))
+
+        mc.connectAttr("{0}.distance".format(distArmElbowShape), "{0}.color1R".format(blndUpperArmStretchChoice))
+        # put the animation output of the joint into the color2R
+        mc.connectAttr("{0}_translateX.output".format(ikJnts[1]), "{0}.color2R".format(blndUpperArmStretchChoice))
+
+        mc.connectAttr("{0}.outputR".format(blndUpperArmStretchChoice), "{0}.translateX".format(ikJnts[1]), f=True)
+
+        blndLowerArmStretchChoice = "{0}lowerArm_stretchChoice".format(leftRight)
+        mc.shadingNode("blendColors", au=True, name=blndLowerArmStretchChoice)
+
+        mc.connectAttr("{0}.{1}".format(ctrlElbow, elbowSnapAttr), "{0}.blender".format(blndLowerArmStretchChoice))
+
+        mc.connectAttr("{0}.distance".format(distElbowHandShape), "{0}.color1R".format(blndLowerArmStretchChoice))
+        # put the animation output of the joint into the color2R
+        mc.connectAttr("{0}_translateX.output".format(ikJnts[-2]), "{0}.color2R".format(blndLowerArmStretchChoice))
+
+        mc.connectAttr("{0}.outputR".format(blndLowerArmStretchChoice), "{0}.translateX".format(ikJnts[-2]), f=True)
+
+        ##########
+        # hide the objects
+        for i in range(len(cycleVis)):
+            mc.setAttr("{0}.visibility".format(cycleVis[i]), False)
+
+        return locDistArmElbowStart, locDistArmElbowEnd, distArmElbow, locDistElbowHandStart, \
+               locDistElbowHandEnd, distElbowHand, distArmElbowShape, distElbowHandShape, \
+               blndUpperArmStretchChoice, blndLowerArmStretchChoice
+
+    def makeFKElbow(self, fkJnts, ctrlElbow):
+        # duplicate the fk elbow
+        fkJntsElbow = mc.duplicate(fkJnts[1], rc=True)
+
+        mc.parent(fkJntsElbow[0], w=True)
+        CRU.constrainMove(ctrlElbow, fkJntsElbow[0], point=True)
+        for i in range(len(fkJntsElbow)):
+            toRename = fkJntsElbow[i][:-1] + "Elbow"
+            mc.rename(fkJntsElbow[i], toRename)
+            fkJntsElbow[i] = toRename
+        fkElbow = fkJntsElbow[0]
+        # Parent under the left elbow control
+        mc.parent(fkElbow, ctrlElbow)
+
+        return fkJntsElbow, fkElbow
+
+    def makeElbowFKIKSwitch(self, ctrlIKArm, ikJnts, fkJntsElbow, leftRight):
+        ctrlIKArmKidsSetup = mc.listRelatives(ctrlIKArm, s=False)
+        ctrlIKArmKids = []
+        for i in range(len(ctrlIKArmKidsSetup)):
+            # Add the non-shape children
+            if not mc.objectType(ctrlIKArmKidsSetup[i], isType='nurbsCurve'):
+                ctrlIKArmKids.append(ctrlIKArmKidsSetup[i])
+        grpIKConstArm = "GRP_IKConst_{0}arm".format(leftRight)
+
+        mc.group(n=grpIKConstArm, em=True, w=True)
+        CRU.constrainMove(ikJnts[-2], grpIKConstArm, point=True)
+        mc.parent(ctrlIKArmKids, grpIKConstArm)
+        ##########
+        # parent the grpIKConst to the control, then the FK Elbow hand joint
+        prntTemp = mc.parentConstraint(ctrlIKArm, grpIKConstArm, w=0)[0]
+        fkJntElbowHand = fkJntsElbow[-2]
+        mc.parentConstraint(fkJntElbowHand, grpIKConstArm, mo=False)
+        ##########
+        # we are going to be doing some backtracking
+        w0w1Attr = mc.listAttr(prntTemp)[-2:]
+        rotVals = mc.getAttr("{0}.r".format(grpIKConstArm))[0]
+        # print("{0}.{1}".format(prntTemp, w0w1Attr[0]))
+        # print("{0}.{1}".format(prntTemp, w0w1Attr[1]))
+        mc.setAttr("{0}.{1}".format(prntTemp, w0w1Attr[0]), 1)
+        mc.setAttr("{0}.{1}".format(prntTemp, w0w1Attr[1]), 0)
+        mc.delete(prntTemp)
+        # unparent everything in grpIKConstArm and adjust the rotation
+        mc.parent(ctrlIKArmKids, w=True)
+        mc.setAttr("{0}.rx".format(grpIKConstArm), rotVals[0])
+        mc.setAttr("{0}.ry".format(grpIKConstArm), rotVals[1])
+        mc.setAttr("{0}.rz".format(grpIKConstArm), rotVals[2])
+
+        # reparent what we unparented
+        mc.parent(ctrlIKArmKids, grpIKConstArm)
+        # we parent in this order because we do FK/IK. We can reverse this if we want FK to be 0
+        grpIKConstArmConstraint = mc.parentConstraint(ctrlIKArm, grpIKConstArm, mo=True)[0]
+        mc.parentConstraint(fkJntElbowHand, grpIKConstArm, mo=False)
+
+        return grpIKConstArm, grpIKConstArmConstraint
+
+    def makeElbowFKIKSwitchControl(self, ctrlElbow, grpIKConstArmConstraint, fkElbow, ctrlIKArm,
+                                   ctrlArmSettings, ikVis,
+                                   leftRight):
+
+        # switch between on and off, and visibility on and off
+        lNameAttr = "FKIK_lowerArmBlend"
+        nName = "FK / IK Lower Arm Blend"
+        mc.addAttr(ctrlElbow, ln=lNameAttr, nn=nName, min=0, max=1, attributeType="float", k=True, dv=1)
+
+        self.tgpSetDriverSwitch2Vals(ctrlElbow, lNameAttr, grpIKConstArmConstraint, valsInOut="linear")
+
+        # set visibility
+        lNameAttrVis = "lowerArm_FKIK_visibility"
+        nName = "Lower Arm FK / IK Visibility"
+        mc.addAttr(ctrlElbow, ln=lNameAttrVis, nn=nName, attributeType="bool", k=True)
+
+        tangentToUse = ["linear", "step"]
+        visMin = 0.001
+
+        mc.connectAttr("{0}.{1}".format(ctrlElbow, lNameAttrVis), "{0}.visibility".format(fkElbow))
+
+        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
+        CRU.setVisibility(ctrlElbow, lNameAttr, ctrlElbow, lNameAttrVis, visMin, tangentToUse, True, True, False)
+
+        # we can't just hide the IK Control so we need to make a group
+        grpIKVisArm = "GRP_IK_vis_{0}arm".format(leftRight)
+
+        mc.group(n=grpIKVisArm, em=True, w=True)
+        mc.parent(ctrlIKArm, grpIKVisArm)
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(grpIKVisArm))
+
+        CRU.setVisibility(ctrlElbow, lNameAttr, ctrlIKArm, "visibility", 1 - visMin, tangentToUse, False, True, True)
+        CRU.lockHideCtrls(grpIKVisArm, translate=True, rotate=True, scale=True, )
+
+        return lNameAttr, lNameAttrVis, grpIKVisArm
+
+    def tgpSetDriverSwitch2Vals(self, driver, driverAttr, driven, valsInOut, *args):
+
+        w0w1Attr = mc.listAttr(driven)[-2:]
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=0,
+                                  modifyBoth=valsInOut)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=1, driverValue=1,
+                                  modifyBoth=valsInOut)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=0, driverValue=1,
+                                  modifyBoth=valsInOut)
+        CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[1], drivenValue=1, driverValue=0,
+                                  modifyBoth=valsInOut)
+
+    def makeShoulderIK(self, jntShoulders, bndStart, leftRight):
+
+        hdlShoulder = "HDL_{0}shoulder".format(leftRight)
+        effShoulder = "EFF_{0}shoulder".format(leftRight)
+        ikShoulder = mc.ikHandle(n=hdlShoulder, sj=jntShoulders[0], ee=jntShoulders[-1], sol="ikSCsolver",
+                                 ccv=False)
+        mc.rename(ikShoulder[1], effShoulder)
+        ikShoulder[1] = effShoulder
+        locShldrTemp = "LOC_{0}shoulder".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locShldrTemp)
+        # print("bndStart: {0}".format(bndStart))
+        CRU.constrainMove(bndStart, locShldrTemp, point=True)
+        mc.parent(hdlShoulder, locShldrTemp)
+
+        mc.setAttr("{0}.v".format(locShldrTemp), False)
+
+        return locShldrTemp, ikShoulder
+
+    def makeShoulderStretchJoint(self, jntShoulders, locShldr, leftRight):
+        if leftRight == self.valLeft:
+            # need to make adjustments for the values making a mirror
+            m = 1
+        else:
+            m = -1
+        cycleVis = []
+        # creates locators for the shoulders
+        locShldrDistStart = "LOC_{0}shoulder_lengthStart".format(leftRight)
+        locShldrDistEnd = "LOC_{0}shoulder_lengthEnd".format(leftRight)
+        distShldr = "DIST_{0}shoulder_length".format(leftRight)
+
+        cycleVis.append(locShldrDistStart)
+        cycleVis.append(locShldrDistEnd)
+        cycleVis.append(distShldr)
+
+        mc.spaceLocator(p=(0, 0, 0), name=locShldrDistStart)
+        mc.spaceLocator(p=(0, 0, 0), name=locShldrDistEnd)
+
+        CRU.constrainMove(jntShoulders[0], locShldrDistStart, point=True)
+        CRU.constrainMove(jntShoulders[-1], locShldrDistEnd, point=True)
+        distShldrShape = CRU.createDistanceDimensionNode(locShldrDistStart, locShldrDistEnd, distShldr)
+
+        mc.parent(locShldrDistEnd, locShldr)
+
+        ikShoulderEnd = jntShoulders[-1]
+
+        shoulderLen = mc.getAttr("{0}.translateX".format(ikShoulderEnd))
+
+        driverAttr = "distance"
+        sumLegLen = shoulderLen * m
+
+        drivenAttr = "translateX"
+
+        ctrlIKLengthKeyArray = []
+
+        # uses the total length to drive the length of the upper leg and  extrapolates it to infinity
+        CRU.setDriverDrivenValues(distShldrShape, driverAttr, ikShoulderEnd, drivenAttr, sumLegLen, shoulderLen,
+                                  modifyBoth="spline")
+        CRU.setDriverDrivenValues(distShldrShape, driverAttr, ikShoulderEnd, drivenAttr, sumLegLen * 2, shoulderLen * 2,
+                                  modifyBoth="spline")
+
+        mc.selectKey(cl=True)
+        mc.selectKey(ikShoulderEnd, add=True, k=sumLegLen * 2, attribute=drivenAttr)
+        mc.setInfinity(poi='cycleRelative')
+        ctrlIKLengthKeyArray.append("{0}_{1}".format(ikShoulderEnd, drivenAttr))
+
+        for i in range(len(cycleVis)):
+            mc.setAttr("{0}.visibility".format(cycleVis[i]), False)
+
+        return locShldrDistStart, locShldrDistEnd, distShldr, distShldrShape
+
+    def makeShoulderStretchGeo(self, jntShoulders, leftRight):
+
+        # allows the shoulder geo to be stretchable
+        # creates multiply divide node
+        mdNrmlzDiv = "{0}shoulder_normalize_DIV".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=mdNrmlzDiv, au=True)
+        mc.setAttr("{0}.operation".format(mdNrmlzDiv), 2)  # set the operation to divide
+
+        # gets default length, plug in default to divisor, base into dividend
+        defShoulderLen = mc.getAttr("{0}.translateX".format(jntShoulders[-1]))
+        mc.connectAttr("{0}.translateX".format(jntShoulders[-1]), "{0}.input1X".format(mdNrmlzDiv))
+        mc.setAttr("{0}.input2X".format(mdNrmlzDiv), defShoulderLen, )
+
+        geoName = jntShoulders[0].replace("JNT_BND_", "GEO_")
+        # gets the pivot location for the joint, assign it to the geo
+        pivotTranslate = mc.xform(jntShoulders[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(geoName, ws=True, pivots=pivotTranslate)
+
+        # connect the operation into the geo scale
+        mc.connectAttr("{0}.outputX".format(mdNrmlzDiv), "{0}.scaleX".format(geoName))
+        mc.parent(geoName, jntShoulders[0])
+        CRU.layerEdit(geoName, geoLayer=True)
+
+        return
+
+    def makeShoulderControl(self, jntShoulders, locShldrTemp, ctrlArmSettings, leftRight):
+
+        ctrlShoulder = "CTRL_{0}shoulder".format(leftRight)
+
+        defShoulderLen = mc.getAttr("{0}.translateX".format(jntShoulders[-1]))
+        # create a pyramid
+        boxDimensionsLWH = [1, 4, 1]
+        x = boxDimensionsLWH[0]
+        y = boxDimensionsLWH[1]
+        z = boxDimensionsLWH[2]
+        toPass = [(0, y, 0),
+                  (-x, 0, z), (-x, 0, -z), (0, y, 0),
+                  (x, 0, z), (x, 0, -z), (0, y, 0),
+                  (x, 0, z), (x, 0, -z), (-x, 0, -z), (-x, 0, z), (x, 0, z), ]
+
+        try:
+            ctrl = mc.curve(ctrlShoulder, r=True, d=1, p=toPass, )
+        except:
+            ctrl = mc.curve(name=ctrlShoulder, d=1, p=toPass, )
+
+        CRU.constrainMove(jntShoulders[0], ctrlShoulder, parent=True)
+        CRU.constrainMove(jntShoulders[-1], ctrlShoulder, point=True)
+
+        mc.select(ctrlShoulder + ".cv[:]")
+        mc.move(-defShoulderLen * 0.5, defShoulderLen * 1.25, 0, r=True, os=True)
+
+        mc.makeIdentity(ctrlShoulder, apply=True, t=True, r=True, s=True)
+
+        mc.parent(locShldrTemp, ctrlShoulder)
+
+        # add attribute to ctrl arm settings for shoulder visibility
+        lNameAttrVis = "shoulderVisibility"
+        mc.addAttr(ctrlArmSettings, ln=lNameAttrVis, attributeType="bool", k=True)
+
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, lNameAttrVis), True)
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, lNameAttrVis), "{0}.visibility".format(ctrlShoulder))
+        CRU.lockHideCtrls(ctrlShoulder, scale=True, rotate=True, visible=True)
+
+        return ctrlShoulder
+
+    def makeShoulderGroup(self, ctrlRoot, ctrlShoulder,
+                          jntShoulders, jntIKShoulder,
+                          locShldrDistStart, distShldr,
+                          leftRight):
+        jntShoulderBase = jntShoulders[0]
+        grpDNTShoulder = "GRP_DO_NOT_TOUCH_{0}shoulder".format(leftRight)
+        # create groups and organize them appropriately
+        mc.group(n=grpDNTShoulder, em=True, w=True)
+        mc.parent(jntShoulderBase, locShldrDistStart, distShldr, grpDNTShoulder)
+        grpShoulder = "GRP_{0}shoulder".format(leftRight)
+
+        mc.group(n=grpShoulder, em=True, w=True)
+        mc.parent(ctrlShoulder, grpDNTShoulder, grpShoulder)
+        mc.parent(grpShoulder, ctrlRoot)
+
+        # TO DELETE this comment: Probably need to get rid of the Connect To Spine bit
+        pivotTranslate = mc.xform(jntIKShoulder, q=True, ws=True, rotatePivot=True)
+        mc.xform(grpShoulder, ws=True, pivots=pivotTranslate)
+
+        mc.parentConstraint(jntIKShoulder, grpShoulder, mo=True)
+        return grpShoulder, grpDNTShoulder
+
+    def organizeArm(self, ctrlRoot, bndJnts, ikJnts, fkJnts,
+                    bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
+                    twistJntsArrayOfArrays,
+                    grpIKVisArm, grpIKConstArm, grpArmTwist,
+                    distArmElbow, distElbowHand, distIKArmLen,
+                    locDistArmElbowStart, locIKDistArmStart,
+                    ctrlElbow,
+                    jntShoulders,
+                    leftRight):
+        # group all arm nodes under the arm
+        grpArm = "GRP_{0}arm".format(leftRight)
+        mc.group(n=grpArm, em=True, w=True)
+        mc.parent(bndJnts[0], fkJnts[0], ikJnts[0], bindJntTwistEnd, bindJntTwistMid, bindJntTwistStart, grpArm)
+        mc.parent(grpIKVisArm, grpIKConstArm, grpArmTwist, grpArm)
+        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpArm)
+        mc.parent(ctrlElbow, grpArm)
+
+        for i in range(len(twistJntsArrayOfArrays)):
+            mc.parent(twistJntsArrayOfArrays[i][0], grpArm)
+
+        mc.parent(grpArm, ctrlRoot)
+
+        ##########
+        # organize the do not touch arm
+        grpDNTArm = "GRP_DO_NOT_TOUCH_{0}arm".format(leftRight)
+        mc.group(n=grpDNTArm, em=True, w=True)
+        mc.parent(grpDNTArm, grpArm)
+        # group everything so far except GRP_IK_vis, CTRL_l_elbow, and the FK  Jnts
+        mc.parent(bndJnts[0], ikJnts[0], bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd, grpDNTArm)
+        mc.parent(grpIKConstArm, grpArmTwist, grpDNTArm)
+        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
+
+        # Group JNT_IK_l_upperArm, LOC_l_upperArm_to_elbowLengthStart, LOC_IK_l_arm_lengthStart
+        grpIKConstArmBase = "GRP_IKConst_{0}armBase".format(leftRight)
+        mc.group(n=grpIKConstArmBase, em=True, w=True)
+        mc.parent(grpIKConstArmBase, grpDNTArm)
+
+        # move the pivot to the base of the arm
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpIKConstArmBase, ws=True, pivots=pivotTranslate)
+        mc.parent(ikJnts[0], locDistArmElbowStart, locIKDistArmStart, grpIKConstArmBase)
+
+        # create a space locator
+        locShoulderSpace = "LOC_shoulderSpace_{0}arm".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locShoulderSpace)
+
+        CRU.constrainMove(jntShoulders[-1], locShoulderSpace, point=True)
+        mc.parent(locShoulderSpace, jntShoulders[-1])
+
+        mc.pointConstraint(locShoulderSpace, grpIKConstArmBase)
+        ##########
+        grpBNDConstArm = "GRP_BNDConst_{0}arm".format(leftRight)
+        mc.group(n=grpBNDConstArm, em=True, w=True)
+        mc.parent(grpBNDConstArm, grpDNTArm)
+        mc.parent(bndJnts[0], grpBNDConstArm)
+
+        # move to the pivot of the upper arm joint
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpBNDConstArm, ws=True, pivots=pivotTranslate)
+        mc.pointConstraint(locShoulderSpace, grpBNDConstArm)
+
+        return grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace
+
+    def gimbalFix(self, grpArm, fkJnts, bndJnts, grpBNDConstArm, ctrlArmSettings, fkikBlendName, fkVis,
+                  locShoulderSpace, leftRight):
+        # creates an extra controller to help with
+        nrVal = (1, 0, 0)
+        sizeVal = 8.5
+        ctrlGimbalCorr = "CTRL_gimbalCorr_{0}arm".format(leftRight)
+        mc.circle(r=sizeVal, n=ctrlGimbalCorr, nr=nrVal)
+        toDelete = "CTRL_gimbalCorrSub_{0}arm".format(leftRight)
+        mc.circle(r=1, n=toDelete, nr=nrVal)
+        ctrlGimbalCorrSubShp = mc.listRelatives(toDelete, s=True)[0]
+        # print("ctrlGimbalCorrSubShp: {0}".format(ctrlGimbalCorrSubShp))
+
+        mc.select(toDelete + ".cv[:]")
+        mc.move(-sizeVal, os=True, r=True, y=True)
+        mc.parent(ctrlGimbalCorrSubShp, ctrlGimbalCorr, s=True, r=True)
+        mc.select(cl=True)
+        mc.delete(toDelete)
+
+        # move and orient to the arm
+        CRU.constrainMove(fkJnts[0], ctrlGimbalCorr, parent=True)
+        mc.makeIdentity(ctrlGimbalCorr, apply=True, t=True, r=True, s=True)
+        mc.parent(ctrlGimbalCorr, grpArm)
+        mc.parent(fkJnts[0], ctrlGimbalCorr)
+        ##########
+        grpGimbalArm = "GRP_BNDGimbal_{0}arm".format(leftRight)
+        mc.group(n=grpGimbalArm, em=True, p=grpBNDConstArm)
+
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpGimbalArm, ws=True, pivots=pivotTranslate)
+
+        mc.parent(bndJnts[0], grpGimbalArm)
+
+        ##########
+        blndGimbalToggle = "{0}arm_gimbalCorrToggle".format(leftRight)
+        mc.shadingNode("blendColors", au=True, name=blndGimbalToggle)
+
+        mc.connectAttr("{0}.rotateX".format(ctrlGimbalCorr), "{0}.color2R".format(blndGimbalToggle))
+        mc.connectAttr("{0}.rotateY".format(ctrlGimbalCorr), "{0}.color2G".format(blndGimbalToggle))
+        mc.connectAttr("{0}.rotateZ".format(ctrlGimbalCorr), "{0}.color2B".format(blndGimbalToggle))
+
+        mc.setAttr("{0}.color1R".format(blndGimbalToggle), 0)
+        mc.setAttr("{0}.color1G".format(blndGimbalToggle), 0)
+        mc.setAttr("{0}.color1B".format(blndGimbalToggle), 0)
+
+        mc.connectAttr("{0}.outputR".format(blndGimbalToggle), "{0}.rotateX".format(grpGimbalArm))
+        mc.connectAttr("{0}.outputG".format(blndGimbalToggle), "{0}.rotateY".format(grpGimbalArm))
+        mc.connectAttr("{0}.outputB".format(blndGimbalToggle), "{0}.rotateZ".format(grpGimbalArm))
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), "{0}.blender".format(blndGimbalToggle))
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkVis), "{0}.visibility".format(ctrlGimbalCorr))
+
+        ##########
+        grpFKConst = "GRP_FKConst_{0}arm".format(leftRight)
+        mc.group(n=grpFKConst, em=True, p=grpArm)
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpFKConst, ws=True, pivots=pivotTranslate)
+        mc.parent(ctrlGimbalCorr, grpFKConst)
+
+        mc.pointConstraint(locShoulderSpace, grpFKConst)
+
+        return ctrlGimbalCorr, grpGimbalArm, blndGimbalToggle, grpFKConst
+
+    def armSpaceSetup(self, locShoulderSpace, grpDNTTorso, ctrlRoot, grpFKConst, grpBNDConstArm, ctrlArmSettings,
+                      colourTU, leftRight):
+        # put the locators in the right places for limb switching
+        locBodySpace = "LOC_bodySpace_{0}arm".format(leftRight)
+        locRootSpace = "LOC_rootSpace_{0}arm".format(leftRight)
+
+        mc.duplicate(locShoulderSpace, n=locBodySpace)
+
+        mc.duplicate(locShoulderSpace, n=locRootSpace)
+        mc.parent(locBodySpace, grpDNTTorso)
+        mc.parent(locRootSpace, ctrlRoot)
+
+        locArmFollowArray = [locShoulderSpace, locBodySpace, locRootSpace]
+
+        # orient constraint these values
+        fkOrientConstr = mc.orientConstraint(locShoulderSpace, locBodySpace, locRootSpace, grpFKConst)[0]
+        bndOrientConstr = mc.orientConstraint(locShoulderSpace, locBodySpace, locRootSpace, grpBNDConstArm)[0]
+
+        enumName = "FK_rotationSpace"
+        enumVals = "shoulder:upperBody:root"
+
+        CRU.makeLimbSwitchNoAutoLocsInPosition(ctrlArmSettings, locArmFollowArray, fkOrientConstr, enumVals, enumName)
+        CRU.makeLimbSwitchNoAutoLocsInPosition(ctrlArmSettings, locArmFollowArray, bndOrientConstr, enumVals, enumName)
+
+        return fkOrientConstr, bndOrientConstr
+
+    def fixSegRotInheritsTransformFK(self, crvArms):
+        # disable inherits transform
+        for i in range(len(crvArms)):
+            mc.setAttr("{0}.inheritsTransform".format(crvArms[i]), False)
+
+    def fixSegRotInheritsTransformIK(self, bndOrientConstr, grpBNDConstArm, ctrlArmSettings, fkikBlendName, leftRight):
+        # fix it so the IK is properly oriented
+        blndBndOrntChoice = "{0}arm_BNDOrientChoice".format(leftRight)
+
+        mc.shadingNode("blendColors", au=True, name=blndBndOrntChoice)
+
+        mc.connectAttr("{0}.constraintRotateX".format(bndOrientConstr), "{0}.color2R".format(blndBndOrntChoice))
+        mc.connectAttr("{0}.constraintRotateY".format(bndOrientConstr), "{0}.color2G".format(blndBndOrntChoice))
+        mc.connectAttr("{0}.constraintRotateZ".format(bndOrientConstr), "{0}.color2B".format(blndBndOrntChoice))
+
+        mc.setAttr("{0}.color1R".format(blndBndOrntChoice), 0)
+        mc.setAttr("{0}.color1G".format(blndBndOrntChoice), 0)
+        mc.setAttr("{0}.color1B".format(blndBndOrntChoice), 0)
+
+        # plug this into the bnnd orient group
+        mc.connectAttr("{0}.outputR".format(blndBndOrntChoice), "{0}.rotateX".format(grpBNDConstArm), f=True)
+        mc.connectAttr("{0}.outputG".format(blndBndOrntChoice), "{0}.rotateY".format(grpBNDConstArm), f=True)
+        mc.connectAttr("{0}.outputB".format(blndBndOrntChoice), "{0}.rotateZ".format(grpBNDConstArm), f=True)
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), "{0}.blender".format(blndBndOrntChoice))
+
+    def cleanArm(self, fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings):
+
+        # We want to lock and hide as much as possible
+        # Lock and hide all the controls on the elbow’s locators
+        # Hide all the space locators (done already)
+        # Add the shoulder joints to jnt_bnd_LYR (already done)
+        # Add the geometry to the geo_LYR (already done)
+        CRU.lockHideCtrls(ctrlArmSettings, translate=True, rotate=True, scale=True, visible=True)
+        # Lock and hide everything on FKConst
+        CRU.lockHideCtrls(grpFKConst, rotate=True, scale=True, translate=True, visible=True)
+        # Lock and hide the scale and visibility of the IK arm control
+        CRU.lockHideCtrls(ctrlIKArm, visible=True, scale=True)
+
+        # Lock and hide the non-length/rotate controls of the elbow FK controls
+        for i in range(len(fkJntsElbow)):
+            CRU.lockHideCtrls(fkJntsElbow[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJntsElbow[i], theVals=["radi"], channelBox=False)
+
+        # Lock and hide the non-rotate and length attributes of the FK controls
+        for i in range(len(fkJnts)):
+            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJnts[i], theVals=["radi"], channelBox=False)
+        return
+
+    def fixScaling(self, distShldrShape, distIKArmLenShape, ctrlRoot, jntShoulders, ikJnts, distArmElbowShape,
+                   distElbowHandShape, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
+                   crvInfoUpper, armNrmlzDivUpper,
+                   crvInfoLower, armNrmlzDivLower,
+                   twistJntsUpper, twistJntsLower,
+                   leftRight):
+        mdGScaleArmDiv = "globalScale_{0}arm_normalize_DIV".format(leftRight)
+        mdGScaleShldrDiv = "globalScale_{0}shoulder_normalize_DIV".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=mdGScaleArmDiv, au=True)
+        mc.shadingNode("multiplyDivide", n=mdGScaleShldrDiv, au=True)
+
+        mc.setAttr("{0}.operation".format(mdGScaleArmDiv), 2)
+        mc.setAttr("{0}.operation".format(mdGScaleShldrDiv), 2)
+
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(mdGScaleArmDiv))
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(mdGScaleShldrDiv))
+
+        mc.connectAttr("{0}.distance".format(distIKArmLenShape), "{0}.input1X".format(mdGScaleArmDiv))
+        mc.connectAttr("{0}.distance".format(distShldrShape), "{0}.input1X".format(mdGScaleShldrDiv))
+
+        mc.connectAttr("{0}.outputX".format(mdGScaleShldrDiv), "{0}_translateX.input".format(jntShoulders[-1]), f=True)
+
+        mc.connectAttr("{0}.outputX".format(mdGScaleArmDiv), "{0}_translateX.input".format(ikJnts[1]), f=True)
+        mc.connectAttr("{0}.outputX".format(mdGScaleArmDiv), "{0}_translateX.input".format(ikJnts[2]), f=True)
+
+        ##########
+        # affect the elbows
+        gScaleArmToElbowNrmlzDiv = "globalScale_{0}upperArm_to_elbowNrmlz_DIV".format(leftRight)
+        gScaleElbowToHandNrmlzDiv = "globalScale_{0}elbow_to_handNrmlz_DIV".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=gScaleArmToElbowNrmlzDiv, au=True)
+        mc.shadingNode("multiplyDivide", n=gScaleElbowToHandNrmlzDiv, au=True)
+
+        mc.setAttr("{0}.operation".format(gScaleArmToElbowNrmlzDiv), 2)
+        mc.setAttr("{0}.operation".format(gScaleElbowToHandNrmlzDiv), 2)
+
+        # this is for the mirror values
+        gScaleArmToElbowNrmlzInvertMult = "globalScale_{0}upperArm_to_ElbowInvert_MUL".format(leftRight)
+        gScaleElbowToHandNrmlzInvertMult = "globalScale_{0}elbow_to_handInvert_MUL".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=gScaleArmToElbowNrmlzInvertMult, au=True)
+        mc.shadingNode("multiplyDivide", n=gScaleElbowToHandNrmlzInvertMult, au=True)
+        ##########
+
+        mc.connectAttr("{0}.distance".format(distArmElbowShape), "{0}.input1X".format(gScaleArmToElbowNrmlzInvertMult))
+        mc.connectAttr("{0}.distance".format(distElbowHandShape),
+                       "{0}.input1X".format(gScaleElbowToHandNrmlzInvertMult))
+
+        mc.connectAttr("{0}.outputX".format(gScaleArmToElbowNrmlzInvertMult),
+                       "{0}.input1X".format(gScaleArmToElbowNrmlzDiv))
+        mc.connectAttr("{0}.outputX".format(gScaleElbowToHandNrmlzInvertMult),
+                       "{0}.input1X".format(gScaleElbowToHandNrmlzDiv))
+
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(gScaleArmToElbowNrmlzDiv))
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(gScaleElbowToHandNrmlzDiv))
+
+        mc.connectAttr("{0}.outputX".format(gScaleArmToElbowNrmlzDiv), "{0}.color1R".format(blndUpperArmStretchChoice),
+                       f=True)
+        mc.connectAttr("{0}.outputX".format(gScaleElbowToHandNrmlzDiv), "{0}.color1R".format(blndLowerArmStretchChoice),
+                       f=True)
+
+        ##########
+        # affect the segments
+        gScaleUpperNrmlzDive = "globalScale_{0}upperArm_normalize_DIV".format(leftRight)
+        gScaleLowerNrmlzDive = "globalScale_{0}lowerArm_normalize_DIV".format(leftRight)
+
+        mc.shadingNode("multiplyDivide", n=gScaleUpperNrmlzDive, au=True)
+        mc.shadingNode("multiplyDivide", n=gScaleLowerNrmlzDive, au=True)
+
+        mc.setAttr("{0}.operation".format(gScaleUpperNrmlzDive), 2)
+        mc.setAttr("{0}.operation".format(gScaleLowerNrmlzDive), 2)
+
+        mc.connectAttr("{0}.outputX".format(armNrmlzDivUpper), "{0}.input1X".format(gScaleUpperNrmlzDive))
+        mc.connectAttr("{0}.outputX".format(armNrmlzDivLower), "{0}.input1X".format(gScaleLowerNrmlzDive))
+
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(gScaleUpperNrmlzDive))
+        mc.connectAttr("{0}.scaleX".format(ctrlRoot), "{0}.input2X".format(gScaleLowerNrmlzDive))
+
+        for i in range(len(twistJntsUpper) - 1):
+            mc.connectAttr("{0}.outputX".format(gScaleUpperNrmlzDive), "{0}.scaleX".format(twistJntsUpper[i]), f=True)
+        for i in range(len(twistJntsLower) - 1):
+            mc.connectAttr("{0}.outputX".format(gScaleLowerNrmlzDive), "{0}.scaleX".format(twistJntsLower[i]), f=True)
+
+        return
+
     def makeArmComplete(self, isLeft, leftRight,
                         jntArmArray,
                         colourTU, jntShoulderRoot,
-                        ctrlIKShoulder,
+                        jntIKShoulder, ctrlRoot,
+                        grpDNTTorso,
                         checkboxSpine, checkGeo,
                         geoJntArray, *args):
-
         uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
         lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))
 
         # Creating FK and IK Joints
         bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray)
-
-        fkLayer = "{0}arm_FK_lyr".format(leftRight)
-        ikLayer = "{0}arm_IK_lyr".format(leftRight)
-        CRU.layerEdit(fkJnts, newLayerName=fkLayer)
-        CRU.layerEdit(ikJnts, newLayerName=ikLayer)
 
         # we want to create FK controls for the limbs except the end
         fkJnts = self.createArmFKs(fkJnts, )
@@ -545,19 +1138,24 @@ class pcCreateRigAlt05Arms(UI):
         rotOrderTemp = mc.getAttr("{0}.rotateOrder".format(ikJnts[-2]))
         mc.setAttr("{0}.rotateOrder".format(ctrlIKArm), rotOrderTemp)
 
-
-        ######
+        ##########
         # to delete test
         # if this works, delete the notes, otherwise delete this part
         # I want to see how 0-out the IK control works. If things mess up, try not including this step
 
         mc.makeIdentity(ctrlIKArm, apply=True, t=True, r=True, s=True)
 
-        #####
+        ##########
         # create the settings control
         name = "settings_" + leftRight + "arm"
         ctrlArmSettings, fkikBlendName, fkVis, ikVis = self.createSettings(jntArmArray, isLeft, name, colourTU, fkJnts,
                                                                            ikJnts, bndJnts, ctrlIKArm)
+
+        # set visibility
+        tangentToUse = ["linear", "step"]
+
+        CRU.setVisibility(ctrlArmSettings, fkikBlendName, ctrlArmSettings, fkVis, .999, tangentToUse, True, True, False)
+        CRU.setVisibility(ctrlArmSettings, fkikBlendName, ctrlArmSettings, ikVis, .999, tangentToUse, False, True, True)
 
         ##########
         # Twistable segments
@@ -580,21 +1178,23 @@ class pcCreateRigAlt05Arms(UI):
         mc.parentConstraint(jntArmArray[1], bindJntTwistMid)
         mc.parentConstraint(jntArmArray[2], bindJntTwistEnd)
 
-        # temp to delete this geo binding
-        CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
-
         ##########
         # FK Stretch
-        ctrlFKLengthKeyArray = self.makeFKStretch(fkJnts)
+        ctrlFKLengthKeyArray = self.makeFKStretchJnt(fkJnts, "Arm")
         # FK Scale Geometry
-        self.makeFKStretchGeo(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0])
-        self.makeFKStretchGeo(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1])
-        ##########
 
+        # It's fine to put this here
+        if checkGeo:
+            CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
+
+        crvInfoUpper, armNrmlzDivUpper = self.makeFKStretchTwists(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0])
+        crvInfoLower, armNrmlzDivLower = self.makeFKStretchTwists(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1])
+        ##########
 
         ##########
         # IK Arm
         ikArms, ikHands = self.makeIKHandle(ctrlIKArm, ikJnts, leftRight)
+        hdlArm = ikArms[0]
 
         # IK Stretch
         vals = self.makeIKStretch(bindJntTwistStart, bindJntTwistEnd, ikJnts, ctrlIKArm, leftRight)
@@ -605,78 +1205,132 @@ class pcCreateRigAlt05Arms(UI):
         ##########
         # Snappable elbow
         # Elbow
-        locElbow, ctrlElbow = self.makeElbowCtrl(leftRight, ikJnts, )
+        locElbow, ctrlElbow = self.makeElbowCtrl(leftRight, ikJnts, hdlArm)
 
 
         # Elbow Snap
-        self.makeElbowSnap(ctrlElbow, ikJnts, leftRight)
+        valsElbowSnap = self.makeElbowSnap(ikJnts, ctrlIKArm, ctrlElbow, leftRight)
+        locDistArmElbowStart, locDistArmElbowEnd, distArmElbow, locDistElbowHandStart, \
+        locDistElbowHandEnd, distElbowHand, distArmElbowShape, distElbowHandShape, \
+        blndUpperArmStretchChoice, blndLowerArmStretchChoice = valsElbowSnap
         ##########
 
+        # IK/FK hybrid elbow
+        # Elbow FK Forearm
+        fkJntsElbow, fkElbow = self.makeFKElbow(fkJnts, ctrlElbow)
 
+        # Elbow FK IK Switch
+        grpIKConstArm, grpIKConstArmConstraint = self.makeElbowFKIKSwitch(ctrlIKArm, ikJnts, fkJntsElbow, leftRight)
 
+        lNameAttr, lNameAttrVis, grpIKVisArm = self.makeElbowFKIKSwitchControl(ctrlElbow, grpIKConstArmConstraint,
+                                                                               fkElbow,
+                                                                               ctrlIKArm, ctrlArmSettings, ikVis,
+                                                                               leftRight)
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ctrlElbow))
+        CRU.lockHideCtrls(ctrlElbow, scale=True, visible=True, rotate=True)
 
-        return
-        # NOTE: I use a slightly different order than the originals, leaving the SetGeo section to the lat
+        ctrlFKElbowLengthKeyArray = self.makeFKStretchJnt(fkJntsElbow, "ArmElbow", add=False)
 
-        fkLen = len(fkJnts)
-        ikLen = len(ikJnts)
-        bndLen = len(bndJnts)
+        ##########
 
-        if bndLen != fkLen or bndLen != ikLen:
-            mc.warning("Your arm joints are somehow not equal")
-            return
-        else:
-            ikFkJntConstraints = []
-            for i in range(bndLen):
-                temp = mc.orientConstraint(fkJnts[i], ikJnts[i], bndJnts[i])[0]
-                ikFkJntConstraints.append(temp)
+        # Part 26: Translation-based shoulder rig
+        jntShoulders = mc.listRelatives(jntShoulderRoot, type="joint")
 
-        for i in range(len(ikFkJntConstraints)):
-            self.tgpSetDriverArmFKIKSwitch(ctrlFKIKAttr, ikFkJntConstraints[i])
+        jntShoulders.append(jntShoulderRoot)
+        jntShoulders.reverse()
 
-        # create the shoulder control
-        shoulderOffsetCtrl = self.setupShoulder(jntShoulderRoot, bndJnts, fkJntOffsetCtrls, colourTU)
+        geoJntArray.extend(jntShoulders)
+        print("jntShoulders: {0}".format(jntShoulders))
+        bndStart = bndJnts[0]
 
-        # create the clavicle
-        if jntClavicle:
-            clavicleOffsetCtrl = self.setupClavicle(jntClavicle, colourTU, leftRight, shoulderOffsetCtrl, jntArmArray)
+        locShldrTemp, ikShoulder = self.makeShoulderIK(jntShoulders, bndStart, leftRight)
 
-        # create the scapula
-        if jntScapula:
-            scapulaOffsetCtrl = self.setupScapula(jntScapula, colourTU, leftRight, shoulderOffsetCtrl, )
-
-        # for testing purposes only, setting the IK to active:
-        mc.setAttr("{0}.{1}".format(ctrlFKIKAttr), 0.5)
-
-        # Setting up the IK Arm
-        ikOffsetCtrl, ikArms, ikJntsDrive, ikSide = self.createArmIK(ikJnts, leftRight, colourTU, isLeft)
-        # create the twists
-        self.setupIkElblowArmTwist(ikOffsetCtrl, ikJnts, ikArms, isLeft)
-
-        # change the rotation order
-        rotationChange = [ikJnts[1], jntArmArray[1], fkJnts[1], ikJntsDrive[1], fkJntOffsetCtrls[1][1]]
-
-        CRU.changeRotateOrder(rotationChange, "YZX")
-
-        # Adding the Elbow Control
-        elbowOffsetCtrl = self.createElbow(ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, )
-
-        # Adding Space Switching
-        # NOTE: This is something I added from the finalizing section
-        if checkboxSwitch:
-            # self.makeArmSwitch(ctrlLimb, ctrlShoulder, ctrlChest, ctrlCOG, grpFollow, leftRight, colourTU)
-            self.makeArmSwitch(fkJntOffsetCtrls[0][1], shoulderOffsetCtrl[1], ctrlIKChest, ctrlCOG, grpFollow,
-                               leftRight, colourTU)
-        # Organize the rig
-        self.armCleanUp(fkJnts, ikJnts, ikJntsDrive, bndJnts,
-                        jntShoulderRoot, jntScapula, jntClavicle,
-                        checkboxSpine,
-                        shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                        ikOffsetCtrl, elbowOffsetCtrl, ikArms, ctrlIKShoulder,
-                        ikSide, fkJntOffsetCtrls, ctrlFKIKAttr)
-
+        # Shoulder Stretch
+        locShldrDistStart, locShldrDistEnd, distShldr, distShldrShape = self.makeShoulderStretchJoint(jntShoulders,
+                                                                                                      locShldrTemp,
+                                                                                                      leftRight)
         if checkGeo:
-            CRU.tgpSetGeo(geoJntArray, setLayer=True)
+            self.makeShoulderStretchGeo(jntShoulders, leftRight)
+
+        ctrlShoulder = self.makeShoulderControl(jntShoulders, locShldrTemp, ctrlArmSettings, leftRight)
+
+        ##########
+        # Arm global transform and cleanup
+        # Shoulder Organizing
+        grpShoulder, grpDNTShoulder = self.makeShoulderGroup(ctrlRoot, ctrlShoulder,
+                                                             jntShoulders, jntIKShoulder,
+                                                             locShldrDistStart, distShldr,
+                                                             leftRight)
+
+        # Arm organizing
+        grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace = \
+            self.organizeArm(ctrlRoot, bndJnts, ikJnts, fkJnts,
+                             bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
+                             twistJntsArrayOfArrays,
+                             grpIKVisArm, grpIKConstArm, grpArmTwist,
+                             distArmElbow, distElbowHand, distIKArmLen,
+                             locDistArmElbowStart, locIKDistArmStart,
+                             ctrlElbow,
+                             jntShoulders,
+                             leftRight)
+        ctrlGimbalCorr, grpGimbalArm, blndGimbalToggle, grpFKConst = self.gimbalFix(grpArm, fkJnts, bndJnts,
+                                                                                    grpBNDConstArm, ctrlArmSettings,
+                                                                                    fkikBlendName, fkVis,
+                                                                                    locShoulderSpace,
+                                                                                    leftRight)
+
+        # Arm space
+
+        fkOrientConstr, bndOrientConstr = self.armSpaceSetup(locShoulderSpace, grpDNTTorso, ctrlRoot, grpFKConst,
+                                                             grpBNDConstArm, ctrlArmSettings,
+                                                             colourTU, leftRight)
+
+        # Geometry and Segments fix
+
+        self.fixSegRotInheritsTransformFK(crvArms)
+        self.fixSegRotInheritsTransformIK(bndOrientConstr, grpBNDConstArm, ctrlArmSettings, fkikBlendName, leftRight)
+
+        # Clean up
+        self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings)
+
+
+        # Root Transform Scaling
+        # print("distShldrShape: {0}".format(distShldrShape))
+        # print("distIKArmLenShape: {0}".format(distIKArmLenShape))
+        twistJntsUpper, twistJntsLower = twistJntsArrayOfArrays
+        self.fixScaling(distShldrShape, distIKArmLenShape, ctrlRoot, jntShoulders, ikJnts, distArmElbowShape,
+                        distElbowHandShape, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
+                        crvInfoUpper, armNrmlzDivUpper,
+                        crvInfoLower, armNrmlzDivLower,
+                        twistJntsUpper, twistJntsLower,
+                        leftRight)
+
+        fkLayer = "{0}arm_FK_lyr".format(leftRight)
+        ikLayer = "{0}arm_IK_lyr".format(leftRight)
+
+
+
+        CRU.layerEdit(fkJnts, newLayerName=fkLayer, colourTU=colourTU)
+
+        CRU.layerEdit(ctrlGimbalCorr, newLayerName=fkLayer)  # add the gimbal correction to the FK layer
+
+        CRU.layerEdit(jntShoulders, bndLayer=True)
+
+        CRU.layerEdit(ikJnts, newLayerName=ikLayer)
+        CRU.layerEdit(bndJnts, bndLayer=True)
+
+        CRU.layerEdit(ctrlElbow, newLayerName=ikLayer)
+        CRU.layerEdit(ctrlIKArm, newLayerName=ikLayer)
+
+        mc.setAttr("{0}.displayType".format(ikLayer), 0)
+        mc.setAttr("{0}.color".format(ikLayer), 0)
+        if isLeft:
+            clrRGB = [0, 0.5, 1]
+        else:
+            clrRGB = [1, 0.5, 0]
+        mc.setAttr("{0}.overrideColorRGB".format(ikLayer), clrRGB[0], clrRGB[1], clrRGB[2])
+        mc.setAttr("{0}.overrideRGBColors".format(ikLayer), 1)
+        return
 
     def makeTwists(self, numTwists, jntArmArray, geoJntArray, *args):
         numTwistsM1 = numTwists - 1
@@ -737,7 +1391,6 @@ class pcCreateRigAlt05Arms(UI):
         return bndJnts, fkJnts, ikJnts
 
     def makeCrvSpline(self, twistJntsSub, leftRight, name, grp=None, *args):
-
         pivotTranslate1 = mc.xform(twistJntsSub[0], q=True, ws=True, rotatePivot=True)
         pivotTranslate2 = mc.xform(twistJntsSub[-1], q=True, ws=True, rotatePivot=True)
 
@@ -781,7 +1434,6 @@ class pcCreateRigAlt05Arms(UI):
         mc.connectAttr("{0}.ox".format(ikCtrlArmTwistNode), ikArms[0] + ".twist")
 
     def createElbow(self, ikJntsDrive, leftRight, armLength, ikArms, isLeft, colourTU, *args):
-
         elbowName = "CTRL_" + leftRight + "elbow"
 
         elbowOffsetCtrl = []
@@ -830,181 +1482,36 @@ class pcCreateRigAlt05Arms(UI):
 
         return fkJnts
 
-    def setupShoulder(self, jntShoulderRoot, bndJnts, fkJntOffsetCtrls, colourTU, *args):
-        shoulderOffsetCtrl = CRU.createCTRLs(jntShoulderRoot, size=5, ornt=True, colour=colourTU)
-        shoulderLength = mc.getAttr("{0}.ty".format(bndJnts[0]))
-
-        mc.select(shoulderOffsetCtrl[1] + ".cv[:]")
-        mc.move(-shoulderLength * 0.65, shoulderLength * 0.8, 0, r=True, ls=True)
-
-        mc.parent(fkJntOffsetCtrls[0][0], shoulderOffsetCtrl[1])
-
-        return shoulderOffsetCtrl
-
-    def setupClavicle(self, jointClavicle, colourTU, leftRight, shoulderOffsetCtrl, jntArmArray, *args):
-        jntClav = jointClavicle[0]
-        childClavicle = mc.listRelatives(jntClav, c=True, type="joint")[0]
-        clavLength = mc.getAttr("{0}.ty".format(childClavicle))
-        clavicleOffsetCtrl = CRU.createCTRLs(jntClav, size=6, ornt=True, colour=colourTU, orientVal=(0, 0, 1),
-                                             sectionsTU=6)
-        mc.select(clavicleOffsetCtrl[1] + ".cv[:]")
-        mc.move(clavLength * 0.5, clavLength * 0.5, 0, r=True, ls=True)
-        autoAttrName = "autoClavicle"
-        mc.addAttr(clavicleOffsetCtrl, longName=autoAttrName, at="float", k=True, min=0, max=1, dv=0.05)
-        autoName = clavicleOffsetCtrl[2]
-        xprNameClav = "expr_" + leftRight + "clavicle"
-
-        # AUTO_CTRL_l_clavicle.rotateX = JNT_l_upperArm.rotateX * CTRL_l_clavicle.autoClavicle;
-        exprStringClav = self.tgpAutoClavicleRotate(autoName, jntArmArray[0], clavicleOffsetCtrl[1],
-                                                    autoAttrName)
-
-        mc.expression(s=exprStringClav, n=xprNameClav)
-        mc.parent(clavicleOffsetCtrl[0], shoulderOffsetCtrl[1])
-
-        return clavicleOffsetCtrl
-
-    def setupScapula(self, jointScapula, colourTU, leftRight, shoulderOffsetCtrl, *args):
-        jntScap = jointScapula[0]
-        childScap = mc.listRelatives(jntScap, c=True, type="joint")[0]
-        scapLength = mc.getAttr("{0}.ty".format(childScap))
-        scapulaOffsetCtrl = CRU.createCTRLs(jntScap, size=6, ornt=True, colour=colourTU, orientVal=(1, 0, 0),
-                                            sectionsTU=8)
-
-        mc.select(scapulaOffsetCtrl[1] + ".cv[:]")
-        mc.move(-scapLength * 0.5, scapLength * 0.5, 0, r=True, ls=True)
-        autoAttrName = "autoScapula"
-        mc.addAttr(scapulaOffsetCtrl, longName=autoAttrName, at="float", k=True, min=0, max=1, dv=0.5)
-        autoName = scapulaOffsetCtrl[2]
-        xprNameScap = "expr_" + leftRight + "scapula"
-
-        # AUTO_CTRL_l_scapula.rotateX = -1*CTRL_l_shoulder.rotateZ * CTRL_l_scapula.autoScapula;
-        exprStringScap = "{0}.rotateX = -1*{1}.rotateZ * {2}.{3};\n".format(autoName, shoulderOffsetCtrl[1],
-                                                                            scapulaOffsetCtrl[1], autoAttrName)
-
-        mc.expression(s=exprStringScap, n=xprNameScap)
-        mc.parent(scapulaOffsetCtrl[0], shoulderOffsetCtrl[1])
-
-        return scapulaOffsetCtrl
-
-    def createArmIK(self, ikJnts, leftRight, colourTU, isLeft, *args):
-
-        ikJntsTDriveTemp = mc.duplicate(ikJnts[0], rc=True)
-        ikJntsDrive = self.tgpCreateLimbFKIFList(ikJntsTDriveTemp, addToEnd="Drive", stripLastVal=1)
-
-        ikSide = leftRight + "arm"
-
-        ikArmName = "IK_" + ikSide
-        effArmName = "EFF_" + ikSide
-        ikArms = mc.ikHandle(n=ikArmName, sj=ikJntsDrive[0], ee=ikJntsDrive[-1], sol="ikRPsolver")
-        mc.rename(ikArms[1], effArmName)
-        ikArms[1] = effArmName
-
-        # fkJntOffsetCtrls.append(CRU.createCTRLs(temp, size=9, ornt=True, colour=colourTU, orientVal=(0, 1, 0)))
-        ikOffsetCtrl = CRU.createCTRLs(ikArms[0], pnt=True, colour=colourTU, addPrefix=True, boxDimensionsLWH=[5, 5, 5])
-
-        fkOrntUpperArm1 = mc.orientConstraint(ikJntsDrive[0], ikJnts[0])[0]
-        fkOrntLowerArm1 = mc.orientConstraint(ikJntsDrive[1], ikJnts[1], skip="y")[0]
-
-        return ikOffsetCtrl, ikArms, ikJntsDrive, ikSide
-
-    def armCleanUp(self, fkJnts, ikJnts, ikJntsDrive, bndJnts,
-                   jntShoulderRoot, jntScapula, jntClavicle,
-                   checkboxSpine,
-                   shoulderOffsetCtrl, scapulaOffsetCtrl, clavicleOffsetCtrl,
-                   ikOffsetCtrl, elbowOffsetCtrl, ikArms, ctrlIKShoulder, ikSide, fkJntOffsetCtrls,
-                   ctrlFKIKAttr, *args):
-
-        mc.parent(fkJnts[0], ikJnts[0], ikJntsDrive[0], jntShoulderRoot)
-
-        if checkboxSpine:
-            mc.parentConstraint(ctrlIKShoulder, shoulderOffsetCtrl[0], mo=True)
-
-        mc.pointConstraint(shoulderOffsetCtrl[1], jntShoulderRoot)
-
-        # group OFFSET_CTRL_IK_l_arm, OFFSET_CTRL_l_elbow into GRP_CTRL_IK_l_arm
-        ikGrpCtrlName = "GRP_CTRL_IK_" + ikSide
-        ikGrpCtrl = mc.group(n=ikGrpCtrlName, w=True, em=True)
-
-        mc.parent(ikOffsetCtrl[0], elbowOffsetCtrl[0], ikGrpCtrl)
-
-        # group IK_l_arm, JNT_l_shouder into GRP_jnt_l_arm
-        armGrpRigName = "GRP_jnt_" + ikSide
-        armRigGrp = mc.group(n=armGrpRigName, w=True, em=True)
-
-        mc.parent(ikArms[0], jntShoulderRoot, armRigGrp)
-
-        # creating lists to set invisible
-        fksToVisible = [fkJntOffsetCtrls[0][1], fkJnts[0]]
-        iksToVisible = [ikOffsetCtrl[1], ikJnts[0], ikJntsDrive[0], elbowOffsetCtrl[1]]
-        tangentToUse = ["linear", "step"]
-        visMin = 0.001
-
-        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
-        for i in range(len(fksToVisible)):
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=True,
-                                      driverValue=0, modifyInOut=tangentToUse)
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=True,
-                                      driverValue=1 - visMin, modifyInOut=tangentToUse)
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, fksToVisible[i], "visibility", drivenValue=False,
-                                      driverValue=1, modifyInOut=tangentToUse)
-
-        tangentToUse = ["linear", "step"]
-        # set the IK to visible when not ctrlFKIK not 0 for arm attribute
-        for i in range(len(iksToVisible)):
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=False,
-                                      driverValue=0, modifyInOut=tangentToUse)
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=True,
-                                      driverValue=visMin, modifyInOut=tangentToUse)
-            CRU.setDriverDrivenValues(ctrlFKIK, ctrlFKIKAttr, iksToVisible[i], "visibility", drivenValue=True,
-                                      driverValue=1, modifyInOut=tangentToUse)
-
-        # locking and hiding the IK controls
-        CRU.lockHideCtrls(ikOffsetCtrl[1], rotate=True, scale=True, visible=True)
-        for fkJntOC in fkJntOffsetCtrls:
-            CRU.lockHideCtrls(fkJntOC[1], translate=True, scale=True)
-            CRU.lockHideCtrls(fkJntOC[1], visible=True, toLock=False)
-        CRU.lockHideCtrls(shoulderOffsetCtrl[1], translate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(scapulaOffsetCtrl[1], translate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(clavicleOffsetCtrl[1], translate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(elbowOffsetCtrl[1], rotate=True, scale=True, visible=True)
-
-        # hiding the visibility for the FK
-
-        # locking and hiding the effectors and IK
-        # to delete: May need to not have this hidden
-        mc.setAttr("{0}.visibility".format(ikArms[0]), False)
-        CRU.lockHideCtrls(ikArms[0], visible=True)
-        CRU.lockHideCtrls(ikArms[1], visible=True)
-
-        CRU.layerEdit(ikJnts, ikLayer=True, noRecurse=True)
-        CRU.layerEdit(fkJnts, fkLayer=True, noRecurse=True)
-        CRU.layerEdit(ikJntsDrive, ikdriveLayer=True, noRecurse=True)
-        CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
-        CRU.layerEdit(jntShoulderRoot, bndLayer=True, noRecurse=True)
-        CRU.layerEdit(jntScapula, bndLayer=True, noRecurse=True)
-        CRU.layerEdit(jntClavicle, bndLayer=True, noRecurse=True)
-
     def tgpMakeBC(self, *args):
-
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
-        # self.jntNames = mc.textFieldButtonGrp("jointShoulderLoad_tfbg", q=True, text=True)
         self.jntNames = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
+
         geoJntArray = self.jointArray[:]
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
-        ctrlCOG = mc.textFieldButtonGrp("ctrlCOG_tfbg", q=True, text=True)
+        grpDNTTorso = mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", q=True, text=True)
+        # print("grpDNTTorso: {0}".format(grpDNTTorso))
+
+        ctrlRoot = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+
+        # print("ctrlRoot: {0}".format(ctrlRoot))
+        jntShoulderRoot = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
+
+        # print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
         self.valLeft = "l_"
         self.valRight = "r_"
 
         if checkboxSpine:
-            ctrlIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
+            jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
         else:
-            ctrlIKShoulder = None
+            jntIKShoulder = None
+
+        # print("ctrlIKShoulder: {0}".format(jntIKShoulder))
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -1012,6 +1519,8 @@ class pcCreateRigAlt05Arms(UI):
             mirrorRig = True
 
         jntArmArray = self.jointArray[:]
+        print("jntArmArray: {0}".format(jntArmArray))
+        print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
         if checkSelLeft == 1:
             isLeft = True
@@ -1052,41 +1561,38 @@ class pcCreateRigAlt05Arms(UI):
             if mirrorRig:
                 mirrorBase = mc.mirrorJoint(jntArmArray[0], mirrorYZ=True, mirrorBehavior=True,
                                             searchReplace=[toReplace, toReplaceWith])
+                jntShoulderRootMirror = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
+                                                       searchReplace=[toReplace, toReplaceWith])[0]
 
-                jntShoulderRootMirror = mirrorBase[0]
                 # mc.parent(jntShoulderRootMirror, w=True)
-            jntShoulderRoot = "toDelete"
             self.makeArmComplete(isLeft, leftRight,
                                  jntArmArray,
                                  colourTU, jntShoulderRoot,
-                                 ctrlIKShoulder,
+                                 jntIKShoulder, ctrlRoot,
+                                 grpDNTTorso,
                                  checkboxSpine, checkGeo,
                                  geoJntArray)
 
             if mirrorRig:
 
                 print("Mirroring")
-
                 isLeftMirror = not isLeft
                 # we need to create mirror names for the arms
                 jntArmArrayMirror = []
                 for jntAA in jntArmArray:
                     jntArmArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
-                jntClavicleMirror = []
-                for clav in jntClavicle:
-                    jntClavicleMirror.append(clav.replace(toReplace, toReplaceWith))
-                jntScapulaMirror = []
-                for scap in jntScapula:
-                    jntScapulaMirror.append(scap.replace(toReplace, toReplaceWith))
+
+                print("jntArmArrayMirror: {0}".format(jntArmArrayMirror))
+                print("jntShoulderRootMirror: {0}".format(jntShoulderRootMirror))
                 geoJntArrayMirror = []
                 for mb in mirrorBase:
 
                     if mc.objectType(mb) == "joint" and "End" not in mb:
                         geoJntArrayMirror.append(mb)
                 self.makeArmComplete(isLeftMirror, leftRightMirror,
-                                     jntArmArrayMirror, jntClavicleMirror, jntScapulaMirror,
+                                     jntArmArrayMirror,
                                      colourTUMirror, jntShoulderRootMirror,
-                                     ctrlFKIKAttrMirror, ctrlIKShoulder, checkboxTwists,
+                                     jntIKShoulder, ctrlRoot,
+                                     grpDNTTorso,
                                      checkboxSpine, checkGeo,
-                                     checkboxSwitch, ctrlIKChest, ctrlCOG, grpFollow,
                                      geoJntArrayMirror)
