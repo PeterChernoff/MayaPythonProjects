@@ -1114,6 +1114,57 @@ class pcCreateRigAlt05Arms(UI):
 
         return
 
+    def ikStretchOnOff(self, ikJnts, ctrlArmSettings, leftRight):
+        # creates the IK Stretch on/off
+        ikStretchAttr = "IK_stretch"
+        enumVals = "on:off"
+        mc.addAttr(ctrlArmSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
+
+        condLowerArmIKStretch = "{0}lowerArm_IK_stretch_COND".format(leftRight)
+        condHandIKStretch = "{0}hand_IK_stretch_COND".format(leftRight)
+
+        self.makeIKStretchMethod(ikJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr)
+        self.makeIKStretchMethod(ikJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr)
+
+        '''
+
+        len1 = mc.getAttr("{0}.translateX".format(ikJnts[1]))
+        len2 = mc.getAttr("{0}.translateX".format(ikJnts[2]))
+
+
+        mc.shadingNode("condition", n=condLowerArmIKStretch, au=True)
+        mc.shadingNode("condition", n=condHandIKStretch, au=True)
+
+        mc.setAttr("{0}.colorIfFalse".format(condLowerArmIKStretch), len1, 0, 0)
+        mc.setAttr("{0}.colorIfFalse".format(condHandIKStretch), len2, 0, 0)
+
+        mc.connectAttr("{0}_translateX".format(ikJnts[-2]), "{0}.colorIfTrueR".format(condHandIKStretch))
+        mc.connectAttr("{0}_translateX".format(ikJnts[1]), "{0}.colorIfTrueR".format(condLowerArmIKStretch))
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(condHandIKStretch))
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(condLowerArmIKStretch))
+
+        mc.connectAttr("{0}.outColorR".format(condLowerArmIKStretch), "{0}.translateX".format(ikJnts[1]))
+        mc.connectAttr("{0}.outColorR".format(condHandIKStretch), "{0}.translateX".format(ikJnts[-2]))'''
+
+        return
+
+    def makeIKStretchMethod(self, ikJnt, cond, ctrlArmSettings, ikStretchAttr):
+
+        mc.shadingNode("condition", n=cond, au=True)
+        len1 = mc.getAttr("{0}.translateX".format(ikJnt))
+
+        mc.setAttr("{0}.colorIfFalse".format(cond), len1, 0, 0)
+
+        mc.connectAttr("{0}_translateX.output".format(ikJnt), "{0}.colorIfTrueR".format(cond))
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(cond))
+        mc.setAttr("{0}.secondTerm".format(cond), 0)
+        mc.setAttr("{0}.operation".format(cond), 0)
+
+
+        mc.connectAttr("{0}.outColorR".format(cond), "{0}.translateX".format(ikJnt), f=True)
+
     def makeArmComplete(self, isLeft, leftRight,
                         jntArmArray,
                         colourTU, jntShoulderRoot,
@@ -1304,6 +1355,8 @@ class pcCreateRigAlt05Arms(UI):
                         crvInfoLower, armNrmlzDivLower,
                         twistJntsUpper, twistJntsLower,
                         leftRight)
+
+        self.ikStretchOnOff(ikJnts, ctrlArmSettings, leftRight)
 
         fkLayer = "{0}arm_FK_lyr".format(leftRight)
         ikLayer = "{0}arm_IK_lyr".format(leftRight)
