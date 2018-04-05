@@ -269,15 +269,18 @@ class pcCreateRigUtilities:
 
                 if printOut:
                     print("Setting {0}".format(geoJntArray[i]))
-
+                # get the joint we will be working with
                 theParent = geoJntArray[i]
+                # get the immediate joint child we will be working with
                 theChild = mc.listRelatives(geoJntArray[i], type="joint")[0]
+                # get the name of the object we want
                 geoName = theParent.replace(setter, "GEO_")
                 geoNameSpecial = "{0}{1}".format(geoName, keyWord)
                 listNames = mc.ls("{0}*".format(geoNameSpecial), type="transform")
                 # listNames.append(geoName)
                 if printOut:
                     print("geoName: {0}".format(geoName))
+                # parent geometries of similar types under the joint (for when we have twist geos but no twist joints to go with them
                 mc.parent(listNames, theParent)
                 if printOut:
                     print("Parenting complete")
@@ -565,6 +568,33 @@ class pcCreateRigUtilities:
             pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
 
     @staticmethod
+    def makeLimbSwitchNoAutoLocsInPosition(ctrlLimb, locLimbFollowArray, limbFollowOrntConstr, enumVals, enumName, *args):
+        num = len(enumVals.split(":"))
+
+        alreadySet = mc.attributeQuery(enumName, node=ctrlLimb, ex=True)
+        if not alreadySet:
+            # If we've already set this, we can skip this step
+            mc.addAttr(ctrlLimb, longName=enumName, at="enum", k=True, en=enumVals)
+
+        # get the values for the orient
+        negNum = -1 * num
+        limbSpaceFollow = mc.listAttr(limbFollowOrntConstr)[negNum:]
+        for i in range(len(limbSpaceFollow)):
+            # set the driven key to 1 and the undriven keys to 0
+
+            pcCreateRigUtilities.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr, limbSpaceFollow[i], i,
+                                                       1)
+            for i2 in range(len(limbSpaceFollow)):
+                if i2 != i:
+                    # need to have the second to last value be i, not i2
+                    pcCreateRigUtilities.setDriverDrivenValues(ctrlLimb, enumName, limbFollowOrntConstr,
+                                                               limbSpaceFollow[i2], i, 0)
+        if not alreadySet:
+            for i in range(len(locLimbFollowArray)):
+                mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
+                pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
+
+    @staticmethod
     def createParentGroup(objToGrp, grpName, point=False, orient=False, parent=False):
         mc.group(n=grpName, em=True, w=True)
         if parent:
@@ -583,8 +613,6 @@ class pcCreateRigUtilities:
             mc.parent(grpName, parentObj[0])
 
         mc.parent(objToGrp, grpName)
-
-
 
     @staticmethod
     def makeBlendBasic(jntsSrc1, jntsSrc2, jntsTgt, ctrl, ctrlAttr, rotate, translate, override=False, *args):
@@ -635,7 +663,6 @@ class pcCreateRigUtilities:
 
         return
 
-
     @staticmethod
     def createDistanceDimensionNode(startLoc, endLoc, lenNodeName, toHide=False):
 
@@ -652,15 +679,17 @@ class pcCreateRigUtilities:
         return lenNodeNameShape
 
     @staticmethod
-    def constrainMove(constrainer, constrainee, point = False, orient = False, parent=False):
+    def constrainMove(driver, driven, point=False, orient=False, parent=False):
+        if not point and not orient and not parent:
+            mc.warning("Remember to include a point/orient/parent")
         if point:
-            toDelete  = mc.pointConstraint(constrainer, constrainee)
+            toDelete = mc.pointConstraint(driver, driven)
             mc.delete(toDelete)
         if orient:
-            toDelete  = mc.orientConstraint(constrainer, constrainee)
+            toDelete = mc.orientConstraint(driver, driven)
             mc.delete(toDelete)
         if parent:
-            toDelete  = mc.parentConstraint(constrainer, constrainee)
+            toDelete = mc.parentConstraint(driver, driven)
             mc.delete(toDelete)
 
     @staticmethod
@@ -671,10 +700,20 @@ class pcCreateRigUtilities:
         effName = "EFF_" + ikSide
         ikVals = mc.ikHandle(n=ikHdlName, sj=ikStartJoint, ee=ikEndJoint, sol=ikSolver)
         mc.rename(ikVals[1], effName)
-        ikVals[1] =  effName
+        ikVals[1] = effName
 
         # we are going to hide this eventually anyways
         mc.setAttr("{0}.v".format(ikHdlName), False)
         mc.setAttr("{0}.v".format(effName), False)
 
         return ikVals
+
+    @staticmethod
+    def setVisibility(driver, driverAttr, driven, drivenAttr, visMin, tangentToUse, val1, val2, val3, *args):
+        # set the FK to visible when not ctrlFKIK not 1 for arm attribute
+        pcCreateRigUtilities.setDriverDrivenValues(driver, driverAttr, driven, drivenAttr, drivenValue=val1,
+                                                   driverValue=0, modifyInOut=tangentToUse)
+        pcCreateRigUtilities.setDriverDrivenValues(driver, driverAttr, driven, drivenAttr, drivenValue=val2,
+                                                   driverValue=1 - visMin, modifyInOut=tangentToUse)
+        pcCreateRigUtilities.setDriverDrivenValues(driver, driverAttr, driven, drivenAttr, drivenValue=val3,
+                                                   driverValue=1, modifyInOut=tangentToUse)
