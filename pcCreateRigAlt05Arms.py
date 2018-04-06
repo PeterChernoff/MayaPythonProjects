@@ -41,9 +41,9 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.text(l="Mirror Arm As Well?")
         # mc.setParent("..")
-        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
+        mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 300], )
         mc.text(l="")
-        mc.checkBox("selSpineEnd_cb", l="Connect To Spine", en=True, v=True)
+        mc.checkBox("selSpecialStretch_cb", l="Special Stretch for \nShoulders and IK", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -66,7 +66,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder IK Joint: ")
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_shoulder")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Torso Do Not Touch: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Torso \nDo Not Touch: ")
         mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", cw=(1, 322), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
 
         mc.setParent("..")
@@ -1190,6 +1190,33 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr("{0}.operation".format(cond), 0)
 
         mc.connectAttr("{0}.outColorR".format(cond), "{0}.translateX".format(ikBndJnt), f=True)
+
+    def toggleShoulderStretch(self, jntShoulders, ctrlShoulder, leftRight):
+
+        stretchAttr = "shoulderStretch"
+        enumVals = "on:off"
+        mc.addAttr(ctrlShoulder, longName=stretchAttr, at="enum", k=True, en=enumVals)
+
+        # toggles the shoulder's stretch
+        jntShoulderEnd = jntShoulders[-1]
+        jntShoulderStart = jntShoulders[0]
+        len = mc.getAttr("{0}.translateX".format(jntShoulderEnd))
+        # creates the shoulder stretch condition
+        shoulderStretchCond = "{0}shoulder_stretch_COND".format(leftRight)
+        mc.shadingNode("condition", n=shoulderStretchCond, au=True)
+
+        mc.connectAttr("{0}.{1}".format(ctrlShoulder, stretchAttr),"{0}.firstTerm".format(shoulderStretchCond))
+
+        mc.setAttr("{0}.secondTerm".format(shoulderStretchCond), 0)
+        mc.setAttr("{0}.operation".format(shoulderStretchCond), 0)
+
+        # connects it to the conditional
+        mc.connectAttr("{0}_translateX.output".format(jntShoulderEnd), "{0}.colorIfTrueR".format(shoulderStretchCond))
+        mc.setAttr("{0}.colorIfFalseR".format(shoulderStretchCond), len)
+
+        mc.connectAttr("{0}.outColorR".format(shoulderStretchCond), "{0}.translateX".format(jntShoulderEnd), f=True)
+        return shoulderStretchCond
+
     def makeIKBndJnts(self, ikJnts):
 
         ikBndJnts = mc.duplicate(ikJnts[0], rc=True)
@@ -1208,7 +1235,7 @@ class pcCreateRigAlt05Arms(UI):
                         colourTU, jntShoulderRoot,
                         jntIKShoulder, ctrlRoot,
                         grpDNTTorso,
-                        checkboxSpine, checkGeo,
+                        cbSpecialStretch, checkGeo,
                         geoJntArray, *args):
         '''uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
         lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))'''
@@ -1227,8 +1254,8 @@ class pcCreateRigAlt05Arms(UI):
         rotOrderTemp = mc.getAttr("{0}.rotateOrder".format(ikJnts[-2]))
         mc.setAttr("{0}.rotateOrder".format(ctrlIKArm), rotOrderTemp)
 
-        ikBndStretchBool = True
-        if ikBndStretchBool:
+
+        if cbSpecialStretch:
             # this is for an experimental stretch toggle effect
             ikBndJnts = self.makeIKBndJnts(ikJnts)
 
@@ -1242,7 +1269,7 @@ class pcCreateRigAlt05Arms(UI):
         ##########
         # create the settings control
         name = "settings_" + leftRight + "arm"
-        if ikBndStretchBool:
+        if cbSpecialStretch:
             ikJntsUse = ikBndJnts
         else:
             ikJntsUse = ikJnts
@@ -1359,7 +1386,7 @@ class pcCreateRigAlt05Arms(UI):
                                                              locShldrDistStart, distShldr,
                                                              leftRight)
 
-        if not ikBndStretchBool:
+        if not cbSpecialStretch:
             ikBndJnts = None
             # Arm organizing
         grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace = \
@@ -1391,9 +1418,10 @@ class pcCreateRigAlt05Arms(UI):
 
         # Clean up
         self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings)
-        if ikBndStretchBool:
+        if cbSpecialStretch:
             #set the visibility of the IKs to 0 if we are working with the ikBndJnts
             mc.setAttr("{0}.v".format(ikJnts[0]), False)
+
 
         # Root Transform Scaling
         # print("distShldrShape: {0}".format(distShldrShape))
@@ -1409,11 +1437,14 @@ class pcCreateRigAlt05Arms(UI):
                         crvInfoLower, armNrmlzDivLower,
                         twistJntsUpper, twistJntsLower,
                         leftRight)
-        if ikBndStretchBool:
+        # Special: Turn off IK Stretch
+        if cbSpecialStretch:
             self.ikStretchOnOffSpecial(ikJnts, ikBndJnts, ctrlArmSettings, leftRight)
         else:
             self.ikStretchOnOffNormal(ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice, leftRight)
-
+        # Special: Turn off Shoulder Stretch
+        if cbSpecialStretch:
+            shoulderStretchCond = self.toggleShoulderStretch(jntShoulders, ctrlShoulder,  leftRight)
         fkLayer = "{0}arm_FK_lyr".format(leftRight)
         ikLayer = "{0}arm_IK_lyr".format(leftRight)
 
@@ -1598,7 +1629,7 @@ class pcCreateRigAlt05Arms(UI):
         self.jntNames = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
 
         geoJntArray = self.jointArray[:]
-        checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+        cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
 
         grpDNTTorso = mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", q=True, text=True)
         # print("grpDNTTorso: {0}".format(grpDNTTorso))
@@ -1614,10 +1645,9 @@ class pcCreateRigAlt05Arms(UI):
         self.valLeft = "l_"
         self.valRight = "r_"
 
-        if checkboxSpine:
-            jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
-        else:
-            jntIKShoulder = None
+
+        jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
+
 
         # print("ctrlIKShoulder: {0}".format(jntIKShoulder))
 
@@ -1678,7 +1708,7 @@ class pcCreateRigAlt05Arms(UI):
                                  colourTU, jntShoulderRoot,
                                  jntIKShoulder, ctrlRoot,
                                  grpDNTTorso,
-                                 checkboxSpine, checkGeo,
+                                 cbSpecialStretch, checkGeo,
                                  geoJntArray)
 
             if mirrorRig:
@@ -1702,5 +1732,5 @@ class pcCreateRigAlt05Arms(UI):
                                      colourTUMirror, jntShoulderRootMirror,
                                      jntIKShoulder, ctrlRoot,
                                      grpDNTTorso,
-                                     checkboxSpine, checkGeo,
+                                     cbSpecialStretch, checkGeo,
                                      geoJntArrayMirror)
