@@ -90,7 +90,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc3Btn)
         mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", e=True, bc=self.loadSrc4Btn)
-        mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc5Btn)
+        mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc5Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -771,7 +771,11 @@ class pcCreateRigAlt05Arms(UI):
 
         defShoulderLen = mc.getAttr("{0}.translateX".format(jntShoulders[-1]))
         # create a pyramid
-        boxDimensionsLWH = [1, 4, 1]
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+        boxDimensionsLWH = [1, m * 4, 1]
         x = boxDimensionsLWH[0]
         y = boxDimensionsLWH[1]
         z = boxDimensionsLWH[2]
@@ -835,14 +839,24 @@ class pcCreateRigAlt05Arms(UI):
                     locDistArmElbowStart, locIKDistArmStart,
                     ctrlElbow,
                     jntShoulders,
-                    leftRight):
-        # group all arm nodes under the arm
+                    leftRight, ikBndJnts=None):
+
+        if ikBndJnts is None:
+            dontSkipIkBnd = False
+
+        else:
+            dontSkipIkBnd = True
+            # group all arm nodes under the arm
         grpArm = "GRP_{0}arm".format(leftRight)
         mc.group(n=grpArm, em=True, w=True)
         mc.parent(bndJnts[0], fkJnts[0], ikJnts[0], bindJntTwistEnd, bindJntTwistMid, bindJntTwistStart, grpArm)
+
         mc.parent(grpIKVisArm, grpIKConstArm, grpArmTwist, grpArm)
         mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpArm)
         mc.parent(ctrlElbow, grpArm)
+
+        if dontSkipIkBnd:
+            mc.parent(ikBndJnts[0], grpArm)
 
         for i in range(len(twistJntsArrayOfArrays)):
             mc.parent(twistJntsArrayOfArrays[i][0], grpArm)
@@ -859,6 +873,10 @@ class pcCreateRigAlt05Arms(UI):
         mc.parent(grpIKConstArm, grpArmTwist, grpDNTArm)
         mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
 
+        if dontSkipIkBnd:
+            print("I'm getting too old for this shit")
+            mc.parent(ikBndJnts[0], grpDNTArm)
+
         # Group JNT_IK_l_upperArm, LOC_l_upperArm_to_elbowLengthStart, LOC_IK_l_arm_lengthStart
         grpIKConstArmBase = "GRP_IKConst_{0}armBase".format(leftRight)
         mc.group(n=grpIKConstArmBase, em=True, w=True)
@@ -869,6 +887,8 @@ class pcCreateRigAlt05Arms(UI):
         mc.xform(grpIKConstArmBase, ws=True, pivots=pivotTranslate)
         mc.parent(ikJnts[0], locDistArmElbowStart, locIKDistArmStart, grpIKConstArmBase)
 
+        if dontSkipIkBnd:
+            mc.parent(ikBndJnts[0], grpIKConstArmBase)
         # create a space locator
         locShoulderSpace = "LOC_shoulderSpace_{0}arm".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locShoulderSpace)
@@ -1114,7 +1134,7 @@ class pcCreateRigAlt05Arms(UI):
 
         return
 
-    def ikStretchOnOff(self, ikJnts, ctrlArmSettings, leftRight):
+    def ikStretchOnOffNormal(self, ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice, leftRight):
         # creates the IK Stretch on/off
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
@@ -1123,47 +1143,65 @@ class pcCreateRigAlt05Arms(UI):
         condLowerArmIKStretch = "{0}lowerArm_IK_stretch_COND".format(leftRight)
         condHandIKStretch = "{0}hand_IK_stretch_COND".format(leftRight)
 
-        self.makeIKStretchMethod(ikJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr)
-        self.makeIKStretchMethod(ikJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr)
-
-        '''
-
-        len1 = mc.getAttr("{0}.translateX".format(ikJnts[1]))
-        len2 = mc.getAttr("{0}.translateX".format(ikJnts[2]))
-
-
-        mc.shadingNode("condition", n=condLowerArmIKStretch, au=True)
-        mc.shadingNode("condition", n=condHandIKStretch, au=True)
-
-        mc.setAttr("{0}.colorIfFalse".format(condLowerArmIKStretch), len1, 0, 0)
-        mc.setAttr("{0}.colorIfFalse".format(condHandIKStretch), len2, 0, 0)
-
-        mc.connectAttr("{0}_translateX".format(ikJnts[-2]), "{0}.colorIfTrueR".format(condHandIKStretch))
-        mc.connectAttr("{0}_translateX".format(ikJnts[1]), "{0}.colorIfTrueR".format(condLowerArmIKStretch))
-
-        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(condHandIKStretch))
-        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(condLowerArmIKStretch))
-
-        mc.connectAttr("{0}.outColorR".format(condLowerArmIKStretch), "{0}.translateX".format(ikJnts[1]))
-        mc.connectAttr("{0}.outColorR".format(condHandIKStretch), "{0}.translateX".format(ikJnts[-2]))'''
+        self.makeIKStretchMethodNormal(ikJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr, blndUpperArmStretchChoice)
+        self.makeIKStretchMethodNormal(ikJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr, blndLowerArmStretchChoice)
 
         return
 
-    def makeIKStretchMethod(self, ikJnt, cond, ctrlArmSettings, ikStretchAttr):
+    def makeIKStretchMethodNormal(self, ikJnt, cond, ctrlArmSettings, ikStretchAttr, blendChoice):
 
         mc.shadingNode("condition", n=cond, au=True)
         len1 = mc.getAttr("{0}.translateX".format(ikJnt))
 
         mc.setAttr("{0}.colorIfFalse".format(cond), len1, 0, 0)
 
-        mc.connectAttr("{0}_translateX.output".format(ikJnt), "{0}.colorIfTrueR".format(cond))
+        mc.connectAttr("{0}.outputR".format(blendChoice), "{0}.colorIfTrueR".format(cond))
 
         mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(cond))
         mc.setAttr("{0}.secondTerm".format(cond), 0)
         mc.setAttr("{0}.operation".format(cond), 0)
 
-
         mc.connectAttr("{0}.outColorR".format(cond), "{0}.translateX".format(ikJnt), f=True)
+
+    def ikStretchOnOffSpecial(self, ikJnts, ikBndJnts, ctrlArmSettings, leftRight):
+        # creates the IK Stretch on/off
+        ikStretchAttr = "IK_stretch"
+        enumVals = "on:off"
+        mc.addAttr(ctrlArmSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
+
+        condLowerArmIKStretch = "{0}lowerArm_IK_stretch_COND".format(leftRight)
+        condHandIKStretch = "{0}hand_IK_stretch_COND".format(leftRight)
+
+        self.makeIKStretchMethodSpecial(ikJnts[1], ikBndJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr)
+        self.makeIKStretchMethodSpecial(ikJnts[2], ikBndJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr)
+        return
+
+    def makeIKStretchMethodSpecial(self, ikJnt, ikBndJnt, cond, ctrlArmSettings, ikStretchAttr):
+
+        mc.shadingNode("condition", n=cond, au=True)
+        len1 = mc.getAttr("{0}.translateX".format(ikJnt))
+
+        mc.setAttr("{0}.colorIfFalse".format(cond), len1, 0, 0)
+
+        mc.connectAttr("{0}.translateX".format(ikJnt), "{0}.colorIfTrueR".format(cond))
+
+        mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikStretchAttr), "{0}.firstTerm".format(cond))
+        mc.setAttr("{0}.secondTerm".format(cond), 0)
+        mc.setAttr("{0}.operation".format(cond), 0)
+
+        mc.connectAttr("{0}.outColorR".format(cond), "{0}.translateX".format(ikBndJnt), f=True)
+    def makeIKBndJnts(self, ikJnts):
+
+        ikBndJnts = mc.duplicate(ikJnts[0], rc=True)
+        for i in range(len(ikBndJnts)):
+            renameVal = ikBndJnts[i][:-1].replace("_IK_", "_IKbnd_")
+            mc.rename(ikBndJnts[i], renameVal)
+            ikBndJnts[i] = renameVal
+            mc.orientConstraint(ikJnts[i], ikBndJnts[i])
+            if i != 0:
+                mc.connectAttr("{0}.tx".format(ikJnts[i]), "{0}.tx".format(ikBndJnts[i]))
+
+        return ikBndJnts
 
     def makeArmComplete(self, isLeft, leftRight,
                         jntArmArray,
@@ -1172,8 +1210,8 @@ class pcCreateRigAlt05Arms(UI):
                         grpDNTTorso,
                         checkboxSpine, checkGeo,
                         geoJntArray, *args):
-        uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
-        lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))
+        '''uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
+        lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))'''
 
         # Creating FK and IK Joints
         bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray)
@@ -1189,6 +1227,11 @@ class pcCreateRigAlt05Arms(UI):
         rotOrderTemp = mc.getAttr("{0}.rotateOrder".format(ikJnts[-2]))
         mc.setAttr("{0}.rotateOrder".format(ctrlIKArm), rotOrderTemp)
 
+        ikBndStretchBool = True
+        if ikBndStretchBool:
+            # this is for an experimental stretch toggle effect
+            ikBndJnts = self.makeIKBndJnts(ikJnts)
+
         ##########
         # to delete test
         # if this works, delete the notes, otherwise delete this part
@@ -1199,8 +1242,12 @@ class pcCreateRigAlt05Arms(UI):
         ##########
         # create the settings control
         name = "settings_" + leftRight + "arm"
+        if ikBndStretchBool:
+            ikJntsUse = ikBndJnts
+        else:
+            ikJntsUse = ikJnts
         ctrlArmSettings, fkikBlendName, fkVis, ikVis = self.createSettings(jntArmArray, isLeft, name, colourTU, fkJnts,
-                                                                           ikJnts, bndJnts, ctrlIKArm)
+                                                                           ikJntsUse, bndJnts, ctrlIKArm)
 
         # set visibility
         tangentToUse = ["linear", "step"]
@@ -1234,10 +1281,6 @@ class pcCreateRigAlt05Arms(UI):
         ctrlFKLengthKeyArray = self.makeFKStretchJnt(fkJnts, "Arm")
         # FK Scale Geometry
 
-        # It's fine to put this here
-        if checkGeo:
-            CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
-
         crvInfoUpper, armNrmlzDivUpper = self.makeFKStretchTwists(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0])
         crvInfoLower, armNrmlzDivLower = self.makeFKStretchTwists(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1])
         ##########
@@ -1257,7 +1300,6 @@ class pcCreateRigAlt05Arms(UI):
         # Snappable elbow
         # Elbow
         locElbow, ctrlElbow = self.makeElbowCtrl(leftRight, ikJnts, hdlArm)
-
 
         # Elbow Snap
         valsElbowSnap = self.makeElbowSnap(ikJnts, ctrlIKArm, ctrlElbow, leftRight)
@@ -1305,6 +1347,10 @@ class pcCreateRigAlt05Arms(UI):
 
         ctrlShoulder = self.makeShoulderControl(jntShoulders, locShldrTemp, ctrlArmSettings, leftRight)
 
+        # It's fine to put this here
+        if checkGeo:
+            CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
+
         ##########
         # Arm global transform and cleanup
         # Shoulder Organizing
@@ -1313,7 +1359,9 @@ class pcCreateRigAlt05Arms(UI):
                                                              locShldrDistStart, distShldr,
                                                              leftRight)
 
-        # Arm organizing
+        if not ikBndStretchBool:
+            ikBndJnts = None
+            # Arm organizing
         grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace = \
             self.organizeArm(ctrlRoot, bndJnts, ikJnts, fkJnts,
                              bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
@@ -1323,7 +1371,7 @@ class pcCreateRigAlt05Arms(UI):
                              locDistArmElbowStart, locIKDistArmStart,
                              ctrlElbow,
                              jntShoulders,
-                             leftRight)
+                             leftRight, ikBndJnts=ikBndJnts)
         ctrlGimbalCorr, grpGimbalArm, blndGimbalToggle, grpFKConst = self.gimbalFix(grpArm, fkJnts, bndJnts,
                                                                                     grpBNDConstArm, ctrlArmSettings,
                                                                                     fkikBlendName, fkVis,
@@ -1343,25 +1391,31 @@ class pcCreateRigAlt05Arms(UI):
 
         # Clean up
         self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings)
-
+        if ikBndStretchBool:
+            #set the visibility of the IKs to 0 if we are working with the ikBndJnts
+            mc.setAttr("{0}.v".format(ikJnts[0]), False)
 
         # Root Transform Scaling
         # print("distShldrShape: {0}".format(distShldrShape))
         # print("distIKArmLenShape: {0}".format(distIKArmLenShape))
         twistJntsUpper, twistJntsLower = twistJntsArrayOfArrays
+        # add the twists to the bnd_layer
+        CRU.layerEdit(twistJntsUpper, bndLayer=True)
+        CRU.layerEdit(twistJntsLower, bndLayer=True)
+
         self.fixScaling(distShldrShape, distIKArmLenShape, ctrlRoot, jntShoulders, ikJnts, distArmElbowShape,
                         distElbowHandShape, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
                         crvInfoUpper, armNrmlzDivUpper,
                         crvInfoLower, armNrmlzDivLower,
                         twistJntsUpper, twistJntsLower,
                         leftRight)
-
-        self.ikStretchOnOff(ikJnts, ctrlArmSettings, leftRight)
+        if ikBndStretchBool:
+            self.ikStretchOnOffSpecial(ikJnts, ikBndJnts, ctrlArmSettings, leftRight)
+        else:
+            self.ikStretchOnOffNormal(ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice, leftRight)
 
         fkLayer = "{0}arm_FK_lyr".format(leftRight)
         ikLayer = "{0}arm_IK_lyr".format(leftRight)
-
-
 
         CRU.layerEdit(fkJnts, newLayerName=fkLayer, colourTU=colourTU)
 
@@ -1553,6 +1607,7 @@ class pcCreateRigAlt05Arms(UI):
 
         # print("ctrlRoot: {0}".format(ctrlRoot))
         jntShoulderRoot = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
+        print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
         # print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
