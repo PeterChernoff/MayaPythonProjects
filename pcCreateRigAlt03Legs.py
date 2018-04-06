@@ -1425,7 +1425,7 @@ class pcCreateRigAlt03Legs(UI):
                            blndNdUpperStretchChoice, blndNdLowerStretchChoice,
                            leftRight)
         self.cleanLeg(ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts)
-        return
+        # return # TO DELEte: I don't know why I'm blocking this out
         # creates the ability to turn on and off the stretch
         self.setIKStretchOption(ctrlIKFoot, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
 
