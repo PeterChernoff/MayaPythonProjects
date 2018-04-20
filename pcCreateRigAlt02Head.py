@@ -670,11 +670,11 @@ class pcCreateRigAlt02Head(UI):
 
         # hide translate, scale, radius on FK Control
         CRU.lockHideCtrls(fkJnts[0], scale=True, translate=True)
-        CRU.lockHideCtrls(fkJnts[0], theVals=["radi"], channelBox=False, toLock=True, toHide=False)
+        CRU.lockHideCtrls(fkJnts[0], theVals=["radi"], channelBox=False, toLock=True, attrVisible=False)
 
-        CRU.lockHideCtrls(grpHead, translate=True, rotate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(grpNeckFK, translate=True, rotate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(ikNeckEnd, translate=True, rotate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(grpHead, translate=True, rotate=True, scale=True, visibility=True)
+        CRU.lockHideCtrls(grpNeckFK, translate=True, rotate=True, scale=True, visibility=True)
+        CRU.lockHideCtrls(ikNeckEnd, translate=True, rotate=True, scale=True, visibility=True)
 
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True)
         return grpHeadDNT
@@ -689,21 +689,21 @@ class pcCreateRigAlt02Head(UI):
         mc.parent(jntArrayHead[0], grpHeadDNT)
 
         if jawSel:
-            CRU.lockHideCtrls(grpJaw, translate=True, rotate=True, scale=True, visible=True)
-            CRU.lockHideCtrls(ctrlJaw, translate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(grpJaw, translate=True, rotate=True, scale=True, visibility=True)
+            CRU.lockHideCtrls(ctrlJaw, translate=True, scale=True, visibility=True)
 
         if eyesSel:
             # lock and hide the group values for the eyes
-            CRU.lockHideCtrls(eyesGrp, translate=True, rotate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(eyesGrp, translate=True, rotate=True, scale=True, visibility=True)
             for i in range(len(eyeGrpArray)):
-                CRU.lockHideCtrls(eyeGrpArray[i], translate=True, rotate=True, scale=True, visible=True)
+                CRU.lockHideCtrls(eyeGrpArray[i], translate=True, rotate=True, scale=True, visibility=True)
 
             # lock and hide all but the translates for the individual eyes
             for i in range(len(eyeCtrlArray)):
-                CRU.lockHideCtrls(eyeCtrlArray[i], rotate=True, scale=True, visible=True)
+                CRU.lockHideCtrls(eyeCtrlArray[i], rotate=True, scale=True, visibility=True)
 
             # lock and hide the scale and visible eyes control
-            CRU.lockHideCtrls(eyesCtrl, scale=True, visible=True)
+            CRU.lockHideCtrls(eyesCtrl, scale=True, visibility=True)
         # I'm just going to hardcode this bit for simplicity's sake
 
         grpGeoHead = "GRP_GEO_head"

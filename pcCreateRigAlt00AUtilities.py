@@ -105,7 +105,7 @@ class pcCreateRigUtilities:
                             addPrefix=False, boxDimensionsLWH=None, override=True):
 
         ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
-                                                        addPrefix, boxDimensionsLWH,override=override)
+                                                        addPrefix, boxDimensionsLWH, override=override)
 
         fkShape = mc.listRelatives(ctrl)[0]
 
@@ -122,7 +122,7 @@ class pcCreateRigUtilities:
         return ctrl, fkShape
 
     @staticmethod
-    def lockHideCtrls(s, translate=False, rotate=False, scale=False, theVals=[], toHide=False, visible=False,
+    def lockHideCtrls(s, translate=False, rotate=False, scale=False, visibility=False, theVals=[], attrVisible=False,
                       toLock=True, channelBox=None):
 
         # can be used to lock or unlock
@@ -133,11 +133,11 @@ class pcCreateRigUtilities:
             myVals.extend(["rx", "ry", "rz"])
         if scale:
             myVals.extend(["sx", "sy", "sz"])
-        if visible:
+        if visibility:
             myVals.extend(["v"])
 
         for i in range(len(myVals)):
-            mc.setAttr("{0}.{1}".format(s, myVals[i]), k=toHide, l=toLock)
+            mc.setAttr("{0}.{1}".format(s, myVals[i]), k=attrVisible, l=toLock)
             if channelBox is not None:
                 mc.setAttr("{0}.{1}".format(s, myVals[i]), channelBox=channelBox)
 
@@ -568,10 +568,11 @@ class pcCreateRigUtilities:
 
         for i in range(len(locLimbFollowArray)):
             mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
-            pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
+            pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visibility=True)
 
     @staticmethod
-    def makeLimbSwitchNoAutoLocsInPosition(ctrlLimb, locLimbFollowArray, limbFollowOrntConstr, enumVals, enumName, *args):
+    def makeLimbSwitchNoAutoLocsInPosition(ctrlLimb, locLimbFollowArray, limbFollowOrntConstr, enumVals, enumName,
+                                           *args):
         num = len(enumVals.split(":"))
 
         alreadySet = mc.attributeQuery(enumName, node=ctrlLimb, ex=True)

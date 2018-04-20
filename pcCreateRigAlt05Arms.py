@@ -805,7 +805,7 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.setAttr("{0}.{1}".format(ctrlArmSettings, lNameAttrVis), True)
         mc.connectAttr("{0}.{1}".format(ctrlArmSettings, lNameAttrVis), "{0}.visibility".format(ctrlShoulder))
-        CRU.lockHideCtrls(ctrlShoulder, scale=True, rotate=True, visible=True)
+        CRU.lockHideCtrls(ctrlShoulder, scale=True, rotate=True, visibility=True)
 
         return ctrlShoulder
 
@@ -1031,20 +1031,20 @@ class pcCreateRigAlt05Arms(UI):
         # Hide all the space locators (done already)
         # Add the shoulder joints to jnt_bnd_LYR (already done)
         # Add the geometry to the geo_LYR (already done)
-        CRU.lockHideCtrls(ctrlArmSettings, translate=True, rotate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(ctrlArmSettings, translate=True, rotate=True, scale=True, visibility=True)
         # Lock and hide everything on FKConst
-        CRU.lockHideCtrls(grpFKConst, rotate=True, scale=True, translate=True, visible=True)
+        CRU.lockHideCtrls(grpFKConst, rotate=True, scale=True, translate=True, visibility=True)
         # Lock and hide the scale and visibility of the IK arm control
-        CRU.lockHideCtrls(ctrlIKArm, visible=True, scale=True)
+        CRU.lockHideCtrls(ctrlIKArm, visibility=True, scale=True)
 
         # Lock and hide the non-length/rotate controls of the elbow FK controls
         for i in range(len(fkJntsElbow)):
-            CRU.lockHideCtrls(fkJntsElbow[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJntsElbow[i], scale=True, translate=True, visibility=True)
             CRU.lockHideCtrls(fkJntsElbow[i], theVals=["radi"], channelBox=False)
 
         # Lock and hide the non-rotate and length attributes of the FK controls
         for i in range(len(fkJnts)):
-            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visibility=True)
             CRU.lockHideCtrls(fkJnts[i], theVals=["radi"], channelBox=False)
         return
 
@@ -1347,7 +1347,7 @@ class pcCreateRigAlt05Arms(UI):
                                                                                ctrlIKArm, ctrlArmSettings, ikVis,
                                                                                leftRight)
         mc.connectAttr("{0}.{1}".format(ctrlArmSettings, ikVis), "{0}.visibility".format(ctrlElbow))
-        CRU.lockHideCtrls(ctrlElbow, scale=True, visible=True, rotate=True)
+        CRU.lockHideCtrls(ctrlElbow, scale=True, visibility=True, rotate=True)
 
         ctrlFKElbowLengthKeyArray = self.makeFKStretchJnt(fkJntsElbow, "ArmElbow", add=False)
 

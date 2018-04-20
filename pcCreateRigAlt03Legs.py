@@ -1107,7 +1107,7 @@ class pcCreateRigAlt03Legs(UI):
             check = mc.getAttr("{0}.visibility".format(locArray[i]), l=True)
             if not check:
                 mc.setAttr("{0}.visibility".format(locArray[i]), False)
-                CRU.lockHideCtrls(locArray[i], scale=True, visible=True)
+                CRU.lockHideCtrls(locArray[i], scale=True, visibility=True)
 
     def fkHipTwistFix(self, grpBNDConst, ctrlFootSettings, fkikBlendName, leftRight, *args):
 
@@ -1208,13 +1208,13 @@ class pcCreateRigAlt03Legs(UI):
         return
 
     def cleanLeg(self, ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts, *args):
-        CRU.lockHideCtrls(ctrlFootSettings, translate=True, rotate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(ctrlIKFoot, visible=True, scale=True)
-        CRU.lockHideCtrls(ctrlKnee, rotate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(grpKnee, rotate=True, scale=True, translate=True, visible=True)
+        CRU.lockHideCtrls(ctrlFootSettings, translate=True, rotate=True, scale=True, visibility=True)
+        CRU.lockHideCtrls(ctrlIKFoot, visibility=True, scale=True)
+        CRU.lockHideCtrls(ctrlKnee, rotate=True, scale=True, visibility=True)
+        CRU.lockHideCtrls(grpKnee, rotate=True, scale=True, translate=True, visibility=True)
 
         for i in range(len(fkJnts)):
-            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visible=True)
+            CRU.lockHideCtrls(fkJnts[i], scale=True, translate=True, visibility=True)
             CRU.lockHideCtrls(fkJnts[i], theVals=["radi"], channelBox=False)
 
         return

@@ -811,31 +811,31 @@ class pcCreateRigAlt06Hand(UI):
     def cleanupFingersMethod(self, jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand,
                              ctrlTIRMP, bndBaseHand):
         # lock and hide various traits
-        CRU.lockHideCtrls(jntFKBase, translate=True, rotate=True, scale=True, visible=True)
-        CRU.lockHideCtrls(grpCtrlHand, translate=True, rotate=True, scale=True, visible=True)
+        CRU.lockHideCtrls(jntFKBase, translate=True, rotate=True, scale=True, visibility=True)
+        CRU.lockHideCtrls(grpCtrlHand, translate=True, rotate=True, scale=True, visibility=True)
 
         # we have to hide certain traits, not lock them
         for i in range(len(cmpdCtrlTIMRP)):
             for j in range(len(cmpdCtrlTIMRP[i])):
-                CRU.lockHideCtrls(cmpdCtrlTIMRP[i][j], translate=True, scale=True, visible=True, rotate=True, )
+                CRU.lockHideCtrls(cmpdCtrlTIMRP[i][j], translate=True, scale=True, visibility=True, rotate=True, )
                 CRU.lockHideCtrls(cmpdCtrlTIMRP[i][j], theVals=["radi"], channelBox=False)
 
             for j in range(len(fkTIMRP[i])):
-                CRU.lockHideCtrls(fkTIMRP[i][j], translate=True, scale=True, visible=True)
+                CRU.lockHideCtrls(fkTIMRP[i][j], translate=True, scale=True, visibility=True)
                 CRU.lockHideCtrls(fkTIMRP[i][j], theVals=["radi"], channelBox=False)
 
             # we don't want to lock the rotate values for the start
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], rotate=True, toLock=False)
 
             # we don't want to lock the translate values for the end
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], rotate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], rotate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], translate=True, toLock=False)
 
             # hide the controls stuff
-            CRU.lockHideCtrls(ctrlTIRMP[i], translate=True, scale=True, visible=True, rotate=True, )
+            CRU.lockHideCtrls(ctrlTIRMP[i], translate=True, scale=True, visibility=True, rotate=True, )
 
-        CRU.lockHideCtrls(ctrlHand, translate=True, scale=True, visible=True, rotate=True, )
+        CRU.lockHideCtrls(ctrlHand, translate=True, scale=True, visibility=True, rotate=True, )
 
         CRU.layerEdit(bndBaseHand, bndLayer=True)
 
@@ -1040,8 +1040,8 @@ class pcCreateRigAlt06Hand(UI):
         checkList = mc.listRelatives(ctrlFingers)
         for i in range(len(checkList)):
             if mc.objectType(checkList[i]) == "transform":
-                CRU.lockHideCtrls(checkList[i], translate=True, rotate=True, scale=True, toHide=True, visible=True,
-                                  toLock=False)
+                CRU.lockHideCtrls(checkList[i], translate=True, rotate=True, scale=True, visibility=True,
+                                  toLock=False, attrVisible=True)
         mc.makeIdentity(ctrlFingers, apply=True, translate=True, rotate=True, scale=True)
 
         # get the non-shape values
@@ -1049,7 +1049,7 @@ class pcCreateRigAlt06Hand(UI):
         lockValues.append(ctrlFingers)
 
         for i in range(len(lockValues)):
-            CRU.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True, visible=True)
+            CRU.lockHideCtrls(lockValues[i], translate=True, rotate=True, scale=True, visibility=True)
 
             mc.setAttr('{0}.overrideEnabled'.format(lockValues[i]), 1)
             mc.setAttr("{0}.overrideColor".format(lockValues[i]), colourTU)
@@ -1304,12 +1304,6 @@ class pcCreateRigAlt06Hand(UI):
         mc.xform(locMirrorTop, scale=(mirrorXScal, 1, 1))
         # mc.xform(locMirrorTop, rotation=(mirrorRotX, mirrorRotY, mirrorRotZ))
         checkList = mc.listRelatives(locMirrorTop)
-        '''for i in range(len(checkList)):
-            if mc.objectType(checkList[i]) == "transform":
-                CRU.lockHideCtrls(checkList[i], translate=True, rotate=True, scale=True, toHide=True, visible=True,
-                                  toLock=False)
-        # mc.scale(-1, ctrlFingersMirrorTop, x=True, pivot=(0,0,0), a=True)
-        '''
 
         # fix the scale and rotates
         for i in range(len(locMirror)):
@@ -1345,6 +1339,8 @@ class pcCreateRigAlt06Hand(UI):
 
         if len(self.locArray) == 0:
             locArray = self.tgpLoadLocMethod(locPalm)
+        else:
+            locArray=self.locArray
 
         try:
             fingerRoot = self.jointArray[0]
@@ -1405,7 +1401,7 @@ class pcCreateRigAlt06Hand(UI):
 
             if not (CRU.checkLeftRight(isLeft, jntBindEnd)):
                 # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the fingers control")
+                mc.warning("You are selecting the incorrect side for the bind end")
                 return
 
             if mirrorRig:

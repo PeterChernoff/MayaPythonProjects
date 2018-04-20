@@ -379,19 +379,19 @@ class pcCreateRigAlt01Spine(UI):
         for i in range(len(ctrlFKJnts)):
             print("i: {0}".format(i))
             CRU.lockHideCtrls(ctrlFKJnts[i], translate=True, scale=True)
-            CRU.lockHideCtrls(ctrlFKJnts[i], theVals=["radi"], channelBox=False, toLock=True, toHide=False)
+            CRU.lockHideCtrls(ctrlFKJnts[i], theVals=["radi"], channelBox=False, toLock=True, attrVisible=False)
 
         # lock everything for the other fk bones
         for i in range(len(ctrlFKJntsEnds)):
-            CRU.lockHideCtrls(ctrlFKJntsEnds[i], translate=True, scale=True, rotate=True, visible=True)
-            CRU.lockHideCtrls(ctrlFKJntsEnds[i], theVals=["radi"], channelBox=False, toLock=True, toHide=False)
+            CRU.lockHideCtrls(ctrlFKJntsEnds[i], translate=True, scale=True, rotate=True, visibility=True)
+            CRU.lockHideCtrls(ctrlFKJntsEnds[i], theVals=["radi"], channelBox=False, toLock=True, attrVisible=False)
 
         # lock everything except visibility for grpTorso
         CRU.lockHideCtrls(grpTorso, translate=True, scale=True, rotate=True, )
 
         # lock everything for the grpFK Consts
         for i in range(len(grpFKConsts)):
-            CRU.lockHideCtrls(ctrlFKJntsEnds[i], translate=True, scale=True, rotate=True, visible=True)
+            CRU.lockHideCtrls(ctrlFKJntsEnds[i], translate=True, scale=True, rotate=True, visibility=True)
 
         # lock and hide the scale for everything else
         CRU.lockHideCtrls(ctrlBody, scale=True)
@@ -402,8 +402,8 @@ class pcCreateRigAlt01Spine(UI):
         mc.setAttr('{0}.v'.format(crvSpine), False)
         mc.setAttr('{0}.v'.format(hdlSpine), False)
 
-        CRU.lockHideCtrls(crvSpine, visible=True)
-        CRU.lockHideCtrls(hdlSpine, visible=True)
+        CRU.lockHideCtrls(crvSpine, visibility=True)
+        CRU.lockHideCtrls(hdlSpine, visibility=True)
 
         CRU.layerEdit(ctrlFKJnts, fkLayer=True, noRecurse=True, colourTU=18)
         CRU.layerEdit(ctrlFKJntsEnds, fkLayer=True, noRecurse=True, colourTU=18)
