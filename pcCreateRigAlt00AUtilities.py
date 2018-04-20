@@ -105,7 +105,7 @@ class pcCreateRigUtilities:
                             addPrefix=False, boxDimensionsLWH=None, override=True):
 
         ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
-                                                        addPrefix, boxDimensionsLWH)
+                                                        addPrefix, boxDimensionsLWH,override=override)
 
         fkShape = mc.listRelatives(ctrl)[0]
 
@@ -353,6 +353,9 @@ class pcCreateRigUtilities:
                   bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, newLayerName=None,
                   printout=False,
                   *args):
+
+        if not isinstance(objectsToLoad, list):
+            objectsToLoad = [objectsToLoad]
         if layerVis:
             visVal = 1
         else:
@@ -681,7 +684,7 @@ class pcCreateRigUtilities:
     @staticmethod
     def constrainMove(driver, driven, point=False, orient=False, parent=False):
         if not point and not orient and not parent:
-            mc.warning("Remember to include a point/orient/parent")
+            mc.error("Remember to include a point/orient/parent")
         if point:
             toDelete = mc.pointConstraint(driver, driven)
             mc.delete(toDelete)

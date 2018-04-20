@@ -117,7 +117,7 @@ class pcCreateRigAlt03Legs(UI):
 
     def loadSrc5Btn(self):
         self.selSrc5 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
-                                         ["CTRL", "rootTransform", "follow"], "control")
+                                         ["CTRL", "rootTransform"], "control")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):

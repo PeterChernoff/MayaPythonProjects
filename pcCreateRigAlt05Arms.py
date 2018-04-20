@@ -762,7 +762,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.connectAttr("{0}.outputX".format(mdNrmlzDiv), "{0}.scaleX".format(geoName))
         mc.parent(geoName, jntShoulders[0])
         CRU.layerEdit(geoName, geoLayer=True)
-
+        # TO DELETE: BE SURE TO ADD THE SHOULDER AND ARMS GEOS TO THE GEO LAYER
         return
 
     def makeShoulderControl(self, jntShoulders, locShldrTemp, ctrlArmSettings, leftRight):
