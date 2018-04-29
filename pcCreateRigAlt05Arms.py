@@ -1054,6 +1054,10 @@ class pcCreateRigAlt05Arms(UI):
                    crvInfoLower, armNrmlzDivLower,
                    twistJntsUpper, twistJntsLower,
                    leftRight):
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
         mdGScaleArmDiv = "globalScale_{0}arm_normalize_DIV".format(leftRight)
         mdGScaleShldrDiv = "globalScale_{0}shoulder_normalize_DIV".format(leftRight)
 
@@ -1097,6 +1101,10 @@ class pcCreateRigAlt05Arms(UI):
         mc.connectAttr("{0}.distance".format(distElbowHandShape),
                        "{0}.input1X".format(gScaleElbowToHandNrmlzInvertMult))
 
+        # multiplies by -1 if on the right
+        mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), m)
+        mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), m)
+
         mc.connectAttr("{0}.outputX".format(gScaleArmToElbowNrmlzInvertMult),
                        "{0}.input1X".format(gScaleArmToElbowNrmlzDiv))
         mc.connectAttr("{0}.outputX".format(gScaleElbowToHandNrmlzInvertMult),
@@ -1134,7 +1142,8 @@ class pcCreateRigAlt05Arms(UI):
 
         return
 
-    def ikStretchOnOffNormal(self, ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice, leftRight):
+    def ikStretchOnOffNormal(self, ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
+                             leftRight):
         # creates the IK Stretch on/off
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
@@ -1143,8 +1152,10 @@ class pcCreateRigAlt05Arms(UI):
         condLowerArmIKStretch = "{0}lowerArm_IK_stretch_COND".format(leftRight)
         condHandIKStretch = "{0}hand_IK_stretch_COND".format(leftRight)
 
-        self.makeIKStretchMethodNormal(ikJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr, blndUpperArmStretchChoice)
-        self.makeIKStretchMethodNormal(ikJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr, blndLowerArmStretchChoice)
+        self.makeIKStretchMethodNormal(ikJnts[1], condLowerArmIKStretch, ctrlArmSettings, ikStretchAttr,
+                                       blndUpperArmStretchChoice)
+        self.makeIKStretchMethodNormal(ikJnts[2], condHandIKStretch, ctrlArmSettings, ikStretchAttr,
+                                       blndLowerArmStretchChoice)
 
         return
 
@@ -1205,7 +1216,7 @@ class pcCreateRigAlt05Arms(UI):
         shoulderStretchCond = "{0}shoulder_stretch_COND".format(leftRight)
         mc.shadingNode("condition", n=shoulderStretchCond, au=True)
 
-        mc.connectAttr("{0}.{1}".format(ctrlShoulder, stretchAttr),"{0}.firstTerm".format(shoulderStretchCond))
+        mc.connectAttr("{0}.{1}".format(ctrlShoulder, stretchAttr), "{0}.firstTerm".format(shoulderStretchCond))
 
         mc.setAttr("{0}.secondTerm".format(shoulderStretchCond), 0)
         mc.setAttr("{0}.operation".format(shoulderStretchCond), 0)
@@ -1253,7 +1264,6 @@ class pcCreateRigAlt05Arms(UI):
         mc.delete(todelete)
         rotOrderTemp = mc.getAttr("{0}.rotateOrder".format(ikJnts[-2]))
         mc.setAttr("{0}.rotateOrder".format(ctrlIKArm), rotOrderTemp)
-
 
         if cbSpecialStretch:
             # this is for an experimental stretch toggle effect
@@ -1419,9 +1429,8 @@ class pcCreateRigAlt05Arms(UI):
         # Clean up
         self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings)
         if cbSpecialStretch:
-            #set the visibility of the IKs to 0 if we are working with the ikBndJnts
+            # set the visibility of the IKs to 0 if we are working with the ikBndJnts
             mc.setAttr("{0}.v".format(ikJnts[0]), False)
-
 
         # Root Transform Scaling
         # print("distShldrShape: {0}".format(distShldrShape))
@@ -1441,10 +1450,11 @@ class pcCreateRigAlt05Arms(UI):
         if cbSpecialStretch:
             self.ikStretchOnOffSpecial(ikJnts, ikBndJnts, ctrlArmSettings, leftRight)
         else:
-            self.ikStretchOnOffNormal(ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice, leftRight)
+            self.ikStretchOnOffNormal(ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
+                                      leftRight)
         # Special: Turn off Shoulder Stretch
         if cbSpecialStretch:
-            shoulderStretchCond = self.toggleShoulderStretch(jntShoulders, ctrlShoulder,  leftRight)
+            shoulderStretchCond = self.toggleShoulderStretch(jntShoulders, ctrlShoulder, leftRight)
         fkLayer = "{0}arm_FK_lyr".format(leftRight)
         ikLayer = "{0}arm_IK_lyr".format(leftRight)
 
@@ -1645,9 +1655,7 @@ class pcCreateRigAlt05Arms(UI):
         self.valLeft = "l_"
         self.valRight = "r_"
 
-
         jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
-
 
         # print("ctrlIKShoulder: {0}".format(jntIKShoulder))
 
