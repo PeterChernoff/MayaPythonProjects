@@ -596,7 +596,7 @@ class pcCreateRigUtilities:
         if not alreadySet:
             for i in range(len(locLimbFollowArray)):
                 mc.setAttr("{0}.visibility".format(locLimbFollowArray[i]), False)
-                pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visible=True)
+                pcCreateRigUtilities.lockHideCtrls(locLimbFollowArray[i], scale=True, visibility=True)
 
     @staticmethod
     def createParentGroup(objToGrp, grpName, point=False, orient=False, parent=False):

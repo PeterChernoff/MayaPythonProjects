@@ -754,13 +754,23 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr("{0}.input2X".format(mdNrmlzDiv), defShoulderLen, )
 
         geoName = jntShoulders[0].replace("JNT_BND_", "GEO_")
-        # gets the pivot location for the joint, assign it to the geo
+
+        mc.parent(geoName, jntShoulders[0])
+        # gets the pivot location for the joint, assign it to the geo (need to do so for scale, rotate and transform
         pivotTranslate = mc.xform(jntShoulders[0], q=True, ws=True, rotatePivot=True)
-        mc.xform(geoName, ws=True, pivots=pivotTranslate)
+
+        mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
+        mc.xform(geoName, ws=True, rotatePivot=pivotTranslate)
+
+        pivotRotate = mc.xform(jntShoulders[0], q=True, ws=True, rotateTranslation=True)
+        mc.xform(geoName, ws=True, rotateTranslation=pivotRotate)
+
+        pivotScale = mc.xform(jntShoulders[0], q=True, ws=True, scalePivot=True)
+        mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
+        mc.xform(geoName, ws=True, scalePivot=pivotScale)
 
         # connect the operation into the geo scale
         mc.connectAttr("{0}.outputX".format(mdNrmlzDiv), "{0}.scaleX".format(geoName))
-        mc.parent(geoName, jntShoulders[0])
         CRU.layerEdit(geoName, geoLayer=True)
         # TO DELETE: BE SURE TO ADD THE SHOULDER AND ARMS GEOS TO THE GEO LAYER
         return
@@ -1102,7 +1112,7 @@ class pcCreateRigAlt05Arms(UI):
                        "{0}.input1X".format(gScaleElbowToHandNrmlzInvertMult))
 
         # multiplies by -1 if on the right
-        mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), m)
+        mc.setAttr("{0}.input2X".format(gScaleArmToElbowNrmlzInvertMult), m)
         mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), m)
 
         mc.connectAttr("{0}.outputX".format(gScaleArmToElbowNrmlzInvertMult),
