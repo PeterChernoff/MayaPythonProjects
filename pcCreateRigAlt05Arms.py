@@ -40,10 +40,15 @@ class pcCreateRigAlt05Arms(UI):
                            cal=([1, "left"], [2, "left"], [3, "left"],))
 
         mc.text(l="Mirror Arm As Well?")
-        # mc.setParent("..")
+
         mc.radioButtonGrp("selArmMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 300], )
         mc.text(l="")
-        mc.checkBox("selSpecialStretch_cb", l="Special Stretch for \nShoulders and IK", en=True, v=True)
+        mc.setParent("..")
+
+        mc.rowColumnLayout(nc=2, cw=[(1, 150), (2, 150)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"], [2, "left"]))
+        mc.checkBox("selSpecialStretch_cb", l="Toggle Stretch for \nShoulders and IK Arms", en=True, v=True)
+        mc.checkBox("selAddIKFKSwitching_cb", l="Include IK FK\nSwitching Setup", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -185,14 +190,14 @@ class pcCreateRigAlt05Arms(UI):
 
     def createSettings(self, jntArmArray, isLeft, name, colourTU, fkJnts, ikJnts, bndJnts, ctrlIKArm, *args):
         ctrlArmSettings = CRU.createNailNoOffset(jntArmArray[-2], isLeft, name, bodySize=15, headSize=2,
-                                                 colour=colourTU,
+                                                 colourTU=colourTU,
                                                  pnt=True)
 
         grpSettings = "GRP_settings"
         if not mc.objExists(grpSettings):
             mc.group(n=grpSettings, w=True, em=True)
         mc.parent(ctrlArmSettings, grpSettings)
-        CRU.layerEdit(grpSettings, newLayerName="settings_LYR", colourTU=9)
+        CRU.layerEdit(grpSettings, newLayerName="settings_LYR", colourTU=CRU.clrSettings)
 
         # creates the FKIK blend control
 
@@ -316,7 +321,6 @@ class pcCreateRigAlt05Arms(UI):
         for i in range(len(fkJnts)):
             fkJnt = fkJnts[i]
             if limbName in fkJnt[endVal:]:
-                # print("fkJnt: {0}".format(fkJnt))
                 drivenAttr = "translateX"
                 limbChild = mc.listRelatives(fkJnt, typ="joint")[0]
                 legLen = mc.getAttr("{0}.{1}".format(limbChild, drivenAttr))
@@ -602,8 +606,6 @@ class pcCreateRigAlt05Arms(UI):
         # we are going to be doing some backtracking
         w0w1Attr = mc.listAttr(prntTemp)[-2:]
         rotVals = mc.getAttr("{0}.r".format(grpIKConstArm))[0]
-        # print("{0}.{1}".format(prntTemp, w0w1Attr[0]))
-        # print("{0}.{1}".format(prntTemp, w0w1Attr[1]))
         mc.setAttr("{0}.{1}".format(prntTemp, w0w1Attr[0]), 1)
         mc.setAttr("{0}.{1}".format(prntTemp, w0w1Attr[1]), 0)
         mc.delete(prntTemp)
@@ -679,7 +681,6 @@ class pcCreateRigAlt05Arms(UI):
         ikShoulder[1] = effShoulder
         locShldrTemp = "LOC_{0}shoulder".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locShldrTemp)
-        # print("bndStart: {0}".format(bndStart))
         CRU.constrainMove(bndStart, locShldrTemp, point=True)
         mc.parent(hdlShoulder, locShldrTemp)
 
@@ -884,7 +885,6 @@ class pcCreateRigAlt05Arms(UI):
         mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
 
         if dontSkipIkBnd:
-            print("I'm getting too old for this shit")
             mc.parent(ikBndJnts[0], grpDNTArm)
 
         # Group JNT_IK_l_upperArm, LOC_l_upperArm_to_elbowLengthStart, LOC_IK_l_arm_lengthStart
@@ -930,7 +930,6 @@ class pcCreateRigAlt05Arms(UI):
         toDelete = "CTRL_gimbalCorrSub_{0}arm".format(leftRight)
         mc.circle(r=1, n=toDelete, nr=nrVal)
         ctrlGimbalCorrSubShp = mc.listRelatives(toDelete, s=True)[0]
-        # print("ctrlGimbalCorrSubShp: {0}".format(ctrlGimbalCorrSubShp))
 
         mc.select(toDelete + ".cv[:]")
         mc.move(-sizeVal, os=True, r=True, y=True)
@@ -1269,7 +1268,7 @@ class pcCreateRigAlt05Arms(UI):
 
         # create the IK control without attaching it to anything
         name = "{0}arm".format(leftRight)
-        ctrlIKArm = CRU.setupCtrl(name, colour=colourTU, addPrefix=True, boxDimensionsLWH=(3, 6, 6))[0]
+        ctrlIKArm = CRU.setupCtrl(name, colourTU=colourTU, addPrefix=True, boxDimensionsLWH=(3, 6, 6))[0]
         todelete = mc.pointConstraint(ikJnts[-2], ctrlIKArm)
         mc.delete(todelete)
         rotOrderTemp = mc.getAttr("{0}.rotateOrder".format(ikJnts[-2]))
@@ -1322,6 +1321,8 @@ class pcCreateRigAlt05Arms(UI):
         mc.parentConstraint(jntArmArray[0], bindJntTwistStart)
         mc.parentConstraint(jntArmArray[1], bindJntTwistMid)
         mc.parentConstraint(jntArmArray[2], bindJntTwistEnd)
+
+        mc.setAttr("{0}.visibility".format(grpArmTwist), False)
 
         ##########
         # FK Stretch
@@ -1380,7 +1381,6 @@ class pcCreateRigAlt05Arms(UI):
         jntShoulders.reverse()
 
         geoJntArray.extend(jntShoulders)
-        print("jntShoulders: {0}".format(jntShoulders))
         bndStart = bndJnts[0]
 
         locShldrTemp, ikShoulder = self.makeShoulderIK(jntShoulders, bndStart, leftRight)
@@ -1443,12 +1443,10 @@ class pcCreateRigAlt05Arms(UI):
             mc.setAttr("{0}.v".format(ikJnts[0]), False)
 
         # Root Transform Scaling
-        # print("distShldrShape: {0}".format(distShldrShape))
-        # print("distIKArmLenShape: {0}".format(distIKArmLenShape))
         twistJntsUpper, twistJntsLower = twistJntsArrayOfArrays
         # add the twists to the bnd_layer
-        CRU.layerEdit(twistJntsUpper, bndLayer=True)
-        CRU.layerEdit(twistJntsLower, bndLayer=True)
+        CRU.layerEdit(twistJntsUpper, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(twistJntsLower, bndLayer=True, noRecurse=True)
 
         self.fixScaling(distShldrShape, distIKArmLenShape, ctrlRoot, jntShoulders, ikJnts, distArmElbowShape,
                         distElbowHandShape, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
@@ -1472,10 +1470,11 @@ class pcCreateRigAlt05Arms(UI):
 
         CRU.layerEdit(ctrlGimbalCorr, newLayerName=fkLayer)  # add the gimbal correction to the FK layer
 
-        CRU.layerEdit(jntShoulders, bndLayer=True)
+        CRU.layerEdit(jntShoulders, bndLayer=True, noRecurse=True)
 
         CRU.layerEdit(ikJnts, newLayerName=ikLayer)
-        CRU.layerEdit(bndJnts, bndLayer=True)
+        CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
+        CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
         CRU.layerEdit(ctrlElbow, newLayerName=ikLayer)
         CRU.layerEdit(ctrlIKArm, newLayerName=ikLayer)
@@ -1483,11 +1482,14 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr("{0}.displayType".format(ikLayer), 0)
         mc.setAttr("{0}.color".format(ikLayer), 0)
         if isLeft:
-            clrRGB = [0, 0.5, 1]
+            clrIKrgb = CRU.clrLeftIK
         else:
-            clrRGB = [1, 0.5, 0]
-        mc.setAttr("{0}.overrideColorRGB".format(ikLayer), clrRGB[0], clrRGB[1], clrRGB[2])
+            clrIKrgb = CRU.clrRightIK
+        mc.setAttr("{0}.overrideColorRGB".format(ikLayer), clrIKrgb[0], clrIKrgb[1], clrIKrgb[2])
         mc.setAttr("{0}.overrideRGBColors".format(ikLayer), 1)
+
+        if self.switchSetup:
+            pass
         return
 
     def makeTwists(self, numTwists, jntArmArray, geoJntArray, *args):
@@ -1645,6 +1647,7 @@ class pcCreateRigAlt05Arms(UI):
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        self.switchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
 
         self.jntNames = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
 
@@ -1652,22 +1655,15 @@ class pcCreateRigAlt05Arms(UI):
         cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
 
         grpDNTTorso = mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", q=True, text=True)
-        # print("grpDNTTorso: {0}".format(grpDNTTorso))
 
         ctrlRoot = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
 
-        # print("ctrlRoot: {0}".format(ctrlRoot))
         jntShoulderRoot = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
-        print("jntShoulderRoot: {0}".format(jntShoulderRoot))
-
-        # print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
         self.valLeft = "l_"
         self.valRight = "r_"
 
         jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
-
-        # print("ctrlIKShoulder: {0}".format(jntIKShoulder))
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -1675,23 +1671,21 @@ class pcCreateRigAlt05Arms(UI):
             mirrorRig = True
 
         jntArmArray = self.jointArray[:]
-        print("jntArmArray: {0}".format(jntArmArray))
-        print("jntShoulderRoot: {0}".format(jntShoulderRoot))
 
         if checkSelLeft == 1:
             isLeft = True
             leftRight = "l_"
             leftRightMirror = "r_"
-            colourTU = 14
-            colourTUMirror = 13
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
             leftRight = self.valLeft
             leftRightMirror = self.valRight
         else:
             isLeft = False
             leftRight = "r_"
             leftRightMirror = "l_"
-            colourTU = 13
-            colourTUMirror = 14
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
             leftRight = self.valRight
             leftRightMirror = self.valLeft
 
@@ -1738,8 +1732,6 @@ class pcCreateRigAlt05Arms(UI):
                 for jntAA in jntArmArray:
                     jntArmArrayMirror.append(jntAA.replace(toReplace, toReplaceWith))
 
-                print("jntArmArrayMirror: {0}".format(jntArmArrayMirror))
-                print("jntShoulderRootMirror: {0}".format(jntShoulderRootMirror))
                 geoJntArrayMirror = []
                 for mb in mirrorBase:
 

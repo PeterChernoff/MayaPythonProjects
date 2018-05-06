@@ -45,6 +45,10 @@ class pcCreateRigAlt03Legs(UI):
         mc.checkBox("selSpineEnd_cb", l="Connect To Hip", en=True, v=True)
         mc.checkBox("selAnkleTwist_cb", l="Includes Ankle Twist Bones", en=True, v=True)
         mc.setParent("..")
+        mc.rowColumnLayout(nc=1, cw=[(1, 200)], cs=[1, 5], rs=[1, 3],
+                           cal=([1, "left"]))
+        mc.checkBox("selAddIKFKSwitching_cb", l="Include IK FK Switching Setup", en=True, v=True)
+        mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
@@ -417,7 +421,7 @@ class pcCreateRigAlt03Legs(UI):
                         sizeTU = 13
                     else:
                         sizeTU = 11
-                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(1, 0, 0), colour=colourTU,
+                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(1, 0, 0), colourTU=colourTU,
                                                               override=False)
                     fkJnts[i] = ctrl
 
@@ -433,7 +437,7 @@ class pcCreateRigAlt03Legs(UI):
                 if footJnt in fkJnt:
                     sizeTU = 12
                     ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(0, 1, 0),
-                                                              colour=colourTU, override=False)
+                                                              colourTU=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[:]")
                     mc.rotate(0, 0, 90, ws=True)
@@ -443,7 +447,7 @@ class pcCreateRigAlt03Legs(UI):
 
                     sizeTU = 7
                     ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(m * 1, 0, 0),
-                                                              colour=colourTU, override=False)
+                                                              colourTU=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[5:7]")
                     mc.select(ctrlShape + ".cv[0:1]", add=True)
@@ -1219,27 +1223,32 @@ class pcCreateRigAlt03Legs(UI):
 
         return
 
-    def setIKStretchOption(self, ctrlIKFoot, ikJntsPV, ikJntsNoFlip, legLens,
+    def setIKStretchOption(self, ctrlFootSettings, ikJntsPV, ikJntsNoFlip, legLens,
                            leftRight, *args):
+
+        #TO DELETE: Switch this so that ikStretch is an ENUM instead of a BOOL
+        #TO DELETE: Also, stick it on the CTRL_settings instead of the IK Control
 
         # this is a test for personal expansion ideas
         # this needs to be later on, so we put this at the end
-        ikStretchBool = "IK_Stretch"
-        mc.addAttr(ctrlIKFoot, longName=ikStretchBool, at="bool", k=True, dv=True)
-        mc.setAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), True)
+        ikStretchAttr = "IK_stretch"
+        enumVals = "on:off"
+        mc.addAttr(ctrlFootSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
+        mc.setAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), True)
 
-        self.createStretchIKCond(ikJntsPV, legLens, ctrlIKFoot, ikStretchBool, leftRight, "pv_")
-        self.createStretchIKCond(ikJntsNoFlip, legLens, ctrlIKFoot, ikStretchBool, leftRight, "noFlip_")
+        self.createStretchIKCond(ikJntsPV, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "pv_")
+        self.createStretchIKCond(ikJntsNoFlip, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "noFlip_")
 
         return
 
-    def createStretchIKCond(self, ikJnts, legLens, ctrlIKFoot, ikStretchBool, leftRight, type, *args):
+    def createStretchIKCond(self, ikJnts, legLens, ctrlFootSettings, ikStretchAttr, leftRight, type, *args):
+        # stretches the upper leg
         lowerLegStretchCond = "{0}lowerLeg_{1}stretch_COND".format(leftRight, type)
 
         mc.shadingNode("condition", n=lowerLegStretchCond, au=True)
         mc.setAttr("{0}.colorIfFalse".format(lowerLegStretchCond), legLens[0], 0, 0)
-        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), "{0}.firstTerm".format(lowerLegStretchCond))
-        mc.setAttr("{0}.secondTerm".format(lowerLegStretchCond), 1)
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), "{0}.firstTerm".format(lowerLegStretchCond))
+        mc.setAttr("{0}.secondTerm".format(lowerLegStretchCond), 0)
         mc.setAttr("{0}.operation".format(lowerLegStretchCond), 0)
 
         lowerLegStretchBlnd = []
@@ -1263,12 +1272,12 @@ class pcCreateRigAlt03Legs(UI):
         mc.connectAttr("{0}.outColorB".format(lowerLegStretchCond), "{0}".format(lowerLegStretchBlnd[2]), f=True)
 
         #####
-
+        # stretches the lower leg
         footStretchCond = "{0}foot_{1}stretch_COND".format(leftRight, type)
         mc.shadingNode("condition", n=footStretchCond, au=True)
         mc.setAttr("{0}.colorIfFalse".format(footStretchCond), legLens[1], 0, 0)
-        mc.connectAttr("{0}.{1}".format(ctrlIKFoot, ikStretchBool), "{0}.firstTerm".format(footStretchCond))
-        mc.setAttr("{0}.secondTerm".format(footStretchCond), 1)
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), "{0}.firstTerm".format(footStretchCond))
+        mc.setAttr("{0}.secondTerm".format(footStretchCond), 0)
         mc.setAttr("{0}.operation".format(footStretchCond), 0)
 
         footStretchBlnd = []
@@ -1317,10 +1326,10 @@ class pcCreateRigAlt03Legs(UI):
         mc.setAttr("{0}.displayType".format(newLayerNameIK), 0)
         mc.setAttr("{0}.color".format(newLayerNameIK), 0)
         if isLeft:
-            clrRGB = [0, 0.5, 1]
+            clrIKrgb = [0, 0.5, 1]
         else:
-            clrRGB = [1, 0.5, 0]
-        mc.setAttr("{0}.overrideColorRGB".format(newLayerNameIK), clrRGB[0], clrRGB[1], clrRGB[2])
+            clrIKrgb = [1, 0.5, 0]
+        mc.setAttr("{0}.overrideColorRGB".format(newLayerNameIK), clrIKrgb[0], clrIKrgb[1], clrIKrgb[2])
         mc.setAttr("{0}.overrideRGBColors".format(newLayerNameIK), 1)
 
         # print("bndJnts: {0}".format(bndJnts))
@@ -1331,19 +1340,20 @@ class pcCreateRigAlt03Legs(UI):
         CRU.changeRotateOrder(ikJnts, "XZY")
 
         # creates the foot settings control
+        # to delete: Make this simply the foot
         if self.checkAnkleTwist:
             jntFoot = [x for x in bndJnts if "ankleTwist" in x][0]
         else:
             jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
         name = "settings_" + leftRight + "leg"
-        ctrlFootSettings = CRU.createNailNoOffset(jntFoot, isLeft, name, bodySize=15, headSize=2, colour=colourTU,
+        ctrlFootSettings = CRU.createNailNoOffset(jntFoot, isLeft, name, bodySize=15, headSize=2, colourTU=colourTU,
                                                   pnt=True)
 
         grpSettings = "GRP_settings"
         if not mc.objExists(grpSettings):
             mc.group(n=grpSettings, w=True, em=True)
         mc.parent(ctrlFootSettings, grpSettings)
-        CRU.layerEdit(grpSettings, newLayerName="settings_LYR", colourTU=9)
+        CRU.layerEdit(grpSettings, newLayerName="settings_LYR", colourTU=CRU.clrSettings)
         # creates the FKIK blend control
 
         fkikBlendName = "fkik_blend"
@@ -1425,9 +1435,10 @@ class pcCreateRigAlt03Legs(UI):
                            blndNdUpperStretchChoice, blndNdLowerStretchChoice,
                            leftRight)
         self.cleanLeg(ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts)
-        # return # TO DELEte: I don't know why I'm blocking this out
         # creates the ability to turn on and off the stretch
-        self.setIKStretchOption(ctrlIKFoot, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
+        self.setIKStretchOption(ctrlFootSettings, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
+        if self.checkSwitchSetup:
+            pass
 
         # return
 
@@ -1437,6 +1448,8 @@ class pcCreateRigAlt03Legs(UI):
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
         self.checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
         self.checkAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
+        self.checkSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
+
         self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         '''
@@ -1497,14 +1510,14 @@ class pcCreateRigAlt03Legs(UI):
             isLeft = True
             leftRight = self.valLeft
             leftRightMirror = self.valRight
-            colourTU = 14
-            colourTUMirror = 13
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
         else:
             isLeft = False
             leftRight = self.valRight
             leftRightMirror = self.valLeft
-            colourTU = 13
-            colourTUMirror = 14
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
 
         CRU.checkLeftRight(isLeft, bndJnts[0])
         jntLegArray = self.jntLegArray

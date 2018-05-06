@@ -2,9 +2,23 @@ import maya.cmds as mc
 
 
 class pcCreateRigUtilities:
+    clrBodyFK = 17
+    clrBodyIK = 28
+    clrBodyMain = 13
+    clrLeftFK = [0, 0.75, 1]
+    clrLeftIK = [0, 0.5, 1]
+
+    clrRightFK = [1, 0.75, 0]
+    clrRightIK =  [1, 0.5, 0]
+
+    clrSettings = [.75, 0.5, 1]
+
+    clrHandCtrl = [0.65, 0.8, 0]
+
+
     @staticmethod
-    def setupCtrl(s, size=3, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                  addPrefix=False, boxDimensionsLWH=None, override=True):
+    def setupCtrl(s, size=3, orientVal=(1, 0, 0), colourTU=5, sectionsTU=None,
+                  addPrefix=False, boxDimensionsLWH=None, override=True, ):
         selname = str(s)
         '''
         0 gray, 1 black, 2 dark grey, 3 light gray, 4 red
@@ -49,14 +63,18 @@ class pcCreateRigUtilities:
             else:
                 ctrl = mc.circle(nr=orientVal, r=size, n=ctrlName)[0]
         if override:
-            mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+            if colourTU is not None:
+                if isinstance(colourTU, int):
+                    mc.setAttr("{0}.overrideColor".format(ctrlName), colourTU)
+                else:
+                    mc.setAttr("{0}.overrideColorRGB".format(ctrlName), colourTU[0], colourTU[1], colourTU[2])
+                    mc.setAttr("{0}.overrideRGBColors".format(ctrlName), 1)
         return ctrl, ctrlName
 
     @staticmethod
-    def createCTRLs(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5, sectionsTU=None,
-                    addPrefix=False, boxDimensionsLWH=None):
-        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
+    def createCTRLs(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colourTU=5, sectionsTU=None,
+                    addPrefix=False, boxDimensionsLWH=None, ):
+        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colourTU, sectionsTU,
                                                         addPrefix, boxDimensionsLWH)
 
         auto = mc.group(ctrl, n="AUTO_" + ctrl)
@@ -78,11 +96,11 @@ class pcCreateRigUtilities:
         return offsetCtrl
 
     @staticmethod
-    def createCTRLsNoOffset(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colour=5,
+    def createCTRLsNoOffset(s, size=3, prnt=False, ornt=False, pnt=False, orientVal=(1, 0, 0), colourTU=5,
                             sectionsTU=None,
-                            addPrefix=False, boxDimensionsLWH=None):
+                            addPrefix=False, boxDimensionsLWH=None, ):
 
-        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
+        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colourTU, sectionsTU,
                                                         addPrefix, boxDimensionsLWH)
 
         mc.parentConstraint(s, ctrl, mo=0)
@@ -100,11 +118,11 @@ class pcCreateRigUtilities:
         return ctrl
 
     @staticmethod
-    def createCTRLsFKDirect(s, size=3, orientVal=(1, 0, 0), colour=5,
+    def createCTRLsFKDirect(s, size=3, orientVal=(1, 0, 0), colourTU=5,
                             sectionsTU=None,
                             addPrefix=False, boxDimensionsLWH=None, override=True):
 
-        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colour, sectionsTU,
+        ctrl, ctrlName = pcCreateRigUtilities.setupCtrl(s, size, orientVal, colourTU, sectionsTU,
                                                         addPrefix, boxDimensionsLWH, override=override)
 
         fkShape = mc.listRelatives(ctrl)[0]
@@ -116,7 +134,7 @@ class pcCreateRigUtilities:
         try:
             if override:
                 mc.setAttr('{0}.overrideEnabled'.format(ctrl), 1)
-                mc.setAttr("{0}.overrideColor".format(ctrl), colour)
+                mc.setAttr("{0}.overrideColor".format(ctrl), colourTU)
         except:
             mc.warning('{0}.overrideEnabled is locked'.format(ctrl))
         return ctrl, fkShape
@@ -192,7 +210,10 @@ class pcCreateRigUtilities:
                 mc.makeIdentity(geoName, a=True, t=True, r=True, s=True)
                 mc.xform(geoName, ws=True, pivots=pivotTranslate)
                 if setLayer:
-                    pcCreateRigUtilities.layerEdit([geoName], geoLayer=True, noRecurse=True)
+                    pcCreateRigUtilities.layerEdit(geoName, geoLayer=True, noRecurse=True)
+
+                if printOut:
+                    print("Pivot Complete")
 
             except:
                 if printOut:
@@ -409,7 +430,11 @@ class pcCreateRigUtilities:
         17 yellow, 22 other yellow, 25 puke yellow,
         '''
         if colourTU is not None:
-            mc.setAttr("{0}.color".format(layerName), colourTU)
+            if isinstance(colourTU, int):
+                mc.setAttr("{0}.color".format(layerName), colourTU)
+            else:
+                mc.setAttr("{0}.overrideColorRGB".format(layerName), colourTU[0], colourTU[1], colourTU[2])
+                mc.setAttr("{0}.overrideRGBColors".format(layerName), 1)
 
     @staticmethod
     def checkObjectType(val, *args):
@@ -422,7 +447,7 @@ class pcCreateRigUtilities:
             return mc.objectType(val)
 
     @staticmethod
-    def createNail(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, override=True, *args):
+    def createNail(s, isLeft, name=None, bodySize=3, headSize=1, colourTU=5, override=True, *args):
         selname = str(s)
         # creates a nail at the location
         '''
@@ -455,8 +480,13 @@ class pcCreateRigUtilities:
             ctrl = mc.curve(name=ctrlName, d=1, p=toPass, )
             # ctrl = mc.curve(name=ctrlName, p=toPass, d=1)
         if override:
-            mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+            if colourTU is not None:
+                if isinstance(colourTU, int):
+                    mc.setAttr("{0}.overrideColor".format(ctrlName), colourTU)
+                else:
+                    mc.setAttr("{0}.overrideColorRGB".format(ctrlName), colourTU[0], colourTU[1], colourTU[2])
+                    mc.setAttr("{0}.overrideRGBColors".format(ctrlName), 1)
+                mc.setAttr("{0}.overrideColor".format(ctrlName), colourTU)
 
         auto = mc.group(ctrl, n="AUTO_" + ctrl)
         offset = mc.group(auto, n="OFFSET_" + ctrl)
@@ -471,7 +501,8 @@ class pcCreateRigUtilities:
         return offsetCtrl
 
     @staticmethod
-    def createNailNoOffset(s, isLeft, name=None, bodySize=3, headSize=1, colour=5, prnt=True, pnt=False, override=True,
+    def createNailNoOffset(s, isLeft, name=None, bodySize=3, headSize=1, colourTU=5, prnt=True, pnt=False,
+                           override=True,
                            *args):
         selname = str(s)
         # creates a nail at the location
@@ -510,7 +541,12 @@ class pcCreateRigUtilities:
 
         if override:
             mc.setAttr('{0}.overrideEnabled'.format(ctrlName), 1)
-            mc.setAttr("{0}.overrideColor".format(ctrlName), colour)
+            if colourTU is not None:
+                if isinstance(colourTU, int):
+                    mc.setAttr("{0}.overrideColor".format(ctrlName), colourTU)
+                else:
+                    mc.setAttr("{0}.overrideColorRGB".format(ctrlName), colourTU[0], colourTU[1], colourTU[2])
+                    mc.setAttr("{0}.overrideRGBColors".format(ctrlName), 1)
 
         if pnt:
             todelete = mc.pointConstraint(s, ctrl)
@@ -544,7 +580,13 @@ class pcCreateRigUtilities:
 
             if override:
                 mc.setAttr('{0}.overrideEnabled'.format(locName), 1)
-                mc.setAttr("{0}.overrideColor".format(locName), colourTU)
+
+                if colourTU is not None:
+                    if isinstance(colourTU, int):
+                        mc.setAttr("{0}.overrideColor".format(locName), colourTU)
+                    else:
+                        mc.setAttr("{0}.overrideColorRGB".format(locName), colourTU[0], colourTU[1], colourTU[2])
+                        mc.setAttr("{0}.overrideRGBColors".format(locName), 1)
 
             toDelete = mc.parentConstraint(ctrlLimb, locName)[0]
             mc.delete(toDelete)

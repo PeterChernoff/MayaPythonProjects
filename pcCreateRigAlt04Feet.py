@@ -445,14 +445,10 @@ class pcCreateRigAlt04Feet(UI):
             leftRight = "l_"
             leftRightMirror = "r_"
 
-            colourTU = 14
-            colourTUMirror = 13
         else:
             isLeft = False
             leftRight = "r_"
             leftRightMirror = "l_"
-            colourTU = 13
-            colourTUMirror = 14
 
         leftRightReplace = "_" + leftRight
         leftRightReplaceMirror = "_" + leftRightMirror

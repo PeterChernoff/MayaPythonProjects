@@ -145,7 +145,7 @@ class pcCreateRigAlt01Spine(UI):
         spineIKSizes = [[8, 18, 22], [6, 15, 20]]
 
         for i in range(len(spineIKs)):
-            spineIKCtrl = CRU.createCTRLsNoOffset(spineIKs[i], 19, prnt=False, colour=17,
+            spineIKCtrl = CRU.createCTRLsNoOffset(spineIKs[i], 19, prnt=False, colourTU=17,
                                                   boxDimensionsLWH=spineIKSizes[i])
             spineIKCtrlReplace = spineIKCtrl.replace("_IK_", "_")
             mc.rename(spineIKCtrl, spineIKCtrlReplace)
@@ -282,7 +282,7 @@ class pcCreateRigAlt01Spine(UI):
         ctrlFKJnts = []  # keeps track of the offsets so we can parent them appropriately
         for i in range(len(ctrlFKJntsTU)):
             # Putting into a list so the CTRL sees it properly
-            ctrlFK, fkShape = CRU.createCTRLsFKDirect(ctrlFKJntsTU[i], 18, orientVal=(0, 1, 0), colour=28)
+            ctrlFK, fkShape = CRU.createCTRLsFKDirect(ctrlFKJntsTU[i], 18, orientVal=(0, 1, 0), colourTU=28)
 
             ctrlFKJnts.append(ctrlFK)
 
@@ -310,7 +310,7 @@ class pcCreateRigAlt01Spine(UI):
 
         mc.parent(fkHipEnd, fkHip)
 
-        fkHipOffsetCtrl = CRU.createCTRLs(fkHip, 27, prnt=True, colour=17)
+        fkHipOffsetCtrl = CRU.createCTRLs(fkHip, 27, prnt=True, colourTU=17)
         cvsToMove = mc.select(fkHipOffsetCtrl[1] + ".cv[:]")
         mc.move(-10, cvsToMove, x=True, r=True, wd=True, ls=True)
 
@@ -366,7 +366,7 @@ class pcCreateRigAlt01Spine(UI):
         mc.connectAttr("{0}.ox".format(globalScaleNormalizeDiv), "{0}.i1x".format(spineStretchNameDiv), f=True)
 
         # creates the control
-        ctrlRoot, fkShape = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colour=13, addPrefix="CTRL")
+        ctrlRoot, fkShape = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colourTU=13, addPrefix="CTRL")
 
         ctrlRootRename = ctrlRoot.replace("_GRP_", "_")
         ctrlRoot = mc.rename(ctrlRoot, ctrlRootRename)
@@ -405,11 +405,11 @@ class pcCreateRigAlt01Spine(UI):
         CRU.lockHideCtrls(crvSpine, visibility=True)
         CRU.lockHideCtrls(hdlSpine, visibility=True)
 
-        CRU.layerEdit(ctrlFKJnts, fkLayer=True, noRecurse=True, colourTU=18)
-        CRU.layerEdit(ctrlFKJntsEnds, fkLayer=True, noRecurse=True, colourTU=18)
-        CRU.layerEdit(spineIKCtrls, ikLayer=True, noRecurse=True, colourTU=17)
+        CRU.layerEdit(ctrlFKJnts, fkLayer=True, noRecurse=True, colourTU=CRU.clrBodyFK)
+        CRU.layerEdit(ctrlFKJntsEnds, fkLayer=True, noRecurse=True, colourTU=CRU.clrBodyFK)
+        CRU.layerEdit(spineIKCtrls, ikLayer=True, noRecurse=True, colourTU=CRU.clrBodyIK)
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True, layerState=1)
-        CRU.layerEdit(ctrlBody, bodyLayer=True, noRecurse=True, colourTU=13)
+        CRU.layerEdit(ctrlBody, bodyLayer=True, noRecurse=True, colourTU=CRU.clrBodyMain)
 
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)

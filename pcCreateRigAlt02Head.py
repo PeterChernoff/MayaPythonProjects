@@ -53,7 +53,7 @@ class pcCreateRigAlt02Head(UI):
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", cw=(1, 300), bl="  Load  ", tx="JNT_IK_shoulder")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Torso DNT Group: ")
-        mc.textFieldButtonGrp("grpTorsoDNT_tfbg", cw=(1, 300), bl="  Load  ", tx="GRP_DO_NOT_TOUCH")
+        mc.textFieldButtonGrp("grpTorsoDNT_tfbg", cw=(1, 300), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform Control: ")
         mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform_emma")
@@ -296,7 +296,7 @@ class pcCreateRigAlt02Head(UI):
     def createHeadCtrls(self, ikNeckEnd, *args):
         # Creates the head control
         ctrlHeadName = "CTRL_head"
-        ctrlHeadPre, ctrlHeadPreName = CRU.setupCtrl(ikNeckEnd, 14, orientVal=(0, 1, 0), colour=17, )
+        ctrlHeadPre, ctrlHeadPreName = CRU.setupCtrl(ikNeckEnd, 14, orientVal=(0, 1, 0), colourTU=CRU.clrBodyFK, )
         ctrlHead = mc.rename(ctrlHeadPre, ctrlHeadName)
         todelete = mc.pointConstraint(ikNeckEnd, ctrlHead)
         mc.delete(todelete)
@@ -355,7 +355,7 @@ class pcCreateRigAlt02Head(UI):
             mc.joint(fkJnts[i], e=True, zso=True, oj="yxz", secondaryAxisOrient="xup")
 
         # create the FK control and move it into a nice position
-        ctrlFK, ctrlShape = CRU.createCTRLsFKDirect(fkJnts[0], 10, orientVal=(0, 1, 0), colour=28)
+        ctrlFK, ctrlShape = CRU.createCTRLsFKDirect(fkJnts[0], 10, orientVal=(0, 1, 0), colourTU=CRU.clrBodyIK)
         # ctrlShape = mc.listRelatives(ctrlFK, s=True, )[0]
         fkJnts[0] = ctrlFK
 
@@ -520,7 +520,6 @@ class pcCreateRigAlt02Head(UI):
         for i in range(len(jntArrayHead)):
             # this is an iteration due to a previous version using that, but I like to keep it flexible
             val = str(jntArrayHead[i])
-            colourTU = 17
 
             if listCtrls[0] in val:
                 # if the jaw, do the following

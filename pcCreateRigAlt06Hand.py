@@ -702,8 +702,8 @@ class pcCreateRigAlt06Hand(UI):
     def cleanPalms(self, locArray, grpHDL, ctrlHand, ctrlTIRMP, jntConstHand, leftRight):
 
         # hide these values
-        mc.setAttr("{0}.visibility".format(locArray[0]))
-        mc.setAttr("{0}.visibility".format(grpHDL))
+        mc.setAttr("{0}.visibility".format(locArray[0]), False)
+        mc.setAttr("{0}.visibility".format(grpHDL), False)
 
         # create group for controls
         grpCtrlHand = "GRP_CTRL_{0}hand".format(leftRight)
@@ -845,8 +845,14 @@ class pcCreateRigAlt06Hand(UI):
                             checkGeo, leftRight, colourTU, *args):
 
         for i in range(len(locArray)):
-            mc.setAttr('{0}.overrideEnabled'.format(locArray[i]), 1)
-            mc.setAttr("{0}.overrideColor".format(locArray[i]), colourTU)
+            if isinstance(locArray[i], int):
+                mc.setAttr('{0}.overrideEnabled'.format(locArray[i]), 1)
+
+                mc.setAttr("{0}.overrideColor".format(locArray[i]), colourTU)
+            else:
+                mc.setAttr("{0}.overrideColorRGB".format(locArray[i]), colourTU[0], colourTU[1], colourTU[2])
+                mc.setAttr("{0}.overrideRGBColors".format(locArray[i]), 1)
+
         newLayerNameFK = "{0}hand_FK_LYR".format(leftRight)
         bndBaseHand = jointArrayBaseHand[0]
 
@@ -903,7 +909,7 @@ class pcCreateRigAlt06Hand(UI):
             ctrlTIRMP.append(ctrlName)
             mc.makeIdentity(ctrlName, apply=True)
 
-        CRU.layerEdit(ctrlTIRMP, newLayerName=handsLayer, colourTU=23)
+        CRU.layerEdit(ctrlTIRMP, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
 
         valsMinMaxDef = [-10, 10, 0]
         fingerAttr = ["curl", "scrunch", "lean", "relax", "spread"]
@@ -935,7 +941,7 @@ class pcCreateRigAlt06Hand(UI):
         mc.move(0, -0, 2.65, r=True, os=True)
         mc.select(cl=True)
         mc.makeIdentity(ctrlHand, apply=True)
-        CRU.layerEdit(ctrlHand, newLayerName=handsLayer, colourTU=23)
+        CRU.layerEdit(ctrlHand, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
 
         handAttr = ["curl", "scrunch", "lean", "relax", "spread", "fist"]
 
@@ -1132,16 +1138,16 @@ class pcCreateRigAlt06Hand(UI):
             isLeft = True
             leftRight = "l_"
             leftRightMirror = "r_"
-            colourTU = 14
-            colourTUMirror = 13
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
             leftRight = self.valLeft
             leftRightMirror = self.valRight
         else:
             isLeft = False
             leftRight = "r_"
             leftRightMirror = "l_"
-            colourTU = 13
-            colourTUMirror = 14
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
             leftRight = self.valRight
             leftRightMirror = self.valLeft
 
