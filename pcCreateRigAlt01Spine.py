@@ -37,7 +37,7 @@ class pcCreateRigAlt01Spine(UI):
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="BND Spine Joints: ")
-        mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ")
+        mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_spine1")
 
         mc.setParent("..")
 
@@ -59,8 +59,7 @@ class pcCreateRigAlt01Spine(UI):
         print(self.selSrc1)
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
+
         # hierarchy
         self.selLoad = []
         self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
@@ -69,29 +68,39 @@ class pcCreateRigAlt01Spine(UI):
             return
         else:
 
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
-
             selName = self.selLoad[0]
+            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            print("returner: {0}".format(returner))
+            if returner is None:
+                return None
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectType, objectDesc))
-                return
+        return self.jointArray
 
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
-            # get the children joints
-            self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
-            # collect the joints in an array
-            self.jointArray = [self.parent]
-            # reverse the order of the children joints
-            self.child.reverse()
+    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
+            
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
 
-            # add to the current list
-            self.jointArray.extend(self.child)
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectType, objectDesc))
+            return
 
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        self.parent = selName
+        self.child = mc.listRelatives(selName, ad=True, type="joint")
+        # collect the joints in an array
+        self.jointArray = [self.parent]
+        # reverse the order of the children joints
+        self.child.reverse()
+
+        # add to the current list
+        self.jointArray.extend(self.child)
         return self.jointArray
 
     def createIKSpline(self, jntStart, jntEnd, *args):
@@ -414,19 +423,20 @@ class pcCreateRigAlt01Spine(UI):
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
-        self.jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        # self.geoNames = mc.textFieldButtonGrp("GeoLoad_tfbg", q=True, text=True)
+        bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
+        bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Spine BND", ["JNT", "_BND_", "spine", "1"])
 
         # make sure the selections are not empty
-        checkList = [self.jntNames]
+        checkList = [bndJnts]
+        print("checkList: {0}".format(checkList))
 
-        if ((checkList[0] == "")):
-            mc.warning("You are missing a selection!")
+        if ((checkList[0] == "") or checkList[0] is None):
+            mc.warning("You are missing a proper selection!")
             return
         else:
             CRU.createLocatorToDelete()
             # create the IK base controls
-            jntArray = self.jointArray[:]
+            jntArray = bndJnts[:]
             jntStart = jntArray[0]
             jntEnd = jntArray[-1]
 
