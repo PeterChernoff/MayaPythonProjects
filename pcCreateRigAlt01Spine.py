@@ -76,11 +76,10 @@ class pcCreateRigAlt01Spine(UI):
 
         return self.jointArray
 
-
     def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
         if objectNickname is None:
             objectNickname = objectType
-            
+
         if CRU.checkObjectType(selName) != objectType:
             mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
             return
@@ -306,7 +305,6 @@ class pcCreateRigAlt01Spine(UI):
     def createHipCtrl(self, ikHip, spineIKCtrls, *args):
         # create hip controls
 
-
         fkHip = mc.duplicate(ikHip, n="JNT_FK_hip")
         # delete the children
         fkHipChilds = mc.listRelatives(fkHip[0], ad=True, f=True)
@@ -375,7 +373,8 @@ class pcCreateRigAlt01Spine(UI):
         mc.connectAttr("{0}.ox".format(globalScaleNormalizeDiv), "{0}.i1x".format(spineStretchNameDiv), f=True)
 
         # creates the control
-        ctrlRoot, fkShape = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colourTU=13, addPrefix="CTRL")
+        ctrlRoot, fkShape = CRU.createCTRLsFKDirect(grpRootTransformName, 50, orientVal=(0, 1, 0), colourTU=13,
+                                                    addPrefix="CTRL")
 
         ctrlRootRename = ctrlRoot.replace("_GRP_", "_")
         ctrlRoot = mc.rename(ctrlRoot, ctrlRootRename)
@@ -471,7 +470,7 @@ class pcCreateRigAlt01Spine(UI):
 
             # FK Joints and Controls
             fkJnts, ctrlFKJnts, grpFKConsts, ctrlFKJntsEnds = self.createFKJntAndCtrls(jntArrayLen, jntEndSize,
-                                                                                       spineIKCtrls,jntArray)
+                                                                                       spineIKCtrls, jntArray)
 
             # Adding an extra hip control
             # fkHip, fkHipOffsetCtrl = self.createHipCtrl(ikHip, spineIKCtrls)
@@ -480,7 +479,8 @@ class pcCreateRigAlt01Spine(UI):
             spineInfo, spineStretchNameDiv = self.addStretch(jntArray, crvSpine, jntArrayLen, )
 
             # Torso Global Transform
-            ctrlBody, grpTorso = self.createBodyCtrl(grpFKConsts, ctrlFKJnts, fkJnts, spineIKs, crvSpine, hdlSpine, jntArray)
+            ctrlBody, grpTorso = self.createBodyCtrl(grpFKConsts, ctrlFKJnts, fkJnts, spineIKs, crvSpine, hdlSpine,
+                                                     jntArray)
 
             # clean up, but we don't include certain bits of data
             self.spineCleanup(ctrlFKJnts, ctrlFKJntsEnds, grpFKConsts, grpTorso, ctrlBody, spineIKs, spineIKCtrls,
