@@ -70,7 +70,6 @@ class pcCreateRigAlt01Spine(UI):
 
             selName = self.selLoad[0]
             returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            print("returner: {0}".format(returner))
             if returner is None:
                 return None
 

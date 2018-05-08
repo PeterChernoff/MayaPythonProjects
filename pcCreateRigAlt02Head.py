@@ -182,10 +182,6 @@ class pcCreateRigAlt02Head(UI):
             return
 
         if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectType, objectDesc))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
             mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
             return
         mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)

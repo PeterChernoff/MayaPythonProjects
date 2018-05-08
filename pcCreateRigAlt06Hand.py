@@ -62,13 +62,13 @@ class pcCreateRigAlt06Hand(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Bind End: ")
         mc.textFieldButtonGrp("jntBindEndLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_arm_bindEnd")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform Control: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform\nControl: ")
         mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform_emma")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm's Hand Joint: ")
         mc.textFieldButtonGrp("jntHandLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_hand")
 
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Control Settings: ")
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Control\nSettings: ")
         mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_settings_l_arm")
 
         mc.setParent("..")
