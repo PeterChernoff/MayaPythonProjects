@@ -21,7 +21,7 @@ class pcCreateRigAlt02Head(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigHead"
-        self.winSize = (500, 400)
+        self.winSize = (500, 550)
 
         self.createUI()
 
@@ -61,14 +61,20 @@ class pcCreateRigAlt02Head(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Head Joint Extras: ")
         mc.textFieldButtonGrp("jntHead_tfbg", cw=(1, 300), bl="  Load  ", tx="JNT_BND_head")
 
-        mc.separator(st="in", h=17, w=500)
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder Control: ")
+        mc.textFieldButtonGrp("ctrlShoulderLoad_tf", cw=(1, 300), bl="  Load  ", tx="CTRL_shoulder")
+
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Spine End Joint: ")
+        mc.textFieldButtonGrp("jntSpineEndLoad_tf", cw=(1, 300), bl="  Load  ", tx="JNT_BND_spineEnd")
+
+        mc.separator(st="in", h=15, w=500)
         mc.setParent("..")
 
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 400)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
 
         mc.setParent("..")
-        mc.separator(st="in", h=17, w=500)
+        mc.separator(st="in", h=15, w=500)
 
         # Attributes
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
@@ -77,8 +83,16 @@ class pcCreateRigAlt02Head(UI):
                        ncb=2, va2=[1, 1], cw2=[70, 60])
 
         mc.setParent("..")
+        mc.separator(st="in", h=15, w=500)
 
-        mc.separator(st="in", h=20, w=500)
+        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.text(l="Toggle\nStretchable: ")
+        mc.checkBoxGrp("setStretch_rgp", la2=["Torso", "Neck", ],
+                       ncb=2, va2=[1, 1], cw2=[70, 60])
+
+        mc.setParent("..")
+
+        mc.separator(st="in", h=15, w=500)
 
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
@@ -86,6 +100,7 @@ class pcCreateRigAlt02Head(UI):
         mc.textFieldButtonGrp("grpTorsoDNT_tfbg", e=True, bc=self.loadSrc3Btn)
         mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc4Btn)
         mc.textFieldButtonGrp("jntHead_tfbg", e=True, bc=self.loadSrc5Btn)
+        mc.textFieldButtonGrp("ctrlShoulderLoad_tf", e=True, bc=self.loadSrc6Btn)
 
         mc.showWindow(self.window)
 
@@ -116,6 +131,15 @@ class pcCreateRigAlt02Head(UI):
         self.selSrc5 = self.tgpLoadJntsHeadBtnExtra("jntHead_tfbg", "joint", "Head Joint",
                                                     ["JNT", "BND", "head"])
         print(self.selSrc5)
+
+    def loadSrc6Btn(self):
+        self.selSrc6 = self.tgpLoadTxBtn("ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
+                                         ["CTRL", "shoulder"], "Control")
+
+    def loadSrc6Btn(self):
+        self.selSrc6 = self.tgpLoadTxBtn("jntSpineEndLoad_tf", "joint", "Spine End",
+                                         ["JNT", "BND", "spineEnd"])
+        print(self.selSrc6)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -167,7 +191,7 @@ class pcCreateRigAlt02Head(UI):
             selName = self.selLoad[0]
 
             returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            # print("returner: {0}".format(returner))
+
             if returner is None:
                 return None
 
@@ -472,7 +496,7 @@ class pcCreateRigAlt02Head(UI):
         # we want to overwrite the old version
         mc.connectAttr("{0}.ox".format(globalScaleNormalizeDiv), "{0}.i1x".format(splineStretchNameDiv), f=True)
 
-        return splineInfo, splineStretchNameDiv
+        return splineInfo, splineStretchNameDiv, globalScaleNormalizeDiv
 
     def parentRootTransform(self, ctrlRootTrans, crvNeck, hdlNeck, ikNeckBase, ikNeckEnd, grpHead, fkJntStart,
                             jntArrayStart, *args):
@@ -508,14 +532,21 @@ class pcCreateRigAlt02Head(UI):
 
         return locConstNeckShoulder, grpNeckFK
 
-    def createSpaceSwitching(self, ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT, *args):
-
+    def createSpaceSwitching(self, grpHead, ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT, *args):
+        # to delete: I might have constrained the head control when I should have used the grpHead
         # creates the head follow attributes
-        headLocArray = []
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headNeck")[0])
+
+        locHeadNeck = "LOC_space_headNeck"
+        locHeadShoulder = "LOC_space_headShoulder"
+        locHeadBody = "LOC_space_headBody"
+        locHeadRoot = "LOC_space_headRoot"
+        headLocArray = [locHeadNeck, locHeadShoulder, locHeadBody, locHeadRoot]
+        for i in range(len(headLocArray)):
+            mc.spaceLocator(p=(0, 0, 0), name=headLocArray[i])
+        '''headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headNeck")[0])
         headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headShoulder")[0])
         headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headBody")[0])
-        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headRoot")[0])
+        headLocArray.append(mc.spaceLocator(p=(0, 0, 0), name="LOC_space_headRoot")[0])'''
 
         # moves these to the head
         for i in range(len(headLocArray)):
@@ -528,8 +559,8 @@ class pcCreateRigAlt02Head(UI):
         mc.parent(headLocArray[2], grpTorsoDNT)
         mc.parent(headLocArray[3], ctrlRootTrans)
 
-        headFollowOrntConstr = mc.orientConstraint(headLocArray, ctrlHead)[0]
-        headFollowPntConstr = mc.pointConstraint(headLocArray, ctrlHead)[0]
+        headFollowOrntConstr = mc.orientConstraint(headLocArray, grpHead)[0]
+        headFollowPntConstr = mc.pointConstraint(headLocArray, grpHead)[0]
 
         headFollowRot = 'rotationSpace'
         headFollowTrans = 'translationSpace'
@@ -555,7 +586,9 @@ class pcCreateRigAlt02Head(UI):
         for i in range(len(headLocArray)):
             mc.setAttr("{0}.v".format(headLocArray[i]), False)
 
-    def createJawCtrls(self, jntArrayHead, ctrlHead, *args):
+        return headLocArray, locHeadShoulder
+
+    def createJawCtrls(self, jntArrayHead, jntHead, grpHead, *args):
 
         listCtrls = ["jaw1"]
         headOffsetCtrls = []
@@ -592,7 +625,9 @@ class pcCreateRigAlt02Head(UI):
                 mc.pointConstraint(ctrlJaw, val, mo=True)
                 mc.orientConstraint(ctrlJaw, val, mo=True)
 
-        mc.parent(grpJaw, ctrlHead)
+        print("jntHead test: {0}".format(jntHead))
+        mc.parent(grpJaw, grpHead)
+        mc.parentConstraint(jntHead, grpJaw, mo=True)
 
         return grpJaw, ctrlJaw
 
@@ -605,7 +640,6 @@ class pcCreateRigAlt02Head(UI):
         eyeRadBase = mc.listRelatives(eyeArray[-1], type="joint")[0]
 
         radiusBase = mc.getAttr("{0}.tz".format(eyeRadBase))
-        print("radiusBase: {0}".format(radiusBase))
 
         for i in range(len(eyeArray)):
             # takes the eye joints, creates a corresponding locator
@@ -723,11 +757,11 @@ class pcCreateRigAlt02Head(UI):
     def neckCleanUpExtras(self, jawSel, grpJaw, ctrlJaw,
                           eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
                           grpHeadDNT, jntArrayHead,
-                          ikNeckEnd,
+                          ikNeckEnd, checkHead,
 
                           *args):
-
-        mc.parent(jntArrayHead[0], grpHeadDNT)
+        if checkHead:
+            mc.parent(jntArrayHead[0], grpHeadDNT)
 
         if jawSel:
             CRU.lockHideCtrls(grpJaw, translate=True, rotate=True, scale=True, visibility=True)
@@ -752,6 +786,89 @@ class pcCreateRigAlt02Head(UI):
             mc.parentConstraint(ikNeckEnd, grpGeoHead, mo=True)
             mc.parent(grpGeoHead, grpHeadDNT)
 
+    def toggleStretchTorso(self, locConstNeckShoulder, locHeadShoulder, jntIKShoulder, grpTorsoDNT, jntSpineEnd,
+                           ctrlShoulder):
+        # create the group
+        grpHeadShoulders = "GRP_head_shoulders"
+        mc.group(em=True, w=True, n=grpHeadShoulders)
+        mc.matchTransform(grpHeadShoulders, jntIKShoulder, pos=True)
+
+        # put it under Do Not Touch torso
+        mc.parent(grpHeadShoulders, grpTorsoDNT)
+
+        # parent the locators under it
+        mc.parent(locConstNeckShoulder, locHeadShoulder, grpHeadShoulders)
+
+        # creates the spine tip locator which will drive a lot
+        locSpineTip = "LOC_spineTip"
+        mc.spaceLocator(p=(0, 0, 0), name=locSpineTip)
+        mc.matchTransform(locSpineTip, jntSpineEnd)
+        mc.parent(locSpineTip, grpTorsoDNT)
+
+        mc.pointConstraint(jntSpineEnd, locSpineTip, mo=True)
+        mc.orientConstraint(ctrlShoulder, locSpineTip, mo=True)
+
+        grpPrntConstr = mc.parentConstraint(jntIKShoulder, grpHeadShoulders, mo=True)[0]
+        mc.parentConstraint(locSpineTip, grpHeadShoulders, mo=True)
+
+        stretchable = "stretchable"
+
+        grpPrntConstrVals = mc.listAttr(grpPrntConstr)[-2:]
+        CRU.setDriverDrivenValues(ctrlShoulder, stretchable, grpPrntConstr, grpPrntConstrVals[0], 0, 0)
+        CRU.setDriverDrivenValues(ctrlShoulder, stretchable, grpPrntConstr, grpPrntConstrVals[0], 1, 1)
+
+        CRU.setDriverDrivenValues(ctrlShoulder, stretchable, grpPrntConstr, grpPrntConstrVals[1], 0, 1)
+        CRU.setDriverDrivenValues(ctrlShoulder, stretchable, grpPrntConstr, grpPrntConstrVals[1], 1, 0)
+
+        return
+
+    def makeNeckStretchable(self, neckInfo, globalScaleNormalizeDiv, splineStretchNameDiv, ctrlHead):
+        # get the default spine length
+        defLen = mc.getAttr("{0}.arcLength".format(neckInfo))
+        # create the blend node
+        neckStretch_blnd = "neck_stretchToggle"
+        mc.shadingNode("blendColors", n=neckStretch_blnd, au=True)
+
+        # blend node inputs
+        mc.connectAttr("{0}.outputX".format(globalScaleNormalizeDiv), "{0}.color1R".format(neckStretch_blnd))
+        mc.setAttr("{0}.color2R".format(neckStretch_blnd), defLen)
+
+        # blend node outputs
+        mc.connectAttr("{0}.outputR".format(neckStretch_blnd), "{0}.input1X".format(splineStretchNameDiv), f=True)
+
+        # add the blend nodes
+        stretchable = "stretchable"
+        mc.addAttr(ctrlHead, longName=stretchable, at="enum", enumName="off:on", k=True)
+        mc.setAttr("{0}.{1}".format(ctrlHead, stretchable), 1)
+        mc.connectAttr("{0}.{1}".format(ctrlHead, stretchable), "{0}.blender".format(neckStretch_blnd))
+
+        return neckStretch_blnd, stretchable
+
+    def toggleStretchNeck(self, jntEnd, grpHeadDNT, ctrlHead, stretchable, ikNeckEnd, jntHead):
+
+        locNeckTip = "LOC_neckTip"
+        mc.spaceLocator(p=(0, 0, 0), name=locNeckTip)
+
+        # parent the jntEnd under grpHeadDNT
+        mc.matchTransform(locNeckTip, jntEnd, pos=True)
+        mc.parent(locNeckTip, grpHeadDNT)
+
+        # constrain the neck tip
+        mc.pointConstraint(jntEnd, locNeckTip)
+        mc.orientConstraint(ctrlHead, locNeckTip)
+
+        # the ikNeckEnd will probably have constrained it already
+        neckPrntConstr = mc.parentConstraint(ikNeckEnd, jntHead, mo=True)[0]
+        mc.parentConstraint(locNeckTip, jntHead, mo=True)
+
+        neckPrntConstrVals = mc.listAttr(neckPrntConstr)[-2:]
+        CRU.setDriverDrivenValues(ctrlHead, stretchable, neckPrntConstr, neckPrntConstrVals[0], 0, 0)
+        CRU.setDriverDrivenValues(ctrlHead, stretchable, neckPrntConstr, neckPrntConstrVals[0], 1, 1)
+
+        CRU.setDriverDrivenValues(ctrlHead, stretchable, neckPrntConstr, neckPrntConstrVals[1], 0, 1)
+        CRU.setDriverDrivenValues(ctrlHead, stretchable, neckPrntConstr, neckPrntConstrVals[1], 1, 0)
+        return
+
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
@@ -771,6 +888,8 @@ class pcCreateRigAlt02Head(UI):
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
+        jntEnd = self.jointEndArray[:]
+        print("jntEnd: {0}".format(jntEnd))
 
         # make sure the selections are not empty
         checkList = bndJnts
@@ -787,13 +906,20 @@ class pcCreateRigAlt02Head(UI):
 
         jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
         eyesSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
+        if jawSel or eyesSel:
+            checkHead = True
+        else:
+            checkHead = False
+
+        torsoSel = mc.checkBoxGrp("setStretch_rgp", q=True, v1=True)
+        neckSel = mc.checkBoxGrp("setStretch_rgp", q=True, v2=True)
 
         # only include if eyes or jaws
-        if jawSel or eyesSel:
+        if checkHead:
             jntHead = mc.textFieldButtonGrp("jntHead_tfbg", q=True, text=True)
             jntHeads = self.tgpGetHeadJnts(jntHead, "jntHead_tfbg", "joint", "Head Joint", ["JNT", "BND", "head"])
 
-            jntArrayHead = self.jointArrayHead[:]
+            jntArrayHead = jntHeads[:]
             checkList2 = jntHeads
 
             if checkList2 is None:
@@ -802,11 +928,18 @@ class pcCreateRigAlt02Head(UI):
         if eyesSel:
             eyeArray = [x for x in jntArrayHead if "eye" in x]
 
+        if torsoSel:
+            ctrlShoulderCheck = mc.textFieldButtonGrp("ctrlShoulderLoad_tf", q=True, text=True)
+            ctrlShoulder = self.tgpGetTx(ctrlShoulderCheck, "ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
+                                         ["CTRL", "shoulder"], "Control")
+            jntSpineEndCheck = mc.textFieldButtonGrp("jntSpineEndLoad_tf", q=True, text=True)
+            jntSpineEnd = self.tgpGetTx(jntSpineEndCheck, "jntSpineEndLoad_tf", "joint", "Spine End",
+                                        ["JNT", "BND", "spineEnd"])
+
         jntArrayLen = len(jntArray)
 
         noUnicode = str(jntEnd)
         jntEndSize = mc.getAttr('{0}.radius'.format(noUnicode))
-
         if ((checkList[0] == "") or checkList[0] is None):
             mc.warning("You are missing a proper selection!")
             return
@@ -814,7 +947,7 @@ class pcCreateRigAlt02Head(UI):
             if "neck1" not in checkList[0]:
                 mc.warning("Make the first selection the root neck joint")
                 return
-            if jawSel or eyesSel:
+            if checkHead:
                 if "head" not in checkList2[0]:
                     mc.warning("Make the first selection the root head joint")
                     return
@@ -834,7 +967,8 @@ class pcCreateRigAlt02Head(UI):
             # creates the group head and
             grpHead = self.createGroupHead(ctrlHead, ikNeckEnd, fkJnts)
 
-            neckInfo, neckStretchNameDiv = self.addStretch(jntArray, crvNeck, jntArrayLen, "neck", ctrlRootTrans, )
+            neckInfo, splineStretchNameDiv, globalScaleNormalizeDiv = self.addStretch(jntArray, crvNeck, jntArrayLen,
+                                                                                      "neck", ctrlRootTrans, )
             fkJntsStart = fkJnts[0]
             jntArrayStart = jntArray[0]
             self.parentRootTransform(ctrlRootTrans, crvNeck, hdlNeck, ikNeckBase, ikNeckEnd, grpHead, fkJntsStart,
@@ -844,15 +978,17 @@ class pcCreateRigAlt02Head(UI):
             # In case we want to attach it to the body
             locConstNeckShoulder, grpNeckFK = self.createNeckShoulderLoc(checkboxSpine, jntIKShoulder, ikNeckBase,
                                                                          fkJnts, )
-            self.createSpaceSwitching(ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT)
-
+            # to delete test: see if the headGRP is where I'm supposed to be
+            # self.createSpaceSwitching(ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT)
+            headLocArray, locHeadShoulder = self.createSpaceSwitching(grpHead, ctrlHead, jntIKShoulder, ctrlRootTrans,
+                                                                      fkJnts, grpTorsoDNT)
             # attach the extra bones to the head
-            if jawSel or eyesSel:
+            if checkHead:
                 mc.parentConstraint(ikNeckEnd, jntArrayHead[0], mo=True)
 
             # we can create eyes and jaw
             if jawSel:
-                grpJaw, ctrlJaw = self.createJawCtrls(jntArrayHead, ctrlHead)
+                grpJaw, ctrlJaw = self.createJawCtrls(jntArrayHead, jntHead, grpHead)
             else:
                 grpJaw, ctrlJaw = None, None
 
@@ -865,13 +1001,24 @@ class pcCreateRigAlt02Head(UI):
             grpHeadDNT = self.neckCleanUp(jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK,
                                           ctrlHead)
 
+            if torsoSel:
+                self.toggleStretchTorso(locConstNeckShoulder, locHeadShoulder, jntIKShoulder, grpTorsoDNT, jntSpineEnd,
+                                        ctrlShoulder)
+
+            if neckSel:
+                neckStretch_blnd, stretchable = self.makeNeckStretchable(neckInfo, globalScaleNormalizeDiv,
+                                                                         splineStretchNameDiv, ctrlHead)
+                if checkHead:
+                    self.toggleStretchNeck(jntEnd, grpHeadDNT, ctrlHead, stretchable, ikNeckEnd, jntHead)
+
             # it will be easier just to grab the groups above it
             self.neckCleanUpExtras(jawSel, grpJaw, ctrlJaw,
                                    eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
                                    grpHeadDNT, jntArrayHead,
-                                   ikNeckEnd,
+                                   ikNeckEnd, checkHead,
                                    )
 
             if checkGeo:
                 CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)
-                CRU.tgpSetGeo(jntArrayHead, setLayer=True)
+                if checkHead:
+                    CRU.tgpSetGeo(jntArrayHead, setLayer=True)
