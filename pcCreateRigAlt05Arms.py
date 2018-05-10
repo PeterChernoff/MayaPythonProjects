@@ -20,6 +20,8 @@ from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 class pcCreateRigAlt05Arms(UI):
     def __init__(self):
+        self.valLeft = "l_"
+        self.valRight = "r_"
 
         self.window = "bcWindow"
         self.title = "pcRigArms"
@@ -63,7 +65,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Joint: ")
-        mc.textFieldButtonGrp("jointArmsLoad_tfbg", cw=(1, 322), bl="  Load  ")
+        mc.textFieldButtonGrp("jointArmsLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_upperArm")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Shoulder Joint: ")
         mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_shoulderBase")
@@ -72,7 +74,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_IK_shoulder")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Torso \nDo Not Touch: ")
-        mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", cw=(1, 322), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
+        mc.textFieldButtonGrp("grpTorsoDNTLoad_tf", cw=(1, 322), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
 
         mc.setParent("..")
 
@@ -94,7 +96,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.textFieldButtonGrp("jointArmsLoad_tfbg", e=True, bc=self.loadSrc1Btn)
         mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", e=True, bc=self.loadSrc2Btn)
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc3Btn)
-        mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", e=True, bc=self.loadSrc4Btn)
+        mc.textFieldButtonGrp("grpTorsoDNTLoad_tf", e=True, bc=self.loadSrc4Btn)
         mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc5Btn)
 
         self.selLoad = []
@@ -110,8 +112,8 @@ class pcCreateRigAlt05Arms(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadJntsBtn("jointShoulderJntLoad_tfbg", "joint", "Root Shoulder Joint",
-                                           ["JNT", "BND", "shoulder"])
+        self.selSrc2 = self.tgpLoadTxBtn("jointShoulderJntLoad_tfbg", "joint", "Root Shoulder Joint",
+                                         ["JNT", "BND", "shoulder"])
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
@@ -120,7 +122,7 @@ class pcCreateRigAlt05Arms(UI):
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.selSrc4 = self.tgpLoadTxBtn("jntTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
+        self.selSrc4 = self.tgpLoadTxBtn("grpTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
                                          ["GRP", "DO_NOT_TOUCH", "torso"],
                                          "Group")
         print(self.selSrc4)
@@ -141,16 +143,22 @@ class pcCreateRigAlt05Arms(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
             selName = self.selLoad[0]
+            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
+
+    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -163,29 +171,41 @@ class pcCreateRigAlt05Arms(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-
             selName = self.selLoad[0]
+            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
+            if returner is None:
+                return None
 
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return self.jointArray
 
-            # get the children joints
-            self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
-            # collect the joints in an array
-            self.jointArray = [self.parent]
-            # reverse the order of the children joints
-            self.child.reverse()
+    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
 
-            # add to the current list
-            self.jointArray.extend(self.child)
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
 
-            # removes if the last joint is End
-            self.jointRoot = self.selLoad[0]
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
 
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        self.parent = selName
+        self.child = mc.listRelatives(selName, ad=True, type="joint")
+        # collect the joints in an array
+        self.jointArray = [self.parent]
+        # reverse the order of the children joints
+        self.child.reverse()
+
+        # add to the current list
+        self.jointArray.extend(self.child)
+
+        # removes if the last joint is End
+        self.jointRoot = selName
         return self.jointArray
 
     def createSettings(self, jntArmArray, isLeft, name, colourTU, fkJnts, ikJnts, bndJnts, ctrlIKArm, *args):
@@ -773,7 +793,6 @@ class pcCreateRigAlt05Arms(UI):
         # connect the operation into the geo scale
         mc.connectAttr("{0}.outputX".format(mdNrmlzDiv), "{0}.scaleX".format(geoName))
         CRU.layerEdit(geoName, geoLayer=True)
-        # TO DELETE: BE SURE TO ADD THE SHOULDER AND ARMS GEOS TO THE GEO LAYER
         return
 
     def makeShoulderControl(self, jntShoulders, locShldrTemp, ctrlArmSettings, leftRight):
@@ -1153,7 +1172,7 @@ class pcCreateRigAlt05Arms(UI):
 
     def ikStretchOnOffNormal(self, ikJnts, ctrlArmSettings, blndUpperArmStretchChoice, blndLowerArmStretchChoice,
                              leftRight):
-        # creates the IK Stretch on/off
+        # creates the IK Stretch on/off for the arm
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
         mc.addAttr(ctrlArmSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
@@ -1184,7 +1203,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.connectAttr("{0}.outColorR".format(cond), "{0}.translateX".format(ikJnt), f=True)
 
     def ikStretchOnOffSpecial(self, ikJnts, ikBndJnts, ctrlArmSettings, leftRight):
-        # creates the IK Stretch on/off
+        # creates the IK Stretch on/off for the elbow arm
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
         mc.addAttr(ctrlArmSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
@@ -1489,8 +1508,41 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr("{0}.overrideRGBColors".format(ikLayer), 1)
 
         if self.switchSetup:
-            pass
+            self.makeArmFKIKComplete(bndJnts, fkJnts, ctrlIKArm)
         return
+
+    def makeArmFKIKComplete(self, bndJnts, fkJnts, ctrlIK, ):
+        fkSwitchJnts = self.makeFKSnapJnts(fkJnts, bndJnts)
+
+        ctrlIKSwitch = self.makeIKSnap(ctrlIK, bndJnts)
+
+        return
+
+    def makeFKSnapJnts(self, fkJnts, bndJnts):
+        fkSwitchJnts = []
+        for i in range(len(fkJnts[:-1])):
+            # create duplicates of everything except the last joint
+            rename = fkJnts[i].replace("CTRL_FK_", "JNT_FKsnap_")
+            mc.duplicate(fkJnts[i], n=rename, po=True)
+            CRU.lockHideCtrls(rename, translate=True, visibility=True, attrVisible=True, toLock=False)
+            mc.parent(rename, bndJnts[i])
+            mc.setAttr("{0}.visibility".format(rename), False)
+            CRU.lockHideCtrls(rename, visibility=True)
+            fkSwitchJnts.append(rename)
+
+        return fkSwitchJnts
+
+    def makeIKSnap(self, ctrlIK, bndJnts):
+        # create the hand IK and parent it under the hand
+        ctrlIKSwitch = ctrlIK.replace("CTRL_", "GRP_IKsnap_")
+        mc.duplicate(ctrlIK, n=ctrlIKSwitch, po=True)
+        mc.parent(ctrlIKSwitch, bndJnts[-2])
+
+        CRU.lockHideCtrls(ctrlIKSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
+        mc.setAttr("{0}.visibility".format(ctrlIKSwitch), False)
+        CRU.lockHideCtrls(ctrlIKSwitch, visibility=True)
+
+        return ctrlIKSwitch
 
     def makeTwists(self, numTwists, jntArmArray, geoJntArray, *args):
         numTwistsM1 = numTwists - 1
@@ -1649,28 +1701,38 @@ class pcCreateRigAlt05Arms(UI):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         self.switchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
 
-        self.jntNames = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
+        bndJnt = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
+        bndJnts = self.tgpGetJnts(bndJnt, "jointArmsLoad_tfbg", "joint", "Root Upper Arm Joint",
+                                  ["JNT", "BND", "upperArm"])
 
         geoJntArray = self.jointArray[:]
         cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
 
-        grpDNTTorso = mc.textFieldButtonGrp("jntTorsoDNTLoad_tf", q=True, text=True)
+        grpDNTTorsoCheck = mc.textFieldButtonGrp("grpTorsoDNTLoad_tf", q=True, text=True)
+        grpDNTTorso = self.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
+                                    ["GRP", "DO_NOT_TOUCH", "torso"],
+                                    "Group")
 
-        ctrlRoot = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        ctrlRootCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        ctrlRoot = self.tgpGetTx(ctrlRootCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
+                                 ["CTRL", "rootTransform"],
+                                 "control")
 
-        jntShoulderRoot = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
+        jntShoulderRootCheck = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
+        jntShoulderRoot = self.tgpGetTx(jntShoulderRootCheck, "jointShoulderJntLoad_tfbg", "joint",
+                                        "Root Shoulder Joint",
+                                        ["JNT", "BND", "shoulder"])
 
-        self.valLeft = "l_"
-        self.valRight = "r_"
-
-        jntIKShoulder = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
+        jntIKShoulderCheck = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
+        jntIKShoulder = self.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
+                                      ["JNT", "_IK_", "shoulder"])
 
         if mirrorSel == 1:
             mirrorRig = False
         else:
             mirrorRig = True
 
-        jntArmArray = self.jointArray[:]
+        jntArmArray = bndJnts[:]
 
         if checkSelLeft == 1:
             isLeft = True
@@ -1693,9 +1755,11 @@ class pcCreateRigAlt05Arms(UI):
         toReplaceWith = "_" + leftRightMirror
 
         # make sure the selections are not empty
-        checkList = [self.jntNames]
+        checkList = [bndJnts]
+        if checkList is None:
+            checkList = [bndJnts]
 
-        if ((checkList[0] == "")):
+        if ((checkList[0] == "") or (checkList[0] is None)):
             mc.warning("You are missing a selection!")
             return
         else:
