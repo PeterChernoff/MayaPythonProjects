@@ -43,8 +43,9 @@ class pcCreateRigAlt01Spine(UI):
 
         mc.separator(st="in", h=17, w=500)
 
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 120), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
+        mc.checkBox("selStretch_cb", l="Include Stretchable Spine Toggle", en=True, v=True)
         mc.setParent("..")
         # load buttons
         mc.textFieldButtonGrp("jointLoad_tfbg", e=True, bc=self.loadSrc1Btn)
@@ -379,13 +380,17 @@ class pcCreateRigAlt01Spine(UI):
         ctrlRoot = mc.rename(ctrlRoot, ctrlRootRename)
         CRU.layerEdit(ctrlRoot, bodyLayer=True, noRecurse=True, colourTU=13)
 
+        CRU.lockHideCtrls(ctrlRoot, visibility=True)
+
+        return globalScaleNormalizeDiv
+
     def spineCleanup(self, ctrlFKJnts, ctrlFKJntsEnds, grpFKConsts, grpTorso, ctrlBody, spineIKs, spineIKCtrls,
                      crvSpine, hdlSpine, jntArray, *args):  # lock attributes
 
         # lock the translate/scale for the control joints
         for i in range(len(ctrlFKJnts)):
             print("i: {0}".format(i))
-            CRU.lockHideCtrls(ctrlFKJnts[i], translate=True, scale=True)
+            CRU.lockHideCtrls(ctrlFKJnts[i], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ctrlFKJnts[i], theVals=["radi"], channelBox=False, toLock=True, attrVisible=False)
 
         # lock everything for the other fk bones
@@ -400,11 +405,15 @@ class pcCreateRigAlt01Spine(UI):
         for i in range(len(grpFKConsts)):
             CRU.lockHideCtrls(ctrlFKJntsEnds[i], translate=True, scale=True, rotate=True, visibility=True)
 
-        # lock and hide the scale for everything else
-        CRU.lockHideCtrls(ctrlBody, scale=True)
+        # lock and hide the scale and visibility for everything else
+        CRU.lockHideCtrls(ctrlBody, scale=True, visibility=True)
+
 
         for i in range(len(spineIKs)):
             CRU.lockHideCtrls(spineIKs[i], scale=True)
+
+        for i in range(len(spineIKCtrls)):
+            CRU.lockHideCtrls(spineIKCtrls[i], visibility=True)
 
         mc.setAttr('{0}.v'.format(crvSpine), False)
         mc.setAttr('{0}.v'.format(hdlSpine), False)
@@ -418,8 +427,34 @@ class pcCreateRigAlt01Spine(UI):
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True, layerState=1)
         CRU.layerEdit(ctrlBody, bodyLayer=True, noRecurse=True, colourTU=CRU.clrBodyMain)
 
+    def makeSpineStretchable(self, spineIKCtrls, globalScaleNormalizeDiv, spineStretchNameDiv, spineInfo):
+        ctrlShoulder = spineIKCtrls[1] # gonna be using the CTRL_spine a lot
+        # get the default spine length
+        defLen = mc.getAttr("{0}.arcLength".format(spineInfo))
+        #create the blend node
+        torsoStretch_blnd = "torso_stretchToggle"
+        mc.shadingNode("blendColors", n=torsoStretch_blnd, au=True)
+
+        # blend node inputs
+        mc.connectAttr("{0}.outputX".format(globalScaleNormalizeDiv), "{0}.color1R".format(torsoStretch_blnd))
+        mc.setAttr("{0}.color2R".format(torsoStretch_blnd), defLen)
+
+        # blend node outputs
+        mc.connectAttr("{0}.outputR".format(torsoStretch_blnd), "{0}.input1X".format(spineStretchNameDiv), f=True)
+
+        # add the blend nodes
+        stretchable = "stretchable"
+        mc.addAttr(ctrlShoulder, longName=stretchable, at="enum", enumName="off:on", k=True)
+        mc.setAttr("{0}.{1}".format(ctrlShoulder, stretchable), 1)
+        mc.connectAttr("{0}.{1}".format(ctrlShoulder, stretchable), "{0}.blender".format(torsoStretch_blnd))
+
+
+
+        return
+
     def tgpMakeBC(self, *args):
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        checkStretch = mc.checkBox("selStretch_cb", q=True, v=True)
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Spine BND", ["JNT", "_BND_", "spine", "1"])
@@ -487,7 +522,11 @@ class pcCreateRigAlt01Spine(UI):
 
             # Root Transform Node
             # we don't clean this one up yet
-            self.createRootTransform(ctrlBody, grpTorso, spineInfo, spineStretchNameDiv)
+            globalScaleNormalizeDiv = self.createRootTransform(ctrlBody, grpTorso, spineInfo, spineStretchNameDiv)
+
+            if checkStretch:
+                self.makeSpineStretchable(spineIKCtrls, globalScaleNormalizeDiv, spineStretchNameDiv, spineInfo)
+
 
             # make the last thing we do the geometry
             if checkGeo:
