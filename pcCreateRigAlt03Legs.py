@@ -61,7 +61,7 @@ class pcCreateRigAlt03Legs(UI):
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 140), (2, 360)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="Leg: ")
-        mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 300), bl="  Load  ")
+        mc.textFieldButtonGrp("jointLoad_tfbg", cw=(1, 300), bl="  Load  ", tx="JNT_BND_l_upperLeg")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Hip Joint: ")
         mc.textFieldButtonGrp("jntIKHip_tfbg", cw=(1, 300), bl="  Load  ", tx="JNT_IK_hip")
@@ -141,16 +141,22 @@ class pcCreateRigAlt03Legs(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
             selName = self.selLoad[0]
+            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
+
+    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -165,7 +171,11 @@ class pcCreateRigAlt03Legs(UI):
         else:
 
             selName = self.selLoad[0]
-            if not all(word.lower() in selName.lower() for word in keywords):
+            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            # print("returner: {0}".format(returner))
+            if returner is None:
+                return None
+            '''if not all(word.lower() in selName.lower() for word in keywords):
                 mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
 
                 return
@@ -187,8 +197,41 @@ class pcCreateRigAlt03Legs(UI):
             # checks if the last three letters are "End"
             self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
 
-            self.jointRoot = self.selLoad[0]
+            self.jointRoot = self.selLoad[0]'''
 
+        return self.jointArray
+
+    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+
+            return
+
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        self.parent = selName
+        self.child = mc.listRelatives(selName, ad=True, type="joint")
+        # collect the joints in an array
+        self.jointArray = [self.parent]
+        # reverse the order of the children joints
+        self.child.reverse()
+
+        # add to the current list
+        self.jointArray.extend(self.child)
+
+        # removes if the last joint is End
+        # checks if the last three letters are "End"
+        self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
+
+        self.jointRoot = selName
         return self.jointArray
 
     def makeTwists(self, numTwists, jntLegArray, geoJntArray, ctrlFootSettings, ctrlIKFoot,
@@ -1256,15 +1299,12 @@ class pcCreateRigAlt03Legs(UI):
     def setIKStretchOption(self, ctrlFootSettings, ikJntsPV, ikJntsNoFlip, legLens,
                            leftRight, *args):
 
-        # TO DELETE: Switch this so that ikStretch is an ENUM instead of a BOOL
-        # TO DELETE: Also, stick it on the CTRL_settings instead of the IK Control
-
         # this is a test for personal expansion ideas
         # this needs to be later on, so we put this at the end
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
         mc.addAttr(ctrlFootSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
-        mc.setAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), True)
+        #mc.setAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), True)
 
         self.createStretchIKCond(ikJntsPV, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "pv_")
         self.createStretchIKCond(ikJntsNoFlip, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "noFlip_")
@@ -1323,11 +1363,10 @@ class pcCreateRigAlt03Legs(UI):
         mc.connectAttr("{0}.outColorG".format(footStretchCond), "{0}".format(footStretchBlnd[1]), f=True)
         mc.connectAttr("{0}.outColorB".format(footStretchCond), "{0}".format(footStretchBlnd[2]), f=True)
 
-    def makeLegFKIKComplete(self, bndJnts, fkJnts, ctrlIK,):
+    def makeLegFKIKComplete(self, bndJnts, fkJnts, ctrlIK, ):
         fkSwitchJnts = self.makeFKSnapJnts(fkJnts, bndJnts)
 
         ctrlIKSwitch = self.makeIKSnap(ctrlIK, bndJnts)
-
 
         return
 
@@ -1358,7 +1397,6 @@ class pcCreateRigAlt03Legs(UI):
         mc.parent(jntAnkleTwistSwitch, bndFoot)
         mc.setAttr("{0}.visibility".format(jntAnkleTwistSwitch), False)
         CRU.lockHideCtrls(jntAnkleTwistSwitch, visibility=True)
-
 
         return fkSwitchJnts
 
@@ -1418,11 +1456,9 @@ class pcCreateRigAlt03Legs(UI):
         CRU.changeRotateOrder(ikJnts, "XZY")
 
         # creates the foot settings control
-        # to delete: Make this simply the foot
-        if self.checkAnkleTwist:
-            jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
-        else:
-            jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
+
+        jntFoot = [x for x in bndJnts if "foot" in x[-4:]][0]
+
         name = "settings_" + leftRight + "leg"
         ctrlFootSettings = CRU.createNailNoOffset(jntFoot, isLeft, name, bodySize=15, headSize=2, colourTU=colourTU,
                                                   pnt=True)
@@ -1458,15 +1494,15 @@ class pcCreateRigAlt03Legs(UI):
         if self.checkGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
 
-            jntLegs = [x for x in geoJntArray if "Leg" in x[-3:] or "Seg" in x.lower()]
-            # print("jntLegs: {0}".format(jntLegs))
+            jntLegs = [x for x in geoJntArray if "Leg" in x[-3:] or "seg" in x.lower()]
+            print("jntLegs: {0}".format(jntLegs))
 
             CRU.tgpSetGeoManualStretch(jntLegs, keyWord="Seg")
 
             if not self.checkboxTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
                 # print("jntLegsNoTwist: {0}".format(jntLegsNoTwist))
-                CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Twist", stretch=True)
+                CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Seg", stretch=True)
                 # CRU.tgpSetGeoSpecial()
 
         # IK Stretch
@@ -1542,10 +1578,21 @@ class pcCreateRigAlt03Legs(UI):
         print("check geo: {0}".format(self.checkGeo ))
         '''
 
-        jntIKHip = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
-        grpDNTTorso = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
-        ctrlBody = mc.textFieldButtonGrp("ctrlBody_tfbg", q=True, text=True)
-        ctrlRootTrans = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
+        jntIKHip = self.tgpGetTx(jntIKHipCheck, "jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
+
+        grpDNTTorsoCheck = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
+        grpDNTTorso = self.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
+                                    ["GRP", "DO", "NOT", "TOUCH"],
+                                    "group")
+
+        ctrlBodyCheck = mc.textFieldButtonGrp("ctrlBody_tfbg", q=True, text=True)
+        ctrlBody = self.tgpGetTx(ctrlBodyCheck, "ctrlBody_tfbg", "nurbsCurve", "Body Control", ["CTRL", "body"],
+                                 "control")
+
+        ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        ctrlRootTrans = self.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
+                                      ["CTRL", "rootTransform"], "control")
 
         self.valLeft = "l_"
         self.valRight = "r_"
@@ -1567,18 +1614,19 @@ class pcCreateRigAlt03Legs(UI):
             mc.warning("You need to select the Root Transform Control")
             return
 
-        jntNames = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        # print("jntNames: {0}".format(jntNames))
+        bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
+        bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
 
-        geoJntArray = self.jointArray[:]
-        bndJnts = self.jointArray[:]
+        checkList = bndJnts
+        if checkList is None:
+            checkList = [bndJnts]
 
-        # print("geoJntArray: {0}".format(geoJntArray))
+        geoJntArray = bndJnts[:]
+
         checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
-        # print("checkboxHip: {0}".format(checkboxHip))
 
         try:
-            jntLegRoot = self.jointArray[0]
+            jntLegRoot = bndJnts[0]
         except:
             mc.warning("No joint selected!")
             return
@@ -1601,14 +1649,9 @@ class pcCreateRigAlt03Legs(UI):
             colourTU = CRU.clrRightFK
             colourTUMirror = CRU.clrLeftFK
 
-        CRU.checkLeftRight(isLeft, bndJnts[0])
-        jntLegFoot = [x for x in bndJnts if "Leg" in x[-3:] or "foot" in x[-4:]]
-        # print("jntLegFoot: {0}".format(jntLegFoot))
-
         # make sure the selections are not empty
-        checkList = [jntNames]
         # However, editing them out is too much hassle,  it's easier just to leave them both false
-        if ((checkList[0] == "")):
+        if ((checkList[0] == "") or checkList[0] is None):
             mc.warning("You are missing a selection!")
             return
         else:
