@@ -60,13 +60,10 @@ class pcCreateRigAlt04Feet(UI):
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="Heel Locator: ")
-        mc.textFieldButtonGrp("locLoad_tfbg", cw=(1, 322), bl="  Load  ")
+        mc.textFieldButtonGrp("locLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="LOC_l_heel")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="IK Foot CTRL: ")
         mc.textFieldButtonGrp("ctrlIKFootLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_foot")
-
-        '''mc.text(bgc=(0.85, 0.65, 0.25), l="Upper Leg Joint: ")
-        mc.textFieldButtonGrp("jntLegLoad_tf", cw=(1, 322), bl="  Load  ", tx="CTRL_l_foot")'''
 
         mc.setParent("..")
 
@@ -106,7 +103,9 @@ class pcCreateRigAlt04Feet(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+            selName = self.selLoad[0]
+            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            '''if CRU.checkObjectType(self.selLoad[0]) != objectType:
                 mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
             selName = self.selLoad[0]
@@ -114,8 +113,20 @@ class pcCreateRigAlt04Feet(UI):
             if not all(word.lower() in selName.lower() for word in keywords):
                 mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)'''
             return selName
+
+    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
 
     def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -128,35 +139,45 @@ class pcCreateRigAlt04Feet(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
             selName = self.selLoad[0]
+            returner = self.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            # print("returner: {0}".format(returner))
+            if returner is None:
+                return None
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return self.locArray
 
-            # get the children joints
-            self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="transform")
-            # collect the joints in an array
-            self.locArray = [self.parent]
-            # reverse the order of the children joints
-            self.child.reverse()
+    def tgpGetLocs(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
 
-            # add to the current list
-            self.locArray.extend(self.child)
-            locArraySorted = []
-            for i in range(len(self.locArray)):
-                sels = mc.listRelatives(self.locArray[i], c=True, s=True)
-                if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
-                    locArraySorted.append(self.locArray[i])
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
 
-            self.locRoot = self.selLoad[0]
-            self.locArray = locArraySorted
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
+        # get the children joints
+        self.parent = selName
+        self.child = mc.listRelatives(selName, ad=True, type="transform")
+        # collect the joints in an array
+        self.locArray = [self.parent]
+        # reverse the order of the children joints
+        self.child.reverse()
+
+        # add to the current list
+        self.locArray.extend(self.child)
+        locArraySorted = []
+        for i in range(len(self.locArray)):
+            sels = mc.listRelatives(self.locArray[i], c=True, s=True)
+            if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
+                locArraySorted.append(self.locArray[i])
+
+        self.locRoot = selName
+        self.locArray = locArraySorted
         return self.locArray
 
     def createFootRollAll(self, ctrlIKFoot,
@@ -423,17 +444,20 @@ class pcCreateRigAlt04Feet(UI):
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
-        locNames = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
+        locName = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
+        locNames = self.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
 
-        ctrlIKFoot = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
+        ctrlIKFootCheck = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
+        ctrlIKFoot = self.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
+                                   ["CTRL", "foot"], "control")
 
         try:
-            locFootRoot = self.locArray[0]
+            locFootRoot = locNames[0]
 
         except:
             mc.warning("No locator selected!")
             return
-        locArray = self.locArray
+        locArray = locNames
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -455,9 +479,11 @@ class pcCreateRigAlt04Feet(UI):
 
         # make sure the selections are not empty
         checkList = [locNames]
+        if checkList is None:
+            checkList = [locNames]
         # note: the isCopy is not applicable due to the differences between the leg and arm joint setup.
         # However, editing them out is too much hassle,  it's easier just to leave them both false
-        if ((checkList[0] == "")):
+        if ((checkList[0] == "") or (checkList[0] is None)):
             mc.warning("You are missing a selection!")
             return
         else:
