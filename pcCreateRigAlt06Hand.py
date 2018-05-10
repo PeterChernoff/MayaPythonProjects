@@ -54,7 +54,7 @@ class pcCreateRigAlt06Hand(UI):
         # sources
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
         mc.text(bgc=(0.85, 0.65, 0.25), l="handBase Joint: ")
-        mc.textFieldButtonGrp("jntFingersLoad_tfbg", cw=(1, 322), bl="  Load  ")
+        mc.textFieldButtonGrp("jntFingersLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_handBase")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Palm Loc: ")
         mc.textFieldButtonGrp("locPalmLoad_tf", cw=(1, 322), bl="  Load  ", tx="LOC_l_palmInner")
@@ -139,22 +139,27 @@ class pcCreateRigAlt06Hand(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
             selName = self.selLoad[0]
-
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
             # get the children joints
-            self.locArray = self.tgpLoadLocMethod(selName, objectType)
+            returner = self.tgpLoadLocMethod(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            if returner is None:
+                return None
 
         return self.locArray
 
-    def tgpLoadLocMethod(self, selName, objectType="locator"):
+    def tgpLoadLocMethod(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
         self.parent = selName
         self.child = mc.listRelatives(selName, ad=True, type="transform")
         # collect the joints in an array
@@ -170,7 +175,7 @@ class pcCreateRigAlt06Hand(UI):
             if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
                 locArraySorted.append(self.locArray[i])
 
-        self.locRoot = self.selLoad[0]
+        self.locRoot = selName
         self.locArray = locArraySorted
 
         return self.locArray
@@ -186,16 +191,29 @@ class pcCreateRigAlt06Hand(UI):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
+            selName = self.selLoad[0]
+            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            '''if CRU.checkObjectType(self.selLoad[0]) != objectType:
                 mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
                 return
-            selName = self.selLoad[0]
 
             if not all(word.lower() in selName.lower() for word in keywords):
                 mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)'''
             return selName
+
+    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -211,26 +229,40 @@ class pcCreateRigAlt06Hand(UI):
 
             selName = self.selLoad[0]
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
+            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            # print("returner: {0}".format(returner))
+            if returner is None:
+                return None
 
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return self.jointArray
 
-            # get the children joints
-            self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
-            # collect the joints in an array
-            self.jointArray = [self.parent]
-            # reverse the order of the children joints
-            self.child.reverse()
+    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
 
-            # add to the current list
-            self.jointArray.extend(self.child)
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
 
-            # removes if the last joint is End
-            self.jointRoot = self.selLoad[0]
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
 
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        self.parent = selName
+        self.child = mc.listRelatives(selName, ad=True, type="joint")
+        # collect the joints in an array
+        self.jointArray = [self.parent]
+        # reverse the order of the children joints
+        self.child.reverse()
+
+        # add to the current list
+        self.jointArray.extend(self.child)
+
+        # removes if the last joint is End
+        self.jointRoot = selName
         return self.jointArray
 
     def getJntArray(self, jointArray, fingerType, subType=None):
@@ -825,6 +857,7 @@ class pcCreateRigAlt06Hand(UI):
                 CRU.lockHideCtrls(fkTIMRP[i][j], theVals=["radi"], channelBox=False)
 
             # we don't want to lock the rotate values for the start
+            mc.setAttr("{0}.visibility".format(ikStrFingerTIMRP[i][0]), False)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], rotate=True, toLock=False)
 
@@ -883,7 +916,7 @@ class pcCreateRigAlt06Hand(UI):
         bndTIMRP = self.getSuperJntArray(jointArray, "BND")  # we did some adjustments so we may need to reset this one
 
         # FK Setup
-        fkTIMRP, jntFKBase, modBaseJntsLater = self.makeFKJoints(jointArray,)
+        fkTIMRP, jntFKBase, modBaseJntsLater = self.makeFKJoints(jointArray, )
         for i in range(len(fkTIMRP)):
             CRU.layerEdit(fkTIMRP[i], newLayerName=newLayerNameFK, colourTU=colourTU)
 
@@ -1101,21 +1134,38 @@ class pcCreateRigAlt06Hand(UI):
 
         checkSelLeft = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
-        jntFingerNames = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
-        ctrlRootTrans = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        jntArmHandBnd = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
-        ctrlSettings = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
+
+        jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
+        jntFingerNames = self.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
+                                         ["jnt", "handBase"], "joint")
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         locPalm = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
+        locArray = self.tgpLoadLocMethod(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
+                                         ["loc", "palmInner"], "locator")
 
-        jntBindEnd = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+        jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+        jntBindEnd = self.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
+                                   ["jnt", "arm", "bindEnd"],
+                                   "joint")
 
-        if len(self.locArray) == 0:
+        ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        ctrlRootTrans = self.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
+                                      ["CTRL", "rootTransform"], "control")
+
+        jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
+        jntArmHandBnd = self.tgpGetTx(jntArmHandBndCheck, "jntHandLoad_tfbg", "joint", "Hand Joint",
+                                      ["jnt", "bnd", "hand", ], "joint")
+
+        ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
+        ctrlSettings = self.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
+                                     ["ctrl", "arm", "settings", ], "control")
+
+        '''if len(self.locArray) == 0:
             locArray = self.tgpLoadLocMethod(locPalm)
         else:
-            locArray=self.locArray
+            locArray = self.locArray'''
 
         try:
             fingerRoot = self.jointArray[0]
