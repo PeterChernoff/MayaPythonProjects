@@ -25,7 +25,7 @@ class pcCreateRigAlt05Arms(UI):
 
         self.window = "bcWindow"
         self.title = "pcRigArms"
-        self.winSize = (500, 475)
+        self.winSize = (500, 500)
 
         self.createUI()
 
@@ -47,10 +47,11 @@ class pcCreateRigAlt05Arms(UI):
         mc.text(l="")
         mc.setParent("..")
 
-        mc.rowColumnLayout(nc=2, cw=[(1, 150), (2, 150)], cs=[1, 5], rs=[1, 3],
+        mc.rowColumnLayout(nc=3, cw=[(1, 150), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
                            cal=([1, "left"], [2, "left"]))
         mc.checkBox("selSpecialStretch_cb", l="Toggle Stretch for \nShoulders and IK Arms", en=True, v=True)
         mc.checkBox("selAddIKFKSwitching_cb", l="Include IK FK\nSwitching Setup", en=True, v=True)
+        mc.checkBox("selStretchSpineToggle_cb", l="Using Spine\nStretch Toggle", en=True, v=True)
         mc.setParent("..")
         mc.separator(st="in", h=17, w=500)
 
@@ -84,11 +85,14 @@ class pcCreateRigAlt05Arms(UI):
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Control: ")
         mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform_emma")
 
+        mc.text(bgc=(0.85, 0.65, 0.25), l="Stretchable Head\nShoulder Group: ")
+        mc.textFieldButtonGrp("grpheadShoulders_tfbg", cw=(1, 322), bl="  Load  ", tx="GRP_head_shoulders")
+
         mc.setParent("..")
 
         mc.separator(st="in", h=17, w=500)
 
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
+        mc.rowColumnLayout(nc=2, cw=[(1, 120), (2, 370)], cs=[1, 5], rs=[1, 3])
         mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
         mc.setParent("..")
 
@@ -98,6 +102,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.textFieldButtonGrp("jntIKShoulderLoad_tf", e=True, bc=self.loadSrc3Btn)
         mc.textFieldButtonGrp("grpTorsoDNTLoad_tf", e=True, bc=self.loadSrc4Btn)
         mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc5Btn)
+        mc.textFieldButtonGrp("grpheadShoulders_tfbg", e=True, bc=self.loadSrc6Btn)
 
         self.selLoad = []
         self.jointArray = []
@@ -131,6 +136,12 @@ class pcCreateRigAlt05Arms(UI):
         self.selSrc5 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Control", ["CTRL", "rootTransform"],
                                          "control")
         print(self.selSrc5)
+
+    def loadSrc6Btn(self):
+        self.selSrc6 = self.tgpLoadTxBtn("grpheadShoulders_tfbg", "transform", "Head Shoulders Group",
+                                         ["GRP", "head", "shoulders"],
+                                         "group")
+        print(self.selSrc6)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -317,16 +328,16 @@ class pcCreateRigAlt05Arms(UI):
         mc.setAttr('{0}.dForwardAxis'.format(hdlArm), 0)
 
         # up to negative z
-        mc.setAttr('{0}.dWorldUpAxis'.format(hdlArm), 4)
+        mc.setAttr('{0}.dWorldUpAxis'.format(hdlArm), 1)
 
         # Up Vector and Up Vector 2 to 0, 0, 1
         mc.setAttr('{0}.dWorldUpVectorX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), 1)
+        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), 1)
+        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), 0)
 
         mc.setAttr('{0}.dWorldUpVectorEndX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), 1)
+        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), 1)
+        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), 0)
 
         # connects the joints to the right place
         mc.connectAttr(startJnt + ".worldMatrix[0]", hdlArm + ".dWorldUpMatrix")
@@ -1274,8 +1285,10 @@ class pcCreateRigAlt05Arms(UI):
                         colourTU, jntShoulderRoot,
                         jntIKShoulder, ctrlRoot,
                         grpDNTTorso,
-                        cbSpecialStretch, checkGeo,
+                        grpSpineToggle,
+                        cbSpecialStretch, checkGeo, checkToggleSpineStretch,
                         geoJntArray, *args):
+
         '''uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
         lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))'''
 
@@ -1495,12 +1508,10 @@ class pcCreateRigAlt05Arms(UI):
         CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
-
         altBnds = [x for x in bndJnts if "arm" in x.lower() and "seg" not in x.lower()]
         # the jnt_BND_lyr is supposed to be for the skinning joints
 
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
-
 
         CRU.layerEdit(ctrlElbow, newLayerName=ikLayer)
         CRU.layerEdit(ctrlIKArm, newLayerName=ikLayer)
@@ -1513,9 +1524,13 @@ class pcCreateRigAlt05Arms(UI):
             clrIKrgb = CRU.clrRightIK
         mc.setAttr("{0}.overrideColorRGB".format(ikLayer), clrIKrgb[0], clrIKrgb[1], clrIKrgb[2])
         mc.setAttr("{0}.overrideRGBColors".format(ikLayer), 1)
-
+        # appendix A
         if self.switchSetup:
             self.makeArmFKIKComplete(bndJnts, fkJnts, ctrlIKArm)
+
+        # appendix B
+        if checkToggleSpineStretch:
+            self.setSpineStretchToggle(grpSpineToggle, grpShoulder)
         return
 
     def makeArmFKIKComplete(self, bndJnts, fkJnts, ctrlIK, ):
@@ -1701,12 +1716,22 @@ class pcCreateRigAlt05Arms(UI):
 
         return fkJnts
 
+    def setSpineStretchToggle(self, grpSpineToggle, grpShoulder):
+
+        todelete = mc.listRelatives(grpShoulder, type="parentConstraint")[0]
+        mc.delete(todelete)
+
+        mc.parentConstraint(grpSpineToggle, grpShoulder, mo=True)
+        return
+
     def tgpMakeBC(self, *args):
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         self.switchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
+
+        checkToggleSpineStretch = mc.checkBox("selStretchSpineToggle_cb", q=True, v=True)
 
         bndJnt = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
         bndJnts = self.tgpGetJnts(bndJnt, "jointArmsLoad_tfbg", "joint", "Root Upper Arm Joint",
@@ -1733,6 +1758,12 @@ class pcCreateRigAlt05Arms(UI):
         jntIKShoulderCheck = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
         jntIKShoulder = self.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
                                       ["JNT", "_IK_", "shoulder"])
+
+        if checkToggleSpineStretch:
+            grpSpineToggleCheck = mc.textFieldButtonGrp("grpheadShoulders_tfbg", q=True, text=True)
+            grpSpineToggle = self.tgpGetTx(grpSpineToggleCheck, "grpheadShoulders_tfbg", "transform",
+                                           "Head Shoulders Group", ["GRP", "head", "shoulders"],
+                                           "group")
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -1791,7 +1822,8 @@ class pcCreateRigAlt05Arms(UI):
                                  colourTU, jntShoulderRoot,
                                  jntIKShoulder, ctrlRoot,
                                  grpDNTTorso,
-                                 cbSpecialStretch, checkGeo,
+                                 grpSpineToggle,
+                                 cbSpecialStretch, checkGeo, checkToggleSpineStretch,
                                  geoJntArray)
 
             if mirrorRig:
@@ -1813,5 +1845,6 @@ class pcCreateRigAlt05Arms(UI):
                                      colourTUMirror, jntShoulderRootMirror,
                                      jntIKShoulder, ctrlRoot,
                                      grpDNTTorso,
-                                     cbSpecialStretch, checkGeo,
+                                     grpSpineToggle,
+                                     cbSpecialStretch, checkGeo, checkToggleSpineStretch,
                                      geoJntArrayMirror)
