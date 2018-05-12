@@ -172,7 +172,6 @@ class pcCreateRigAlt03Legs(UI):
 
             selName = self.selLoad[0]
             returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            # print("returner: {0}".format(returner))
             if returner is None:
                 return None
             '''if not all(word.lower() in selName.lower() for word in keywords):
@@ -249,7 +248,6 @@ class pcCreateRigAlt03Legs(UI):
         mc.addAttr(ctrlFootSettings, longName=self.lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
         mc.addAttr(ctrlFootSettings, longName=self.upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
 
-        print("jntLegArray: {0}".format(jntLegArray))
         for i in range(len(jntLegArray)):
             twistJntsSubgroup = []
             val = str(jntLegArray[i])
@@ -261,7 +259,6 @@ class pcCreateRigAlt03Legs(UI):
                 nextJnts = mc.listRelatives(val, c=True, type="joint", ad=True)
                 nextJnt = nextJnts[-2]
                 nextJntVal = nextJnts[-1]
-                print("nextJnts: {0}".format(nextJnts))
 
                 # with the ankle, we can create the control
 
@@ -289,7 +286,6 @@ class pcCreateRigAlt03Legs(UI):
 
                 # names the multiplication node
                 nameValMul = "{0}{1}".format(leftRight, twistTempName.split(leftRight)[1])
-                # print("nameVal: {0}".format(nameValMul))
 
                 twistTemp = mc.duplicate(twistJnt, n=twistTempName)
 
@@ -306,7 +302,7 @@ class pcCreateRigAlt03Legs(UI):
                 mc.shadingNode("multiplyDivide", n=multNodeTX, au=True)
                 mc.setAttr("{0}.operation".format(multNodeTX), 1)
                 mc.setAttr("{0}.input2X".format(multNodeTX), valx * twistInverse)
-                # print("nextJnt: {0}".format(nextJnt))
+
                 mc.connectAttr("{0}.tx".format(nextJntVal), "{0}.input1X".format(multNodeTX))
                 mc.connectAttr("{0}.outputX".format(multNodeTX), "{0}.translateX".format(twistTempName))
 
@@ -946,7 +942,6 @@ class pcCreateRigAlt03Legs(UI):
         ##################################
         mc.parent(locSnapKneeToFootStart, locSnapUpperToKneeEnd, ctrlKnee)
         mc.parent(locSnapKneeToFootEnd, ctrlIKFoot)
-        # print("ikJntsPV: {0}".format(ikJntsPV))
 
         # snappable knee
         # create custom control on knee
@@ -1304,7 +1299,6 @@ class pcCreateRigAlt03Legs(UI):
         ikStretchAttr = "IK_stretch"
         enumVals = "on:off"
         mc.addAttr(ctrlFootSettings, longName=ikStretchAttr, at="enum", k=True, en=enumVals)
-        #mc.setAttr("{0}.{1}".format(ctrlFootSettings, ikStretchAttr), True)
 
         self.createStretchIKCond(ikJntsPV, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "pv_")
         self.createStretchIKCond(ikJntsNoFlip, legLens, ctrlFootSettings, ikStretchAttr, leftRight, "noFlip_")
@@ -1484,7 +1478,6 @@ class pcCreateRigAlt03Legs(UI):
 
         fkJnts = self.createFKCtrls(fkJnts, colourTU, leftRight)
 
-        # print("fkJnts: {0}".format(fkJnts))
         # Stretch FK
         ctrlFKLengthKeyArray = self.makeFKStretch(fkJnts)
 
@@ -1499,15 +1492,12 @@ class pcCreateRigAlt03Legs(UI):
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
 
             jntLegs = [x for x in geoJntArray if "Leg" in x[-3:] or "seg" in x.lower()]
-            print("jntLegs: {0}".format(jntLegs))
 
             CRU.tgpSetGeoManualStretch(jntLegs, keyWord="Seg")
 
             if not self.checkboxTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
-                # print("jntLegsNoTwist: {0}".format(jntLegsNoTwist))
                 CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Seg", stretch=True)
-                # CRU.tgpSetGeoSpecial()
 
         # IK Stretch
         locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray = self.makeIKStretch(ikJnts,
@@ -1558,8 +1548,6 @@ class pcCreateRigAlt03Legs(UI):
         # creates the ability to turn on and off the stretch
         self.setIKStretchOption(ctrlFootSettings, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
         if self.checkSwitchSetup:
-            print("bndJnts: {0}".format(bndJnts))
-
             self.makeLegFKIKComplete(bndJnts, fkJnts, ctrlIKFoot)
 
         # return
@@ -1573,14 +1561,6 @@ class pcCreateRigAlt03Legs(UI):
         self.checkSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
 
         self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-
-        '''
-        print("check left: {0}".format(checkSelLeft))
-        print("check mirror: {0}".format(mirrorSel))
-        print("check twists: {0}".format(self.checkboxTwists))
-        print("Ankle twists: {0}".format(self.checkAnkleTwist))
-        print("check geo: {0}".format(self.checkGeo ))
-        '''
 
         jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
         jntIKHip = self.tgpGetTx(jntIKHipCheck, "jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
@@ -1600,10 +1580,6 @@ class pcCreateRigAlt03Legs(UI):
 
         self.valLeft = "l_"
         self.valRight = "r_"
-        '''print("jntIKHip: {0}".format(jntIKHip))
-        print("grpDNTTorso: {0}".format(grpDNTTorso))
-        print("ctrlBody: {0}".format(ctrlBody))
-        print("ctrlRootTrans: {0}".format(ctrlRootTrans))'''
 
         if not jntIKHip:
             mc.warning("You need to select the IK Hip Control")
@@ -1671,7 +1647,6 @@ class pcCreateRigAlt03Legs(UI):
                 geoJntArrayMirror = []
                 bndJntsMirror = mc.mirrorJoint(jntLegRoot, mirrorYZ=True, mirrorBehavior=True,
                                                searchReplace=[toReplace, toReplaceWith])
-                # print("mirrorBase: {0}".format(bndJntsMirror))
                 jntLegRootMirror = bndJntsMirror[0]
                 try:
                     mc.parent(jntLegRootMirror, w=True)

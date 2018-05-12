@@ -787,7 +787,7 @@ class pcCreateRigAlt02Head(UI):
             mc.parent(grpGeoHead, grpHeadDNT)
 
         if checkHead:
-            altBnds = [x for x in jntArrayHead if "eye" in x.lower() or "jaw2" in x.lower() ]
+            altBnds = [x for x in jntArrayHead if "eye" in x.lower() or "jaw2" in x.lower()]
             CRU.layerEdit(jntArrayHead, bndLayer=True, noRecurse=True)
             CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 

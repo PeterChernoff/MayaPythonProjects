@@ -141,7 +141,7 @@ class pcCreateRigAlt04Feet(UI):
         else:
             selName = self.selLoad[0]
             returner = self.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            # print("returner: {0}".format(returner))
+
             if returner is None:
                 return None
 
