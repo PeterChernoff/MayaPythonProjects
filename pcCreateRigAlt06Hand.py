@@ -230,7 +230,7 @@ class pcCreateRigAlt06Hand(UI):
             selName = self.selLoad[0]
 
             returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            # print("returner: {0}".format(returner))
+
             if returner is None:
                 return None
 
@@ -651,7 +651,7 @@ class pcCreateRigAlt06Hand(UI):
             fBP = + 2
         else:
             fBP = + 1
-        print("cmpdCtrlJnts[{1}]: {0}".format(cmpdCtrlJnts[fBP], fBP))
+
         baseVal = cmpdCtrlJnts[fBP].split("JNT_cmpdCTRL_")[1][:-1]
         ikDup = mc.duplicate(cmpdCtrlJnts[fb + 1], rc=True)
 
@@ -689,19 +689,19 @@ class pcCreateRigAlt06Hand(UI):
         mc.parent(cmpdCtrlJnts[fb + 1], ikStrStart)
 
         # create spacing joint for other hand
-        ikFingerStr = "JNT_{0}_straight".format(baseVal)
-        mc.duplicate(ikStrStart, n=ikFingerStr, po=True)
+        ikFingerStrBase = "JNT_{0}_straight".format(baseVal)
+        mc.duplicate(ikStrStart, n=ikFingerStrBase, po=True)
 
-        mc.parent(ikFingerStr, bndJnts[fb])
+        mc.parent(ikFingerStrBase, bndJnts[fb])
 
-        mc.parent(orntJnts[fb], ikFingerStr)
+        mc.parent(orntJnts[fb], ikFingerStrBase)
 
         # connect the fingers
         rots = ["rx", "ry", "rz"]
         for x in range(len(rots)):
-            mc.connectAttr("{0}.{1}".format(ikStrStart, rots[x]), "{0}.{1}".format(ikFingerStr, rots[x]))
+            mc.connectAttr("{0}.{1}".format(ikStrStart, rots[x]), "{0}.{1}".format(ikFingerStrBase, rots[x]))
 
-        return ikFinger, grpHDL, ikStrFingers
+        return ikFinger, grpHDL, ikStrFingers, ikFingerStrBase
 
     def makePalmRaise(self, ctrlHand, locArray, leftRight):
         palmAttr = "palmRaise"
@@ -754,7 +754,7 @@ class pcCreateRigAlt06Hand(UI):
         fingerValsNeg = [-35, -8, -4, 1, 7]
         fingerValsPos = [15, 25, 5, -10, -30]
         for i in range(len(cmpdCtrlTIMRP)):
-            print("cmpdCtrlTIMRP[{1}] {0}".format(cmpdCtrlTIMRP[i], i))
+
             if i == 0:
                 CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
                 CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", -10, 35,
@@ -841,7 +841,7 @@ class pcCreateRigAlt06Hand(UI):
         return
 
     def cleanupFingersMethod(self, jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand,
-                             ctrlTIRMP, bndBaseHand):
+                             ctrlTIRMP, bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP):
         # lock and hide various traits
         CRU.lockHideCtrls(jntFKBase, translate=True, rotate=True, scale=True, visibility=True)
         CRU.lockHideCtrls(grpCtrlHand, translate=True, rotate=True, scale=True, visibility=True)
@@ -895,7 +895,6 @@ class pcCreateRigAlt06Hand(UI):
         bndBaseHand = jointArrayBaseHand[0]
 
         geoJntArray = jointArrayBaseHand[:]
-        print ("geoJntArray: {0}".format(geoJntArray))
 
         # TIMRP = Thumb, Index, Middle, Ring, Pinkie
         bndTIMRP = self.getSuperJntArray(jointArrayBaseHand,
@@ -906,12 +905,16 @@ class pcCreateRigAlt06Hand(UI):
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
             geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
             skinPalm = "{0}palmSkin".format(leftRight)
-            mc.skinCluster(geoJntArray[0], geoPalm, n=skinPalm, dr=6)
+            # mc.skinCluster(geoJntArray[0], geoPalm, n=skinPalm, dr=6)
+            mc.skinCluster(geoJntArray[0], geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
+                           mi=4, omi=True, n=skinPalm, dr=6)
+            # skinCluster -volumeBind 0  -volumeType 1 -toSelectedBones -bindMethod 0 -mi 4 -omi true -dr 4
             CRU.layerEdit(geoPalm, geoLayer=True)
         # probably the geo too
 
         # Orient setup
         orntTIMRP = self.makeOrientJoints(bndTIMRP)
+
         jointArrayReplace = []
         # we have renamed/deleted several joints, so we are purging it and resetting it
         for i in range(len(jointArrayBaseHand)):
@@ -1018,6 +1021,7 @@ class pcCreateRigAlt06Hand(UI):
 
         ikFingerTIMRP = []
         ikStrFingerTIMRP = []
+        ikFingerStrBaseTIMRP = []
         # IK Fingers
         for i in range(len(cmpdCtrlTIMRP)):
 
@@ -1027,10 +1031,12 @@ class pcCreateRigAlt06Hand(UI):
             else:
                 checkThumb = False
             # finger base helps us determine whcih values we use in case of thumb in particular
-            ikFinger, grpHDL, ikStrFingers = self.makeIKFingers(cmpdCtrlTIMRP[i], bndTIMRP[i], orntTIMRP[i], checkThumb,
-                                                                leftRight)
+            ikFinger, grpHDL, ikStrFingers, ikFingerStrBase = self.makeIKFingers(cmpdCtrlTIMRP[i], bndTIMRP[i],
+                                                                                 orntTIMRP[i], checkThumb,
+                                                                                 leftRight)
             ikFingerTIMRP.append(ikFinger)
             ikStrFingerTIMRP.append(ikStrFingers)
+            ikFingerStrBaseTIMRP.append(ikFingerStrBase)
 
         # Custom Attributes
         # Palm Raise
@@ -1071,18 +1077,15 @@ class pcCreateRigAlt06Hand(UI):
         self.setVisibilityModifiers(ctrlSettings, grpCtrlHand, jntFKBase)
 
         self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIRMP,
-                                  bndBaseHand)
+                                  bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP)
 
         if checkGeo:
             # turn off the inherits transform
             mc.setAttr("{0}.inheritsTransform".format(geoPalm), 0)
 
     def tgpCreateMirror(self, locArray, toReplace, toReplaceMirror):
-
         # when you make a duplicate, the order of the duplicated children will get reversed. This reverses the reverse.
         locMirrorWork = mc.duplicate(locArray, rc=True)
-
-        print("locMirrorWork: {0}".format(locMirrorWork))
 
         locMirror = []
 
@@ -1091,9 +1094,6 @@ class pcCreateRigAlt06Hand(UI):
             toRename = locMirrorWork[i].replace(toReplace, toReplaceMirror)[:-1]
             mc.rename(locMirrorWork[i], toRename)
             locMirror.append(toRename)
-
-        print("locArray: {0}".format(locArray))
-        print("locMirror: {0}".format(locMirror))
 
         locMirrorTop = locMirror[0]
         # takes the initial offset value, duplicates it, flips the values around, then freezes the transformation
@@ -1242,7 +1242,6 @@ class pcCreateRigAlt06Hand(UI):
 
                 jointArrayBaseHandMirror = mc.mirrorJoint(jointArrayBaseHand[0], mirrorYZ=True, mirrorBehavior=True,
                                                           searchReplace=[toReplace, toReplaceMirror])
-                print("jointArrayBaseHandMirror: {0}".format(jointArrayBaseHandMirror))
 
                 # make sure the children are not locked
                 locArrayMirror = self.tgpCreateMirror(locArray, toReplace,
