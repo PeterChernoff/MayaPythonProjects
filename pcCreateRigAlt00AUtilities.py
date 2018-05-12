@@ -370,7 +370,7 @@ class pcCreateRigUtilities:
         return True
 
     @staticmethod
-    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, geoLayer=False,
+    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, bndAltLayer=False, geoLayer=False,
                   bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, newLayerName=None,
                   printout=False,
                   *args):
@@ -397,6 +397,8 @@ class pcCreateRigUtilities:
             layerName = "geo_LYR"
         elif bodyLayer:
             layerName = "body_LYR"
+        elif bndAltLayer:
+            layerName = "jnt_bnd_extras_LYR"
         elif newLayerName is not None:
             layerName = newLayerName
 

@@ -1495,6 +1495,13 @@ class pcCreateRigAlt05Arms(UI):
         CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
+
+        altBnds = [x for x in bndJnts if "arm" in x.lower() and "seg" not in x.lower()]
+        # the jnt_BND_lyr is supposed to be for the skinning joints
+
+        CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
+
+
         CRU.layerEdit(ctrlElbow, newLayerName=ikLayer)
         CRU.layerEdit(ctrlIKArm, newLayerName=ikLayer)
 

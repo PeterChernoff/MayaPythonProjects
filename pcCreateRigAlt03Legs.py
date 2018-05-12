@@ -1448,8 +1448,12 @@ class pcCreateRigAlt03Legs(UI):
         mc.setAttr("{0}.overrideColorRGB".format(newLayerNameIK), clrIKrgb[0], clrIKrgb[1], clrIKrgb[2])
         mc.setAttr("{0}.overrideRGBColors".format(newLayerNameIK), 1)
 
-        # print("bndJnts: {0}".format(bndJnts))
         CRU.layerEdit(bndJnts, bndLayer=True)
+
+        # the jnt_BND_lyr is supposed to be for the skinning joints
+        altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower()]
+
+        CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 
         CRU.changeRotateOrder(bndJnts, "XZY")
         CRU.changeRotateOrder(fkJnts, "XZY")

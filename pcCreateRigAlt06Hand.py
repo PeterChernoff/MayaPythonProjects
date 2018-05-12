@@ -870,8 +870,13 @@ class pcCreateRigAlt06Hand(UI):
 
         CRU.lockHideCtrls(ctrlHand, translate=True, scale=True, visibility=True, rotate=True, )
 
-        CRU.layerEdit(bndBaseHand, bndLayer=True)
+        CRU.layerEdit(bndBaseHand, bndLayer=True, noRecurse=True)
 
+        for i in range(len(orntTIMRP)):
+            CRU.layerEdit(orntTIMRP[i], bndAltLayer=True, noRecurse=True)
+            CRU.layerEdit(ikStrFingerTIMRP[i], bndAltLayer=True, noRecurse=True)
+            CRU.layerEdit(ikFingerStrBaseTIMRP[i], bndAltLayer=True, noRecurse=True)
+            CRU.layerEdit(bndTIMRP[i], bndLayer=True, noRecurse=True)
         return
 
     def makeFingersComplete(self, jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans, ctrlSettings,
