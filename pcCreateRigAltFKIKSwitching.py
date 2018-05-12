@@ -132,8 +132,7 @@ class pcCreateRigAltFKIKSwitching():
         if ((abs(curr_upperLeg_length - default_upperLeg_length) > tolerance) or (
                 abs(curr_lowerLeg_length - default_lowerLeg_length) > tolerance)):
             mc.setAttr("CTRL_{0}knee.kneeSnap".format(leftRight), 1)
-            mc.setAttr("CTRL_{0}foot.IK_Stretch".format(leftRight),
-                       1)  # TO DELETE: I'm probably going to make make this a CTRL_settings feature and make it an enum
+            mc.setAttr("CTRL_settings_{0}leg.IK_stretch".format(leftRight), 0)
 
         mc.matchTransform("CTRL_{0}foot".format(leftRight), "GRP_IKsnap_{0}foot".format(leftRight), rotation=True)
         mc.matchTransform("CTRL_{0}foot".format(leftRight), "GRP_IKsnap_{0}foot".format(leftRight), position=True)
