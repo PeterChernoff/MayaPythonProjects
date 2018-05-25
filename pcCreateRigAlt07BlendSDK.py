@@ -9,20 +9,14 @@ import maya.cmds as mc
 from functools import partial
 from tgpBaseUI import BaseUI as UI
 
-'''
-import tgpBlendColors as bc
-reload(bc)
-bc.tgpBlendColors()
+import pcCreateRigAlt00AUtilities
 
-'''
-# This program assumes there are no toes in the original.
-import pcCreateRig00AUtilities
-from pcCreateRig00AUtilities import pcCreateRigUtilities as CRU
+reload(pcCreateRigAlt00AUtilities)
 
-reload(pcCreateRig00AUtilities)
+from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRig10BlendSDK(UI):
+class pcCreateRigAlt07BlendSDK(UI):
     def __init__(self):
 
         self.window = "bcWindow"
@@ -54,7 +48,7 @@ class pcCreateRig10BlendSDK(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Geometry: ")
-        mc.textFieldButtonGrp("mshCharLoad_tf", cw=(1, 322), bl="  Load  ", tx="male_geo")
+        mc.textFieldButtonGrp("mshCharLoad_tf", cw=(1, 322), bl="  Load  ", tx="emma_body_GEO")
 
         mc.setParent("..")
         mc.separator(st="in", h=15, w=500)
@@ -71,7 +65,7 @@ class pcCreateRig10BlendSDK(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadTxBtn("mshCharLoad_tf", "mesh", "Body mesh", ["geo"])
+        self.selSrc1 = self.tgpLoadTxBtn("mshCharLoad_tf", "mesh", "Body mesh", ["GEO"])
         print(self.selSrc1)
 
     def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
@@ -79,29 +73,35 @@ class pcCreateRig10BlendSDK(UI):
             objectNickname = objectType
 
         self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True)
+        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
 
         if (len(self.selLoad) != 1):
             mc.warning("Select only the {0}".format(objectDesc))
             return
         else:
-            if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
             selName = self.selLoad[0]
+            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
             return selName
+
+    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if CRU.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
 
     def tgpMakeBC(self, *args):
 
         mc.textFieldButtonGrp("mshCharLoad_tf", e=True, bc=self.loadSrc1Btn)
 
-        mshChar = mc.textFieldButtonGrp("mshCharLoad_tf", q=True, text=True)
-
+        mshCharCheck = mc.textFieldButtonGrp("mshCharLoad_tf", q=True, text=True)
+        mshChar = self.tgpGetTx(mshCharCheck, "mshCharLoad_tf", "mesh", "Body mesh", ["GEO"])
         # print(mshChar)
         history = mc.listHistory(mshChar)
         print("history {0}".format(history))
@@ -154,7 +154,7 @@ class pcCreateRig10BlendSDK(UI):
                 driver = "CTRL_" + driver
 
             else:
-                driver = "JNT_" + driver
+                driver = "JNT_BND_" + driver
             print(driver)
             print(driverAttrDrvnVal)
             driverAttr, driverValNum = self.getDriverAttrDrivenVals(driverAttrDrvnVal)
