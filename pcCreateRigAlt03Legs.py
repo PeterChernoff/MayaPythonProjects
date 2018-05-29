@@ -470,6 +470,7 @@ class pcCreateRigAlt03Legs(UI):
 
     def createFKCtrls(self, fkJnts, colourTU, leftRight, *args):
 
+
         if leftRight == self.valLeft:
             m = 1
         else:
@@ -501,15 +502,16 @@ class pcCreateRigAlt03Legs(UI):
             else:
                 if self.checkAnkleTwist:
                     footJnt = "ankleTwist"
+
                 else:
                     footJnt = "foot"
+                orientVal = (0, 1, 0)
                 if footJnt in fkJnt:
-                    sizeTU = 12
-                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(0, 1, 0),
+                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=orientVal,
                                                               colourTU=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[:]")
-                    mc.rotate(0, 0, 90, ws=True)
+                    mc.rotate(90, z=True, r=True, os=True)
 
                     set = True
                 elif "ball" in fkJnt:
@@ -568,23 +570,28 @@ class pcCreateRigAlt03Legs(UI):
 
         size = mc.getAttr("{0}.tx".format(ikJnts[-1]))
         ctrlName = "CTRL_{0}foot".format(leftRight)
-        orientVal = [0, m * 1, 0]
+        orientVal = (0, m * 1, 0)
         ctrlIKFoot = mc.circle(r=size, n=ctrlName, nr=orientVal, sections=10)[0]
-        todelete = mc.pointConstraint(ikJntFoot, ctrlIKFoot)
-        mc.delete(todelete)
+        mc.matchTransform(ctrlIKFoot, ikJntFoot, pos=True)
 
         # adjust size for foot
         mc.select("{0}.cv[:]".format(ctrlIKFoot))
         mc.move(0, moveY=True, ws=True)
         mc.move(2.6, moveZ=True, r=True)
 
-        mc.scale(.8, xz=True)
+        mc.scale(.9, xz=True)
         mc.scale(1.2, z=True)
+
+
         mc.select("{0}.cv[3:8]".format(ctrlIKFoot))
         mc.move(m * size * 1.4, moveZ=True, r=True)
 
         mc.select("{0}.cv[3]".format(ctrlIKFoot))
-        mc.move(size * .2, moveX=True, r=True)
+        mc.move(size * .1, moveX=True, r=True)
+
+        mc.select("{0}.cv[:]".format(ctrlIKFoot))
+        mc.move( -size * .1, moveX=True, r=True) # this may be a point you need to personalize for the rig more than usual
+
         mc.makeIdentity(ctrlIKFoot, apply=True)
         mc.select(cl=True)
 
