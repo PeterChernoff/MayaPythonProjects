@@ -752,6 +752,9 @@ class pcCreateRigAlt02Head(UI):
         CRU.lockHideCtrls(ikNeckEnd, translate=True, rotate=True, scale=True, visibility=True)
 
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True)
+
+        altBnds = [x for x in jntArray if "end" in x.lower()]
+        CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
         return grpHeadDNT
 
     def neckCleanUpExtras(self, jawSel, grpJaw, ctrlJaw,
@@ -787,7 +790,7 @@ class pcCreateRigAlt02Head(UI):
             mc.parent(grpGeoHead, grpHeadDNT)
 
         if checkHead:
-            altBnds = [x for x in jntArrayHead if "eye" in x.lower() or "jaw2" in x.lower()]
+            altBnds = [x for x in jntArrayHead if "eye" in x.lower() or "jaw2" in x.lower() or "end" in x.lower()]
             CRU.layerEdit(jntArrayHead, bndLayer=True, noRecurse=True)
             CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 
@@ -875,6 +878,7 @@ class pcCreateRigAlt02Head(UI):
         return
 
     def tgpMakeBC(self, *args):
+        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
@@ -1027,3 +1031,6 @@ class pcCreateRigAlt02Head(UI):
                 CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)
                 if checkHead:
                     CRU.tgpSetGeo(jntArrayHead, setLayer=True)
+
+            # reset the symmetry to the default because otherwise we might get wonky results
+            mc.symmetricModelling(symmetry=symmetry)

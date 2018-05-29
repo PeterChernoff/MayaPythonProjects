@@ -1725,6 +1725,8 @@ class pcCreateRigAlt05Arms(UI):
         return
 
     def tgpMakeBC(self, *args):
+        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
+
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
@@ -1848,3 +1850,6 @@ class pcCreateRigAlt05Arms(UI):
                                      grpSpineToggle,
                                      cbSpecialStretch, checkGeo, checkToggleSpineStretch,
                                      geoJntArrayMirror)
+
+            # reset the symmetry to the default because otherwise we might get wonky results
+            mc.symmetricModelling(symmetry=symmetry)

@@ -1445,7 +1445,7 @@ class pcCreateRigAlt03Legs(UI):
         CRU.layerEdit(bndJnts, bndLayer=True)
 
         # the jnt_BND_lyr is supposed to be for the skinning joints
-        altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower()]
+        altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
 
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 
@@ -1553,6 +1553,7 @@ class pcCreateRigAlt03Legs(UI):
         # return
 
     def tgpMakeBC(self, *args):
+        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
@@ -1666,3 +1667,6 @@ class pcCreateRigAlt03Legs(UI):
                 self.makeLegComplete(bndJntsMirror, colourTUMirror, leftRightMirror, isLeftMirror, ctrlRootTrans,
                                      jntIKHip, checkboxHip,
                                      grpDNTTorso, geoJntArrayMirror, )
+
+            # reset the symmetry to the default because otherwise we might get wonky results
+            mc.symmetricModelling(symmetry=symmetry)

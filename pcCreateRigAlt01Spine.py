@@ -425,6 +425,10 @@ class pcCreateRigAlt01Spine(UI):
         CRU.layerEdit(ctrlFKJntsEnds, fkLayer=True, noRecurse=True, colourTU=CRU.clrBodyFK)
         CRU.layerEdit(spineIKCtrls, ikLayer=True, noRecurse=True, colourTU=CRU.clrBodyIK)
         CRU.layerEdit(jntArray, bndLayer=True, noRecurse=True, layerState=1)
+
+        altBnds = [x for x in jntArray if "end" in x.lower()]
+        CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True, layerState=1)
+
         CRU.layerEdit(ctrlBody, bodyLayer=True, noRecurse=True, colourTU=CRU.clrBodyMain)
 
     def makeSpineStretchable(self, spineIKCtrls, globalScaleNormalizeDiv, spineStretchNameDiv, spineInfo):
@@ -453,6 +457,7 @@ class pcCreateRigAlt01Spine(UI):
         return
 
     def tgpMakeBC(self, *args):
+        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         checkStretch = mc.checkBox("selStretch_cb", q=True, v=True)
 
@@ -531,10 +536,13 @@ class pcCreateRigAlt01Spine(UI):
             # make the last thing we do the geometry
             if checkGeo:
                 CRU.tgpSetGeo(jntArray, "JNT_BND_", setLayer=True)
-            try:
-                CRU.tgpSetGeo([spineIKs[0]], "JNT_IK_", setLayer=True)
-                # mc.parent("GEO_hip", ikHip)
-            except:
-                mc.warning("Hip geometry either does not exist or is not properly named")
+                try:
+                    CRU.tgpSetGeo([spineIKs[0]], "JNT_IK_", setLayer=True)
+                    # mc.parent("GEO_hip", ikHip)
+                except:
+                    mc.warning("Hip geometry either does not exist or is not properly named")
 
         mc.select(ctrlFKJntsEnds[0])
+
+        # reset the symmetry to the default because otherwise we might get wonky results
+        mc.symmetricModelling(symmetry=symmetry)

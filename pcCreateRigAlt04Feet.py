@@ -442,6 +442,8 @@ class pcCreateRigAlt04Feet(UI):
 
     def tgpMakeBC(self, *args):
 
+        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
+
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
         locName = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
@@ -521,3 +523,6 @@ class pcCreateRigAlt04Feet(UI):
                     locArrayMirror.append(locArray[i].replace(leftRightReplace, leftRightReplaceMirror))
 
                 self.makeFootComplete(ctrlIKFootMirror, locArrayMirror, leftRightMirror, isLeftMirror)
+
+            # reset the symmetry to the default because otherwise we might get wonky results
+            mc.symmetricModelling(symmetry=symmetry)
