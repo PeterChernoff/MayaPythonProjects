@@ -962,7 +962,12 @@ class pcCreateRigAlt05Arms(UI):
         ctrlGimbalCorrSubShp = mc.listRelatives(toDelete, s=True)[0]
 
         mc.select(toDelete + ".cv[:]")
-        mc.move(-sizeVal, os=True, r=True, y=True)
+        if leftRight is self.valLeft:
+            m = -1
+        else:
+            m = 1
+        mc.move(m*sizeVal, os=True, r=True, y=True)
+
         mc.parent(ctrlGimbalCorrSubShp, ctrlGimbalCorr, s=True, r=True)
         mc.select(cl=True)
         mc.delete(toDelete)
@@ -1503,12 +1508,19 @@ class pcCreateRigAlt05Arms(UI):
         CRU.layerEdit(ctrlGimbalCorr, newLayerName=fkLayer)  # add the gimbal correction to the FK layer
 
         CRU.layerEdit(jntShoulders, bndLayer=True, noRecurse=True)
+        CRU.layerEdit(jntShoulders[-1], bndAltLayer=True, noRecurse=True)
 
         CRU.layerEdit(ikJnts, newLayerName=ikLayer)
         CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
+
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
-        altBnds = [x for x in bndJnts if "arm" in x.lower() and "seg" not in x.lower()]
+
+
+        altBnds = [x for x in bndJnts if "arm" in x.lower() and "seg" not in x.lower() or "hand" in x.lower()]
+        for i in range(len(twistJntsArrayOfArrays)):
+            # put the last seg into the alt bnds since it shares the same space as lower arm's seg1 or hand
+            altBnds.append(twistJntsArrayOfArrays[i][-1])
         # the jnt_BND_lyr is supposed to be for the skinning joints
 
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
