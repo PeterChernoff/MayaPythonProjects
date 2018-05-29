@@ -902,8 +902,17 @@ class pcCreateRigAlt06Hand(UI):
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
             geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
             skinPalm = "{0}palmSkin".format(leftRight)
+
+            # we only want to skin the relevant bones
+            geoHandSkin = [bndBaseHand]
+            for i in range(len(bndTIMRP)):
+                if i == 0 :
+                    geoHandSkin.extend(bndTIMRP[i][1:-2])
+                else:
+                    geoHandSkin.extend(bndTIMRP[i][:-3])
+
             # mc.skinCluster(geoJntArray[0], geoPalm, n=skinPalm, dr=6)
-            mc.skinCluster(geoJntArray, geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
+            mc.skinCluster(geoHandSkin, geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
                            mi=4, omi=True, n=skinPalm, dr=6)
             # skinCluster -volumeBind 0  -volumeType 1 -toSelectedBones -bindMethod 0 -mi 4 -omi true -dr 4
             CRU.layerEdit(geoPalm, geoLayer=True)
