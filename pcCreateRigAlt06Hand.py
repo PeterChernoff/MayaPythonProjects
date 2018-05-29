@@ -193,14 +193,7 @@ class pcCreateRigAlt06Hand(UI):
         else:
             selName = self.selLoad[0]
             selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            '''if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)'''
             return selName
 
     def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
@@ -857,7 +850,7 @@ class pcCreateRigAlt06Hand(UI):
                 CRU.lockHideCtrls(fkTIMRP[i][j], theVals=["radi"], channelBox=False)
 
             # we don't want to lock the rotate values for the start
-            mc.setAttr("{0}.visibility".format(ikStrFingerTIMRP[i][0]), False)
+            mc.setAttr("{0}.visibility".format(ikStrFingerTIMRP[i][0]), True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], rotate=True, toLock=False)
 
@@ -877,6 +870,10 @@ class pcCreateRigAlt06Hand(UI):
             CRU.layerEdit(ikStrFingerTIMRP[i], bndAltLayer=True, noRecurse=True)
             CRU.layerEdit(ikFingerStrBaseTIMRP[i], bndAltLayer=True, noRecurse=True)
             CRU.layerEdit(bndTIMRP[i], bndLayer=True, noRecurse=True)
+            if i == 0:
+                # put the thumb base to the altBnd layer
+                CRU.layerEdit(bndTIMRP[i][0], bndAltLayer=True, noRecurse=True)
+
         return
 
     def makeFingersComplete(self, jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans, ctrlSettings,
@@ -906,7 +903,7 @@ class pcCreateRigAlt06Hand(UI):
             geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
             skinPalm = "{0}palmSkin".format(leftRight)
             # mc.skinCluster(geoJntArray[0], geoPalm, n=skinPalm, dr=6)
-            mc.skinCluster(geoJntArray[0], geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
+            mc.skinCluster(geoJntArray, geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
                            mi=4, omi=True, n=skinPalm, dr=6)
             # skinCluster -volumeBind 0  -volumeType 1 -toSelectedBones -bindMethod 0 -mi 4 -omi true -dr 4
             CRU.layerEdit(geoPalm, geoLayer=True)
@@ -943,10 +940,16 @@ class pcCreateRigAlt06Hand(UI):
         for i in range(len(bndTIMRP)):
             orientVal = (1, 0, 0)
             size = 0.5
+
             ctrlName = bndTIMRP[i][0][:-4].replace("JNT_BND_", "CTRL_")
+
             mc.circle(nr=orientVal, r=size, n=ctrlName)
-            CRU.constrainMove(bndTIMRP[i][0], ctrlName, parent=True)
-            mc.move(0, 2, 0, ctrlName, r=True)
+            if i == 0:
+                CRU.constrainMove(bndTIMRP[i][1], ctrlName, parent=True)
+                mc.move(0, -2, 2, ctrlName, r=True, os=True)
+            else:
+                CRU.constrainMove(bndTIMRP[i][0], ctrlName, parent=True)
+                mc.move(0, 2, 0, ctrlName, r=True)
             ctrlTIRMP.append(ctrlName)
             mc.makeIdentity(ctrlName, apply=True)
 
@@ -974,12 +977,17 @@ class pcCreateRigAlt06Hand(UI):
         CRU.constrainMove([ctrlTIRMP[2], ctrlTIRMP[3]], ctrlHand, parent=True)
         mc.select("{0}.cv[:]".format(ctrlHand))
         mc.scale(1, 1.45, 1, r=True, os=True)
+
+        dist = CRU.getDistance(ctrlTIRMP[1], ctrlTIRMP[4]) + 1
+
         mc.select("{0}.cv[7:9] ".format(ctrlHand))
         mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
-        mc.move(0, -0.35, -2.7, r=True, os=True)
+
+        print("dist: {0}".format(dist))
+        mc.move(0, -.35, -dist/2, r=True, os=True)
 
         mc.select("{0}.cv[2:5] ".format(ctrlHand))
-        mc.move(0, -0, 2.65, r=True, os=True)
+        mc.move(0, -0, dist/2, r=True, os=True)
         mc.select(cl=True)
         mc.makeIdentity(ctrlHand, apply=True)
         CRU.layerEdit(ctrlHand, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
@@ -1136,6 +1144,8 @@ class pcCreateRigAlt06Hand(UI):
         return locMirror
 
     def tgpMakeBC(self, *args):
+        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
+
 
         checkSelLeft = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
@@ -1260,3 +1270,6 @@ class pcCreateRigAlt06Hand(UI):
                 self.makeFingersComplete(jointArrayBaseHandMirror, locArrayMirror, jntBindEndMirror,
                                          jntArmHandBndMirror, ctrlRootTrans, ctrlSettingsMirror,
                                          checkGeo, leftRightMirror, colourTUMirror)
+
+            # reset the symmetry to the default because otherwise we might get wonky results
+            mc.symmetricModelling(symmetry=symmetry)
