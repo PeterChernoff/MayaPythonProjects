@@ -9,12 +9,11 @@ class pcCreateRigUtilities:
     clrLeftIK = [0, 0.5, 1]
 
     clrRightFK = [1, 0.75, 0]
-    clrRightIK =  [1, 0.5, 0]
+    clrRightIK = [1, 0.5, 0]
 
     clrSettings = [.75, 0.5, 1]
 
     clrHandCtrl = [0.65, 0.8, 0]
-
 
     @staticmethod
     def setupCtrl(s, size=3, orientVal=(1, 0, 0), colourTU=5, sectionsTU=None,
@@ -370,7 +369,8 @@ class pcCreateRigUtilities:
         return True
 
     @staticmethod
-    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, bndAltLayer=False, geoLayer=False,
+    def layerEdit(objectsToLoad, ikLayer=False, fkLayer=False, ikdriveLayer=False, bndLayer=False, bndAltLayer=False,
+                  geoLayer=False,
                   bodyLayer=False, layerVis=True, layerState=0, noRecurse=False, colourTU=None, newLayerName=None,
                   printout=False,
                   *args):
@@ -741,6 +741,29 @@ class pcCreateRigUtilities:
             mc.delete(toDelete)
 
     @staticmethod
+    def getDistance(startObj, endObj):
+
+        startLoc = "toDeleteStart"
+        endLoc = "toDeleteEnd"
+
+        mc.spaceLocator(n=startLoc, p=(0, 0, 0))
+        mc.spaceLocator(n=endLoc, p=(0, 0, 0))
+
+        mc.matchTransform(startLoc, startObj, pos=True)
+        mc.matchTransform(endLoc, endObj, pos=True)
+
+        lenNodeName = "toDelete"
+        distDimShape = mc.distanceDimension(sp=(0, 0, 0), ep=(0, 0, 0))
+        mc.connectAttr("{0}.worldPosition".format(startLoc), "{0}.startPoint".format(distDimShape), f=True)
+        mc.connectAttr("{0}.worldPosition".format(endLoc), "{0}.endPoint".format(distDimShape), f=True)
+        distDimParent = mc.listRelatives(distDimShape, p=True)
+        mc.rename(distDimParent, lenNodeName)
+        lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
+        dist = mc.getAttr("{0}.distance".format(lenNodeNameShape))
+        mc.delete(lenNodeName, startLoc, endLoc)
+        return dist
+
+    @staticmethod
     def createIKVal(ikStartJoint, ikEndJoint, leftRight, ikSuffix, ikSolver, *args):
         ikSide = leftRight + ikSuffix
 
@@ -765,3 +788,11 @@ class pcCreateRigUtilities:
                                                    driverValue=1 - visMin, modifyInOut=tangentToUse)
         pcCreateRigUtilities.setDriverDrivenValues(driver, driverAttr, driven, drivenAttr, drivenValue=val3,
                                                    driverValue=1, modifyInOut=tangentToUse)
+
+    @staticmethod
+    def checkSymmetry(*args):
+        # checks if symmetry is on
+        symmetry = mc.symmetricModelling(query=True, symmetry=True)
+        if symmetry != 0:
+            mc.symmetricModelling(symmetry=0)
+        return symmetry
