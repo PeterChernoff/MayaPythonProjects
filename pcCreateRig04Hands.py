@@ -137,7 +137,7 @@ class pcCreateRig04Hands(UI):
                             exclsn.lower() in selName.lower() for exclsn in exclusions):
                 mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
                 return None, None
-            print(exclusions)
+            # print(exclusions)
 
             if any(exclsn.lower() in selName.lower() for exclsn in exclusions):
                 mc.warning("That is the wrong {0} to delete. Select the {1}".format(objectNickname, objectDesc))
@@ -243,10 +243,10 @@ class pcCreateRig04Hands(UI):
                 replaceTwistVal = lowerTwistVal
 
             editExpr[i] = editExpr[i].replace(";", " * {0}.{1};\n".format(ctrlPalmName, replaceTwistVal))
-            print(editExpr[i])
+            # print(editExpr[i])
 
         armExprReplace = "".join(editExpr)
-        print(armExprReplace)
+        # print(armExprReplace)
         mc.delete(armExprName)
 
         mc.expression(s=armExprReplace, n=armExprName)
