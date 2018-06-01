@@ -7,7 +7,9 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
 
@@ -56,7 +58,7 @@ class pcCreateRigAlt02Head(UI):
         mc.textFieldButtonGrp("grpTorsoDNT_tfbg", cw=(1, 300), bl="  Load  ", tx="GRP_DO_NOT_TOUCH_torso")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform Control: ")
-        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform_emma")
+        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Head Joint Extras: ")
         mc.textFieldButtonGrp("jntHead_tfbg", cw=(1, 300), bl="  Load  ", tx="JNT_BND_head")
@@ -625,7 +627,6 @@ class pcCreateRigAlt02Head(UI):
                 mc.pointConstraint(ctrlJaw, val, mo=True)
                 mc.orientConstraint(ctrlJaw, val, mo=True)
 
-        print("jntHead test: {0}".format(jntHead))
         mc.parent(grpJaw, grpHead)
         mc.parentConstraint(jntHead, grpJaw, mo=True)
 
@@ -898,7 +899,6 @@ class pcCreateRigAlt02Head(UI):
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
         jntEnd = self.jointEndArray[:]
-        print("jntEnd: {0}".format(jntEnd))
 
         # make sure the selections are not empty
         checkList = bndJnts

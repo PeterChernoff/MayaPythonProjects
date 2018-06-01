@@ -7,7 +7,9 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
@@ -358,7 +360,7 @@ class pcCreateRigAlt01Spine(UI):
 
     def createRootTransform(self, ctrlBody, grpTorso, spineInfo, spineStretchNameDiv, *args):
         # we are trying to normalize this value so the spine stretches properly
-        rootName = "rootTransform_emma"
+        rootName = "rootTransform"
         grpRootTransformName = "GRP_" + rootName
 
         grpRootTransform = mc.group(n=grpRootTransformName, em=True, w=True)
@@ -389,7 +391,6 @@ class pcCreateRigAlt01Spine(UI):
 
         # lock the translate/scale for the control joints
         for i in range(len(ctrlFKJnts)):
-            print("i: {0}".format(i))
             CRU.lockHideCtrls(ctrlFKJnts[i], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ctrlFKJnts[i], theVals=["radi"], channelBox=False, toLock=True, attrVisible=False)
 
@@ -466,7 +467,6 @@ class pcCreateRigAlt01Spine(UI):
 
         # make sure the selections are not empty
         checkList = [bndJnts]
-        print("checkList: {0}".format(checkList))
 
         if ((checkList[0] == "") or checkList[0] is None):
             mc.warning("You are missing a proper selection!")

@@ -7,7 +7,9 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
 
@@ -73,7 +75,7 @@ class pcCreateRigAlt03Legs(UI):
         mc.textFieldButtonGrp("ctrlBody_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_body")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform Control: ")
-        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform_emma")
+        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 300), bl="  Load  ", tx="CTRL_rootTransform")
 
         mc.setParent("..")
 

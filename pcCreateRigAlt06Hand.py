@@ -7,7 +7,9 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
 
@@ -63,7 +65,7 @@ class pcCreateRigAlt06Hand(UI):
         mc.textFieldButtonGrp("jntBindEndLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_arm_bindEnd")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform\nControl: ")
-        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform_emma")
+        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Arm's Hand Joint: ")
         mc.textFieldButtonGrp("jntHandLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_hand")
@@ -992,7 +994,6 @@ class pcCreateRigAlt06Hand(UI):
         mc.select("{0}.cv[7:9] ".format(ctrlHand))
         mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
 
-        print("dist: {0}".format(dist))
         mc.move(0, -.35, -dist/2, r=True, os=True)
 
         mc.select("{0}.cv[2:5] ".format(ctrlHand))

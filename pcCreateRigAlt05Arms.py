@@ -8,7 +8,9 @@ for Tin Girl Book and game project
 import maya.cmds as mc
 # import tgpUtils as ut
 from functools import partial
+import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+reload(tgpBaseUI)
 
 import pcCreateRig00AUtilities
 
@@ -83,7 +85,7 @@ class pcCreateRigAlt05Arms(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Root Control: ")
-        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform_emma")
+        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform")
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Stretchable Head\nShoulder Group: ")
         mc.textFieldButtonGrp("grpheadShoulders_tfbg", cw=(1, 322), bl="  Load  ", tx="GRP_head_shoulders")
@@ -966,7 +968,7 @@ class pcCreateRigAlt05Arms(UI):
             m = -1
         else:
             m = 1
-        mc.move(m*sizeVal, os=True, r=True, y=True)
+        mc.move(m * sizeVal, os=True, r=True, y=True)
 
         mc.parent(ctrlGimbalCorrSubShp, ctrlGimbalCorr, s=True, r=True)
         mc.select(cl=True)
@@ -1514,8 +1516,6 @@ class pcCreateRigAlt05Arms(UI):
         CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
 
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
-
-
 
         altBnds = [x for x in bndJnts if "arm" in x.lower() and "seg" not in x.lower() or "hand" in x.lower()]
         for i in range(len(twistJntsArrayOfArrays)):
