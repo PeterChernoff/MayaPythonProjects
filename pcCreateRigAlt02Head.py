@@ -1029,8 +1029,34 @@ class pcCreateRigAlt02Head(UI):
 
             if checkGeo:
                 CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)
+                checkHeadExists = ["GEO_l_gland", "GEO_r_gland", "GEO_teethUpper"]
+                checkJawExists = ["GEO_teethLower"]
+
                 if checkHead:
                     CRU.tgpSetGeo(jntArrayHead, setLayer=True)
+                    setHead = jntHeads[0]
+                    if jawSel:
+                        setJaw = [x for x in jntHeads if "jaw" in x.lower()][-1]
+                    else:
+                        setJaw = jntHeads[0]
+                else:
+                    setHead = jntArray[-1]
+                    setJaw = jntArray[-1]
+
+                for i in range(len(checkHeadExists)):
+                    # in case we have some special additions
+                    testCheck = checkHeadExists[i]
+                    try:
+                        mc.parent(testCheck, setHead)
+                    except:
+                        pass
+
+                for i in range(len(checkJawExists)):
+                    testCheck = checkJawExists[i]
+                    try:
+                        mc.parent(testCheck, setJaw)
+                    except:
+                        pass
 
             # reset the symmetry to the default because otherwise we might get wonky results
             mc.symmetricModelling(symmetry=symmetry)
