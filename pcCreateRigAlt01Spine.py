@@ -472,7 +472,7 @@ class pcCreateRigAlt01Spine(UI):
             mc.warning("You are missing a proper selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             # create the IK base controls
             jntArray = bndJnts[:]
             jntStart = jntArray[0]
@@ -545,4 +545,4 @@ class pcCreateRigAlt01Spine(UI):
         mc.select(ctrlFKJntsEnds[0])
 
         # reset the symmetry to the default because otherwise we might get wonky results
-        mc.symmetricModelling(symmetry=symmetry)
+        # mc.symmetricModelling(symmetry=symmetry)

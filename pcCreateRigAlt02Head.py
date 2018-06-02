@@ -961,7 +961,7 @@ class pcCreateRigAlt02Head(UI):
                     mc.warning("Make the first selection the root head joint")
                     return
 
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             hdlNeck, effNeck, crvNeck = self.createIKSpline(jntArray[0], jntEnd, "neck")
             ikNeckBase, ikNeckEnd, neckIKs = self.createNeckIK(jntArray, jntEnd, jntEndSize, crvNeck)
 
@@ -1059,4 +1059,4 @@ class pcCreateRigAlt02Head(UI):
                         pass
 
             # reset the symmetry to the default because otherwise we might get wonky results
-            mc.symmetricModelling(symmetry=symmetry)
+            # mc.symmetricModelling(symmetry=symmetry)

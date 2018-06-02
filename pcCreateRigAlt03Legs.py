@@ -1645,7 +1645,7 @@ class pcCreateRigAlt03Legs(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, jntLegRoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side for the leg")
@@ -1678,4 +1678,4 @@ class pcCreateRigAlt03Legs(UI):
                                      grpDNTTorso, geoJntArrayMirror, )
 
             # reset the symmetry to the default because otherwise we might get wonky results
-            mc.symmetricModelling(symmetry=symmetry)
+            # mc.symmetricModelling(symmetry=symmetry)
