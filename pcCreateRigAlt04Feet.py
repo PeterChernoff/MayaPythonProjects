@@ -444,7 +444,7 @@ class pcCreateRigAlt04Feet(UI):
 
     def tgpMakeBC(self, *args):
 
-        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
+        # symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
@@ -491,7 +491,7 @@ class pcCreateRigAlt04Feet(UI):
             mc.warning("You are missing a selection!")
             return
         else:
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, locFootRoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side for the locator")
@@ -527,4 +527,4 @@ class pcCreateRigAlt04Feet(UI):
                 self.makeFootComplete(ctrlIKFootMirror, locArrayMirror, leftRightMirror, isLeftMirror)
 
             # reset the symmetry to the default because otherwise we might get wonky results
-            mc.symmetricModelling(symmetry=symmetry)
+            # mc.symmetricModelling(symmetry=symmetry)

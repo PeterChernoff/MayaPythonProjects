@@ -1238,7 +1238,7 @@ class pcCreateRigAlt06Hand(UI):
             return
         else:
 
-            CRU.createLocatorToDelete()
+            # CRU.createLocatorToDelete()
             if not (CRU.checkLeftRight(isLeft, fingerRoot)):
                 # if the values are not lined up properly, break out
                 mc.warning("You are selecting the incorrect side for the fingers control")
@@ -1282,4 +1282,4 @@ class pcCreateRigAlt06Hand(UI):
                                          checkGeo, leftRightMirror, colourTUMirror)
 
             # reset the symmetry to the default because otherwise we might get wonky results
-            mc.symmetricModelling(symmetry=symmetry)
+            # mc.symmetricModelling(symmetry=symmetry)

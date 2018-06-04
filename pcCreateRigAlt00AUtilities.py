@@ -247,11 +247,6 @@ class pcCreateRigUtilities:
                     print("Parenting complete")
                 pcCreateRigUtilities.tgpCreateStretchMultNode(theChild, geoName, theParent,
                                                               printOut, )
-
-
-
-
-
             except:
                 if printOut:
                     mc.warning("Geo for {0} not properly named or available".format(geoJntArray[i]))
