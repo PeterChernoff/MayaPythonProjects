@@ -10,6 +10,7 @@ import maya.cmds as mc
 from functools import partial
 import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+
 reload(tgpBaseUI)
 
 import pcCreateRig00AUtilities
@@ -239,6 +240,7 @@ class pcCreateRigAlt05Arms(UI):
         # NOTE: we make the default value 0.5 for testing purposes
         mc.addAttr(ctrlArmSettings, longName=fkikBlendName, niceName=fkikBlendNiceName, at="float", k=True, min=0,
                    max=1, dv=1)
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
 
         CRU.makeBlendBasic(fkJnts, ikJnts, bndJnts, ctrlArmSettings, fkikBlendName, rotate=True, translate=True)
         # connect the visibility of the controllers
@@ -261,6 +263,12 @@ class pcCreateRigAlt05Arms(UI):
         return ctrlArmSettings, fkikBlendName, fkVis, ikVis
 
     def bindArmTwists(self, twistJntsArrayOfArrays, leftRight, ikArms, *args):
+        uAxis = None
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+            uAxis = 5
 
         bindJntTwistStart = "JNT_{0}arm_bindStart".format(leftRight)
         bindJntTwistMid = "JNT_{0}arm_bindMid".format(leftRight)
@@ -300,8 +308,9 @@ class pcCreateRigAlt05Arms(UI):
         hdlUpperArm = ikArms[0][0]
         hdlLowerArm = ikArms[1][0]
 
-        self.advancedTwistControls(hdlUpperArm, bindJntTwistStart, bindJntTwistMid)
-        self.advancedTwistControls(hdlLowerArm, bindJntTwistMid, bindJntTwistEnd)
+        # the right upperArm seemd to do better with closestZ instead of negative Z
+        self.advancedTwistControls(hdlUpperArm, bindJntTwistStart, bindJntTwistMid, m, uAxis)
+        self.advancedTwistControls(hdlLowerArm, bindJntTwistMid, bindJntTwistEnd, m)
         ##########
 
         for i in range(len(cycleVis)):
@@ -319,27 +328,31 @@ class pcCreateRigAlt05Arms(UI):
         scls = mc.skinCluster(endJnt, startJnt, crvToUse, name=skinName, toSelectedBones=True,
                               bindMethod=0, skinMethod=0, nw=1, maximumInfluences=2)[0]
 
-    def advancedTwistControls(self, hdlArm, startJnt, endJnt):
-
+    def advancedTwistControls(self, hdlArm, startJnt, endJnt, m, uAxis=None):
+        # this one may need a bit of tweaking manually
+        if uAxis is None:
+            uAxis = 4
         mc.setAttr('{0}.dTwistControlEnable'.format(hdlArm), True)
-
-        # World Up Type to Object Rotation Up (Start/End)
-        mc.setAttr('{0}.dWorldUpType'.format(hdlArm), 4)
 
         # forward to positive x
         mc.setAttr('{0}.dForwardAxis'.format(hdlArm), 0)
 
-        # up to negative z
-        mc.setAttr('{0}.dWorldUpAxis'.format(hdlArm), 1)
+        # World Up Type to Object Rotation Up (Start/End)
+        mc.setAttr('{0}.dWorldUpType'.format(hdlArm), 4)
+
+        # up to positive Y / negative z
+        mc.setAttr('{0}.dWorldUpAxis'.format(hdlArm), uAxis)
+        vm = m * 1
 
         # Up Vector and Up Vector 2 to 0, 0, 1
+        # they may need to be opposite values on the left/right
         mc.setAttr('{0}.dWorldUpVectorX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), 1)
-        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), 0)
+        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), 0)
+        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), vm)
 
         mc.setAttr('{0}.dWorldUpVectorEndX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), 1)
-        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), 0)
+        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), 0)
+        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), vm)
 
         # connects the joints to the right place
         mc.connectAttr(startJnt + ".worldMatrix[0]", hdlArm + ".dWorldUpMatrix")
@@ -374,7 +387,7 @@ class pcCreateRigAlt05Arms(UI):
 
         return ctrlFKLengthKeyArray
 
-    def makeFKStretchTwists(self, bndJnt, crvArm, twistJnts):
+    def makeFKStretchTwistsBak(self, bndJnt, crvArm, twistJnts):
         nameEdit = bndJnt.replace("JNT_BND_", "")
 
         crvInfo = nameEdit + "Info"
@@ -389,6 +402,34 @@ class pcCreateRigAlt05Arms(UI):
         mc.connectAttr("{0}.arcLength".format(crvInfo), "{0}.input1X".format(armNrmlzDiv))
 
         armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0]))  # get the joint child
+        # divide arm length by its base length
+        mc.setAttr("{0}.input2X".format(armNrmlzDiv), armLen)
+
+        # connect to the segments' scaleX
+        for i in range(len(twistJnts) - 1):
+            mc.connectAttr("{0}.outputX".format(armNrmlzDiv), "{0}.scaleX".format(twistJnts[i]))
+
+        return crvInfo, armNrmlzDiv
+
+    def makeBndStretchTwists(self, bndJnt, crvArm, twistJnts, leftRight):
+        if leftRight == self.valLeft:
+            m = 1
+        else:
+            m = -1
+        nameEdit = bndJnt.replace("JNT_BND_", "")
+
+        crvInfo = nameEdit + "Info"
+        armNrmlzDiv = nameEdit + "_normalize_DIV"
+        mc.shadingNode("curveInfo", n=crvInfo, au=True)
+        mc.shadingNode("multiplyDivide", n=armNrmlzDiv, au=True)
+
+        crvArmShape = mc.listRelatives(crvArm, s=True)[0]
+        mc.connectAttr("{0}.worldSpace".format(crvArmShape), "{1}.inputCurve".format(crvArmShape, crvInfo))
+
+        mc.setAttr("{0}.operation".format(armNrmlzDiv), 2)
+        mc.connectAttr("{0}.arcLength".format(crvInfo), "{0}.input1X".format(armNrmlzDiv))
+
+        armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0])) * m  # get the joint child
         # divide arm length by its base length
         mc.setAttr("{0}.input2X".format(armNrmlzDiv), armLen)
 
@@ -489,7 +530,7 @@ class pcCreateRigAlt05Arms(UI):
         else:
             m = 1
         locElbow = "LOC_{0}elbow".format(leftRight)
-        mc.spaceLocator(p=(0, 0, 0), name=locElbow)[0]
+        mc.spaceLocator(p=(0, 0, 0), name=locElbow)
         toDelete = mc.pointConstraint(ikJnts[1], locElbow)
         mc.delete(toDelete)
         armLength = mc.getAttr("{0}.tx".format(ikJnts[1]))
@@ -874,6 +915,85 @@ class pcCreateRigAlt05Arms(UI):
         mc.parentConstraint(jntIKShoulder, grpShoulder, mo=True)
         return grpShoulder, grpDNTShoulder
 
+    '''def organizeArmBak(self, ctrlRoot, bndJnts, ikJnts, fkJnts,
+                       bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
+                       twistJntsArrayOfArrays,
+                       grpIKVisArm, grpIKConstArm, grpArmTwist,
+                       distArmElbow, distElbowHand, distIKArmLen,
+                       locDistArmElbowStart, locIKDistArmStart,
+                       ctrlElbow,
+                       jntShoulders,
+                       leftRight, ikBndJnts=None):
+
+        if ikBndJnts is None:
+            dontSkipIkBnd = False
+
+        else:
+            dontSkipIkBnd = True
+            # group all arm nodes under the arm
+        grpArm = "GRP_{0}arm".format(leftRight)
+        mc.group(n=grpArm, em=True, w=True)
+        mc.parent(bndJnts[0], fkJnts[0], ikJnts[0], bindJntTwistEnd, bindJntTwistMid, bindJntTwistStart, grpArm)
+
+        mc.parent(grpIKVisArm, grpIKConstArm, grpArmTwist, grpArm)
+        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpArm)
+        mc.parent(ctrlElbow, grpArm)
+
+        if dontSkipIkBnd:
+            mc.parent(ikBndJnts[0], grpArm)
+
+        for i in range(len(twistJntsArrayOfArrays)):
+            mc.parent(twistJntsArrayOfArrays[i][0], grpArm)
+
+        mc.parent(grpArm, ctrlRoot)
+
+        ##########
+        # organize the do not touch arm
+        grpDNTArm = "GRP_DO_NOT_TOUCH_{0}arm".format(leftRight)
+        mc.group(n=grpDNTArm, em=True, w=True)
+        mc.parent(grpDNTArm, grpArm)
+        # group everything so far except GRP_IK_vis, CTRL_l_elbow, and the FK  Jnts
+        mc.parent(bndJnts[0], ikJnts[0], bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd, grpDNTArm)
+        mc.parent(grpIKConstArm, grpArmTwist, grpDNTArm)
+        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
+
+        if dontSkipIkBnd:
+            mc.parent(ikBndJnts[0], grpDNTArm)
+
+        # Group JNT_IK_l_upperArm, LOC_l_upperArm_to_elbowLengthStart, LOC_IK_l_arm_lengthStart
+        grpIKConstArmBase = "GRP_IKConst_{0}armBase".format(leftRight)
+        mc.group(n=grpIKConstArmBase, em=True, w=True)
+        mc.parent(grpIKConstArmBase, grpDNTArm)
+
+        # move the pivot to the base of the arm
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpIKConstArmBase, ws=True, pivots=pivotTranslate)
+        mc.parent(ikJnts[0], locDistArmElbowStart, locIKDistArmStart, grpIKConstArmBase)
+
+        if dontSkipIkBnd:
+            mc.parent(ikBndJnts[0], grpIKConstArmBase)
+        # create a space locator
+        locShoulderSpace = "LOC_shoulderSpace_{0}arm".format(leftRight)
+        mc.spaceLocator(p=(0, 0, 0), name=locShoulderSpace)
+
+        mc.matchTransform(locShoulderSpace, jntShoulders[-1], pos=True)
+        # CRU.constrainMove(jntShoulders[-1], locShoulderSpace, point=True)
+        mc.parent(locShoulderSpace, jntShoulders[-1])
+
+        mc.pointConstraint(locShoulderSpace, grpIKConstArmBase)
+        ##########
+        grpBNDConstArm = "GRP_BNDConst_{0}arm".format(leftRight)
+        mc.group(n=grpBNDConstArm, em=True, w=True)
+        mc.parent(grpBNDConstArm, grpDNTArm)
+        mc.parent(bndJnts[0], grpBNDConstArm)
+
+        # move to the pivot of the upper arm joint
+        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
+        mc.xform(grpBNDConstArm, ws=True, pivots=pivotTranslate)
+        mc.pointConstraint(locShoulderSpace, grpBNDConstArm)
+
+        return grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace'''
+
     def organizeArm(self, ctrlRoot, bndJnts, ikJnts, fkJnts,
                     bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
                     twistJntsArrayOfArrays,
@@ -934,9 +1054,19 @@ class pcCreateRigAlt05Arms(UI):
         # create a space locator
         locShoulderSpace = "LOC_shoulderSpace_{0}arm".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locShoulderSpace)
+        # I get this weird error where the GRP_BNDConst_r_arm_orientConstraint1 got rotated 360 degrees depending on the build, causing this weird error when switching between IK and FK arms
+        grpAutoShldr = "GRP_AUTO_shoulderSpace_{0}arm".format(leftRight)
+        mc.group(n=grpAutoShldr, em=True, w=True)
 
-        CRU.constrainMove(jntShoulders[-1], locShoulderSpace, point=True)
-        mc.parent(locShoulderSpace, jntShoulders[-1])
+        grpOffsetShldr = "GRP_OFFSET_shoulderSpace_{0}arm".format(leftRight)
+        mc.group(n=grpOffsetShldr, em=True, w=True)
+
+        mc.parent(locShoulderSpace, grpAutoShldr)
+        mc.parent(grpAutoShldr, grpOffsetShldr)
+
+        mc.matchTransform(grpOffsetShldr, jntShoulders[-1], pos=True)
+        # CRU.constrainMove(jntShoulders[-1], locShoulderSpace, point=True)
+        mc.parent(grpOffsetShldr, jntShoulders[-1])
 
         mc.pointConstraint(locShoulderSpace, grpIKConstArmBase)
         ##########
@@ -1298,7 +1428,7 @@ class pcCreateRigAlt05Arms(UI):
 
         '''uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
         lArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[1])[0]))'''
-
+        jntOrientTracking = []
         # Creating FK and IK Joints
         bndJnts, fkJnts, ikJnts = self.getBndFkIkJnts(jntArmArray)
 
@@ -1333,7 +1463,6 @@ class pcCreateRigAlt05Arms(UI):
             ikJntsUse = ikJnts
         ctrlArmSettings, fkikBlendName, fkVis, ikVis = self.createSettings(jntArmArray, isLeft, name, colourTU, fkJnts,
                                                                            ikJntsUse, bndJnts, ctrlIKArm)
-
         # set visibility
         tangentToUse = ["linear", "step"]
 
@@ -1344,18 +1473,22 @@ class pcCreateRigAlt05Arms(UI):
         # Twistable segments
         # Adding the twist joints
         # twistJntsArrayOfArrays is an array of arrays
-        geoJntArray, twistJntsArrayOfArrays = self.makeTwists(5, jntArmArray, geoJntArray)
+
+        defFKIKBlend = mc.getAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName))
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
+        geoJntArray, twistJntsArrayOfArrays = self.makeTwists(5, jntArmArray, geoJntArray, leftRight)
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), defFKIKBlend)
         grpArmTwist = "GRP_{0}armTwist".format(leftRight)
         mc.group(n=grpArmTwist, em=True, w=True)
 
         ikUpperArm = self.makeCrvSpline(twistJntsArrayOfArrays[0], leftRight, "upperArm", grpArmTwist)
         ikLowerArm = self.makeCrvSpline(twistJntsArrayOfArrays[1], leftRight, "lowerArm", grpArmTwist)
-
         ikArms = [ikUpperArm, ikLowerArm]
         crvArms = [ikUpperArm[2], ikLowerArm[2]]
 
         bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd = self.bindArmTwists(twistJntsArrayOfArrays, leftRight,
                                                                                  ikArms)
+
         # upperArm parentConstraints start, lowerArm parentConstraints mid, hand parentConstraints end
         mc.parentConstraint(jntArmArray[0], bindJntTwistStart)
         mc.parentConstraint(jntArmArray[1], bindJntTwistMid)
@@ -1368,8 +1501,10 @@ class pcCreateRigAlt05Arms(UI):
         ctrlFKLengthKeyArray = self.makeFKStretchJnt(fkJnts, "Arm")
         # FK Scale Geometry
 
-        crvInfoUpper, armNrmlzDivUpper = self.makeFKStretchTwists(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0])
-        crvInfoLower, armNrmlzDivLower = self.makeFKStretchTwists(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1])
+        crvInfoUpper, armNrmlzDivUpper = self.makeBndStretchTwists(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0],
+                                                                     leftRight)
+        crvInfoLower, armNrmlzDivLower = self.makeBndStretchTwists(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1],
+                                                                     leftRight)
         ##########
 
         ##########
@@ -1394,7 +1529,6 @@ class pcCreateRigAlt05Arms(UI):
         locDistElbowHandEnd, distElbowHand, distArmElbowShape, distElbowHandShape, \
         blndUpperArmStretchChoice, blndLowerArmStretchChoice = valsElbowSnap
         ##########
-
         # IK/FK hybrid elbow
         # Elbow FK Forearm
         fkJntsElbow, fkElbow = self.makeFKElbow(fkJnts, ctrlElbow)
@@ -1428,6 +1562,7 @@ class pcCreateRigAlt05Arms(UI):
         locShldrDistStart, locShldrDistEnd, distShldr, distShldrShape = self.makeShoulderStretchJoint(jntShoulders,
                                                                                                       locShldrTemp,
                                                                                                       leftRight)
+
         if checkGeo:
             self.makeShoulderStretchGeo(jntShoulders, leftRight)
 
@@ -1435,10 +1570,12 @@ class pcCreateRigAlt05Arms(UI):
 
         # It's fine to put this here
         if checkGeo:
+            defFKIKBlend = mc.getAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName))
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
-
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), defFKIKBlend)
         ##########
-        # Arm global transform and cleanup
+        # Part 27: Arm global transform and cleanup
         # Shoulder Organizing
         grpShoulder, grpDNTShoulder = self.makeShoulderGroup(ctrlRoot, ctrlShoulder,
                                                              jntShoulders, jntIKShoulder,
@@ -1458,6 +1595,17 @@ class pcCreateRigAlt05Arms(UI):
                              ctrlElbow,
                              jntShoulders,
                              leftRight, ikBndJnts=ikBndJnts)
+        '''grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace = \
+            self.organizeArmBak(ctrlRoot, bndJnts, ikJnts, fkJnts,
+                             bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
+                             twistJntsArrayOfArrays,
+                             grpIKVisArm, grpIKConstArm, grpArmTwist,
+                             distArmElbow, distElbowHand, distIKArmLen,
+                             locDistArmElbowStart, locIKDistArmStart,
+                             ctrlElbow,
+                             jntShoulders,
+                             leftRight, ikBndJnts=ikBndJnts)'''
+
         ctrlGimbalCorr, grpGimbalArm, blndGimbalToggle, grpFKConst = self.gimbalFix(grpArm, fkJnts, bndJnts,
                                                                                     grpBNDConstArm, ctrlArmSettings,
                                                                                     fkikBlendName, fkVis,
@@ -1465,7 +1613,6 @@ class pcCreateRigAlt05Arms(UI):
                                                                                     leftRight)
 
         # Arm space
-
         fkOrientConstr, bndOrientConstr = self.armSpaceSetup(locShoulderSpace, grpDNTTorso, ctrlRoot, grpFKConst,
                                                              grpBNDConstArm, ctrlArmSettings,
                                                              colourTU, leftRight)
@@ -1513,7 +1660,9 @@ class pcCreateRigAlt05Arms(UI):
         CRU.layerEdit(jntShoulders[-1], bndAltLayer=True, noRecurse=True)
 
         CRU.layerEdit(ikJnts, newLayerName=ikLayer)
-        CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
+
+        if cbSpecialStretch:
+            CRU.layerEdit(ikBndJnts, newLayerName=ikLayer)
 
         CRU.layerEdit(bndJnts, bndLayer=True, noRecurse=True)
 
@@ -1578,7 +1727,7 @@ class pcCreateRigAlt05Arms(UI):
 
         return ctrlIKSwitch
 
-    def makeTwists(self, numTwists, jntArmArray, geoJntArray, *args):
+    '''def makeTwistsBak(self, numTwists, jntArmArray, geoJntArray, *args):
         numTwistsM1 = numTwists - 1
 
         twists = numTwists
@@ -1594,6 +1743,56 @@ class pcCreateRigAlt05Arms(UI):
             nextJntXVal = mc.getAttr("{0}.tx".format(nextJnt))
             nextJntIncrement = nextJntXVal / (numTwistsM1)
             twistJnt = mc.duplicate(val, po=True, n="ToDelete")
+
+            # create the joint twists at the proper location
+            for x in range(twists):
+                valx = x + 1
+                twistTempName = "{0}_seg{1}".format(val, valx)
+
+                twistTemp = mc.duplicate(twistJnt, n=twistTempName)[0]
+
+                twistJntsSubgroup.append(twistTemp)
+
+                mc.parent(twistTemp, jntArmArray[i])
+                mc.setAttr("{0}.tx".format(twistTempName), nextJntIncrement * x)
+                if x != 0:
+                    # we want to skip for the first value for parenting the subjoints
+
+                    mc.parent(twistTemp, twistJntsSubgroup[x - 1])
+
+                geoJntArray.append(twistTempName)
+            # puts the top value into worldspace
+            mc.parent(twistJntsSubgroup[0], w=True)
+
+            mc.delete(twistJnt)
+
+            twistJntsArrayOfArrays.append(twistJntsSubgroup)
+
+        return geoJntArray, twistJntsArrayOfArrays'''
+
+    def makeTwists(self, numTwists, jntArmArray, geoJntArray, leftRight, *args):
+        if leftRight == self.valLeft:
+            locRotZ = 0
+        else:
+            locRotZ = 180
+        numTwistsM1 = numTwists - 1
+
+        twists = numTwists
+        twistJntsArrayOfArrays = []
+
+        for i in range(len(jntArmArray)):
+            if "Arm" not in jntArmArray[i]:
+                # skip everything if there's no arm in the
+                continue
+            twistJntsSubgroup = []
+            val = str(jntArmArray[i])
+            nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
+            nextJntXVal = mc.getAttr("{0}.tx".format(nextJnt))
+            nextJntIncrement = nextJntXVal / (numTwistsM1)
+            twistJnt = mc.duplicate(val, po=True, n="ToDelete")
+            mc.rotate(locRotZ, twistJnt, z=True, os=True, r=True)
+            if leftRight == self.valRight:
+                mc.makeIdentity(twistJnt, r=True, a=True)
 
             # create the joint twists at the proper location
             for x in range(twists):
@@ -1737,7 +1936,7 @@ class pcCreateRigAlt05Arms(UI):
         return
 
     def tgpMakeBC(self, *args):
-        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
+        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
