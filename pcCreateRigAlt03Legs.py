@@ -247,7 +247,7 @@ class pcCreateRigAlt03Legs(UI):
         breakVal = "_{0}".format(leftRight)
 
         ctrlTwistValAttr = bndTwistee.split("{0}".format(breakVal))[1]
-
+        ctrlTwistValAttrName = "{0}Twist".format(ctrlTwistValAttr)
         mc.addAttr(ctrlFootSettings, longName=ctrlTwistValAttr, at="float", k=True, min=0, max=1, dv=1)
 
         twistJntsSubgroup = []
@@ -518,17 +518,23 @@ class pcCreateRigAlt03Legs(UI):
             else:
                 if self.checkAnkleTwist:
                     footJnt = "ankleTwist"
+                    orientVal = (0, 1, 0)
+                    turn = True
+
 
                 else:
                     footJnt = "foot"
-                orientVal = (0, 1, 0)
+                    orientVal = (0, 1, 0)
+                    turn = False
                 if footJnt in fkJnt:
                     ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=orientVal,
                                                               colourTU=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[:]")
-                    mc.rotate(90, z=True, r=True, os=True)
-
+                    if turn:
+                        mc.rotate(90, z=True, r=True, os=True)
+                    else:
+                        mc.rotate(90, z=True, r=True, ws=True)
                     set = True
                 elif "ball" in fkJnt:
 
@@ -1400,10 +1406,11 @@ class pcCreateRigAlt03Legs(UI):
             fkSwitchJnts.append(rename)
 
         # put the ankleTwist under foot
-        CRU.lockHideCtrls(jntAnkleTwistSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
-        mc.parent(jntAnkleTwistSwitch, bndFoot)
-        mc.setAttr("{0}.visibility".format(jntAnkleTwistSwitch), False)
-        CRU.lockHideCtrls(jntAnkleTwistSwitch, visibility=True)
+        if self.checkAnkleTwist:
+            CRU.lockHideCtrls(jntAnkleTwistSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
+            mc.parent(jntAnkleTwistSwitch, bndFoot)
+            mc.setAttr("{0}.visibility".format(jntAnkleTwistSwitch), False)
+            CRU.lockHideCtrls(jntAnkleTwistSwitch, visibility=True)
 
         return fkSwitchJnts
 
