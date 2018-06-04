@@ -9,6 +9,7 @@ import maya.cmds as mc
 from functools import partial
 import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+
 reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
@@ -235,149 +236,165 @@ class pcCreateRigAlt03Legs(UI):
         self.jointRoot = selName
         return self.jointArray
 
-    def makeTwists(self, numTwists, jntLegArray, geoJntArray, ctrlFootSettings, ctrlIKFoot,
-                   leftRight, *args):
+    def makeTwists(self, mkTwists, bndTwistee, bndTwister, ctrlFootSettings, ctrlIKFoot,
+                   leftRight, fkikBlendName=None, *args):
+        mc.setAttr("{0}.fkik_blend".format(ctrlFootSettings), 0)  # to delete
         # colourTU and isLeft is for a special part of the code which lets us create a foot control
-        numTwistsPlus1 = numTwists + 1
-        twists = numTwists
+        numTwistsP1 = mkTwists + 1
+        twists = mkTwists
         twistJnts = []
         twistExpression = ""
         breakVal = "_{0}".format(leftRight)
 
-        self.lowerTwistVal = "lowerLegTwist"
-        self.upperTwistVal = "upperLegTwist"
+        ctrlTwistValAttr = bndTwistee.split("{0}".format(breakVal))[1]
 
-        mc.addAttr(ctrlFootSettings, longName=self.lowerTwistVal, at="float", k=True, min=0, max=1, dv=1)
-        mc.addAttr(ctrlFootSettings, longName=self.upperTwistVal, at="float", k=True, min=0, max=1, dv=1)
+        mc.addAttr(ctrlFootSettings, longName=ctrlTwistValAttr, at="float", k=True, min=0, max=1, dv=1)
 
-        for i in range(len(jntLegArray)):
-            twistJntsSubgroup = []
-            val = str(jntLegArray[i])
-            # we want to affect the ankle twist
-            if i == 0:
-                nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
-                nextJntVal = nextJnt
+        twistJntsSubgroup = []
+        nextJnt = mc.listRelatives(bndTwistee, c=True, type="joint")[0]  # this is for the length
+
+        # with the ankle, we can create the control
+
+        nextJntXVal = mc.getAttr("{0}.tx".format(nextJnt))
+        nextJntIncrement = nextJntXVal / (mkTwists)
+        twistJntToDel = mc.duplicate(bndTwistee, po=True, n="ToDelete")  # duplicate the joint only
+
+        # create the joint twists at the proper location
+
+        # upper leg is positive, lower leg is negative
+        '''
+        # The calculation should look like this. The negative values may not be needed
+        JNT_l_upperLegSeg1.rotateY = CTRL_l_lowerLeg.rotateX * 0.0* CTRL_l_foot.upperLegTwist;
+        JNT_l_upperLegSeg2.rotateY = CTRL_l_lowerLeg.rotateX * 0.25* CTRL_l_foot.upperLegTwist;
+        JNT_l_upperLegSeg3.rotateY = CTRL_l_lowerLeg.rotateX * 0.5* CTRL_l_foot.upperLegTwist;
+        JNT_l_upperLegSeg4.rotateY = CTRL_l_lowerLeg.rotateX * 0.75* CTRL_l_foot.upperLegTwist;
+        JNT_l_upperLegSeg5.rotateY = CTRL_l_lowerLeg.rotateX * 1* CTRL_l_foot.upperLegTwist;
+
+        JNT_l_lowerLegSeg1.rotateY = JNT_l_ankleTwist.rotateY * -0.0* CTRL_l_foot.lowerLegTwist;
+        JNT_l_lowerLegSeg2.rotateY = JNT_l_ankleTwist.rotateY * -0.25* CTRL_l_foot.lowerLegTwist;
+        JNT_l_lowerLegSeg3.rotateY = JNT_l_ankleTwist.rotateY * -0.5* CTRL_l_foot.lowerLegTwist;
+        JNT_l_lowerLegSeg4.rotateY = JNT_l_ankleTwist.rotateY * -0.75* CTRL_l_foot.lowerLegTwist;
+        JNT_l_lowerLegSeg5.rotateY = JNT_l_ankleTwist.rotateY * -1* CTRL_l_foot.lowerLegTwist;
+        '''
+
+        twistInverse = 1.0 / (mkTwists)
+
+        # names the multiplication node
+        # we want it to divide it by the
+        # gives us the lengths
+        # creates scaling node setup
+        multNodeSX = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "ScaleTwists_MUL")
+        mc.shadingNode("multiplyDivide", n=multNodeSX, au=True)
+        mc.setAttr("{0}.operation".format(multNodeSX), 2)
+        mc.connectAttr("{0}.translateX".format(nextJnt), "{0}.input1X".format(multNodeSX))
+        mc.setAttr("{0}.input2X".format(multNodeSX), nextJntXVal)
+
+        # gives us the rotations
+        multNodeRX = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "RotTwists_MUL")
+        mc.shadingNode("multiplyDivide", n=multNodeRX, au=True)
+        mc.setAttr("{0}.operation".format(multNodeRX), 1)
+        # mc.connectAttr("{0}.tx".format(nextJnt), "{0}.input1X".format(multNodeRX))
+        mc.setAttr("{0}.input2X".format(multNodeRX), twistInverse)
+
+        # gives us the percent by which we twist
+        multNodePercent = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr,
+                                             "PercentTwists_MUL")  # note: this is a test name
+        mc.shadingNode("multiplyDivide", n=multNodePercent, au=True)
+        mc.setAttr("{0}.operation".format(multNodePercent), 1)
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ctrlTwistValAttr), "{0}.input1X".format(multNodePercent))
+        mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodePercent))
+
+        if "foot" in nextJnt:
+            if self.checkAnkleTwist:
+                rotVal = "X"
             else:
-                nextJnts = mc.listRelatives(val, c=True, type="joint", ad=True)
-                nextJnt = nextJnts[-2]
-                nextJntVal = nextJnts[-1]
+                rotVal = "Z"
+            mv = -1
+        else:
+            rotVal = "X"
+            mv = 1
 
-                # with the ankle, we can create the control
+        useAnkleTwist = False
+        if "ankleTwist" in bndTwister:
+            useAnkleTwist = True
+            setupFKFootSub = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_SUB")
+            # get 1-FKIK value
+            mc.shadingNode("plusMinusAverage", n=setupFKFootSub, au=True)
+            mc.setAttr("{0}.operation".format(setupFKFootSub), 2)  # subtract
+            mc.setAttr("{0}.input1D[0]".format(setupFKFootSub), 1)
+            mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkikBlendName), "{0}.input1D[1]".format(setupFKFootSub))
 
-            nextJntXVal = mc.getAttr("{0}.tx".format(nextJntVal))
-            nextJntIncrement = nextJntXVal / (numTwistsPlus1)
-            twistJnt = mc.duplicate(val, po=True, n="ToDelete")  # duplicate the joint only
+            # we want to multiply the FK twist by the FK blend value (1-fkikBlend),
+            # multiply it by 2 to offset the average, and then plug the value into the average calculation
+            fkTwister = bndTwister.replace("BND", "FK").replace("JNT", "CTRL")
+            # probably easier to just replace the BND with FK than to import it as a parameter
+            # setting up the FK
+            setupFKFootMul = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_MUL")
+            mc.shadingNode("multiplyDivide", n=setupFKFootMul, au=True)
+            mc.connectAttr("{0}.rotateX".format(fkTwister), "{0}.input1X".format(setupFKFootMul))
+            mc.connectAttr("{0}.output1D".format(setupFKFootSub), "{0}.input2X".format(setupFKFootMul))
 
-            # create the joint twists at the proper location
+            setupFKFootMulOffset = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_offsetAVG_MUL")
+            mc.shadingNode("multiplyDivide", n=setupFKFootMulOffset, au=True)
+            mc.connectAttr("{0}.outputX".format(setupFKFootMul), "{0}.input1X".format(setupFKFootMulOffset))
+            mc.setAttr("{0}.input2X".format(setupFKFootMulOffset), 2)
 
-            # upper leg is positive, lower leg is negative
-            '''
-            # The calculation should look like this. The negative values may not be needed
-            JNT_l_upperLegSeg1.rotateY = JNT_l_lowerLeg.rotateY * 0.25* CTRL_l_foot.upperLegTwist;
-            JNT_l_upperLegSeg2.rotateY = JNT_l_lowerLeg.rotateY * 0.5* CTRL_l_foot.upperLegTwist;
-            JNT_l_upperLegSeg3.rotateY = JNT_l_lowerLeg.rotateY * 0.75* CTRL_l_foot.upperLegTwist;
-            
-            JNT_l_lowerLegSeg1.rotateY = JNT_l_ankleTwist.rotateY * -0.25* CTRL_l_foot.lowerLegTwist;
-            JNT_l_lowerLegSeg2.rotateY = JNT_l_ankleTwist.rotateY * -0.5* CTRL_l_foot.lowerLegTwist;
-            JNT_l_lowerLegSeg3.rotateY = JNT_l_ankleTwist.rotateY * -0.75* CTRL_l_foot.lowerLegTwist;
-            '''
-            for x in range(twists):
+            if leftRight is self.valLeft:
+                lrm = -1
+            else:
+                lrm = 1
 
-                valx = x + 1
-                twistTempName = "{0}Seg{1}".format(val, valx)
+            # setting up the IK
+            setupIKFootMul = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "IKSetupTwist_MUL")
+            mc.shadingNode("multiplyDivide", n=setupIKFootMul, au=True)
+            mc.connectAttr("{0}.rotateY".format(ctrlIKFoot), "{0}.input1X".format(setupIKFootMul))
+            mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkikBlendName), "{0}.input2X".format(setupIKFootMul))
 
-                # names the multiplication node
-                nameValMul = "{0}{1}".format(leftRight, twistTempName.split(leftRight)[1])
+            setupIKFootMulOffset = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "IKSetupTwist_offsetAVG_MUL")
+            mc.shadingNode("multiplyDivide", n=setupIKFootMulOffset, au=True)
+            mc.connectAttr("{0}.outputX".format(setupIKFootMul), "{0}.input1X".format(setupIKFootMulOffset))
+            mc.setAttr("{0}.input2X".format(setupIKFootMulOffset), lrm * 2)
 
-                twistTemp = mc.duplicate(twistJnt, n=twistTempName)
+            # now get the average between the FK and IK
+            avgFootRot = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "RotTwist_AVG")
+            mc.shadingNode("plusMinusAverage", n=avgFootRot, au=True)
+            mc.setAttr("{0}.operation".format(avgFootRot), 3)  # set to average
+            mc.connectAttr("{0}.outputX".format(setupFKFootMulOffset), "{0}.input1D[0]".format(avgFootRot))
+            mc.connectAttr("{0}.outputX".format(setupIKFootMulOffset), "{0}.input1D[1]".format(avgFootRot))
 
-                mc.parent(twistTemp, jntLegArray[i])
+        if useAnkleTwist:
+            mnRXinput1X = "{0}.output1D".format(avgFootRot)
+        else:
+            mnRXinput1X = "{0}.rotate{1}".format(nextJnt, rotVal)
 
-                twistInverse = 1.0 / (numTwistsPlus1)
-                '''
-                # this was not necessary, but I am still keeping this as other rigs may still suffer this problem
-                if i == 0:
-                    twistInverse = 1.0 / (numTwistsPlus1)
-                else:
-                    twistInverse = -1.0 / (numTwistsPlus1)'''
-                multNodeTX = "{0}_TRANS_MUL".format(nameValMul)  # note: this is a test name
-                mc.shadingNode("multiplyDivide", n=multNodeTX, au=True)
-                mc.setAttr("{0}.operation".format(multNodeTX), 1)
-                mc.setAttr("{0}.input2X".format(multNodeTX), valx * twistInverse)
+        mc.setAttr("{0}.input2X".format(multNodeRX), twistInverse * mv)
+        mc.connectAttr(mnRXinput1X, "{0}.input1X".format(multNodeRX))
 
-                mc.connectAttr("{0}.tx".format(nextJntVal), "{0}.input1X".format(multNodeTX))
-                mc.connectAttr("{0}.outputX".format(multNodeTX), "{0}.translateX".format(twistTempName))
+        twistJnts = []
+        for x in range(numTwistsP1):
+            valx = x + 1
+            twistTemp = "{0}Seg{1}".format(bndTwistee, valx)
 
-                if "foot" in nextJnt:
-                    if not self.checkAnkleTwist:
-                        rotVal = "Z"
-                    else:
-                        rotVal = "X"
-                    m = -1
-                else:
-                    rotVal = "X"
-                    m = 1
-                # we need to take into account the foot and the ankleTwist.
-                useAnkleTwist = False
-                if "ankleTwist" in nextJnt:
-                    useAnkleTwist = True
-                    avgFootRot = "{0}RotTwist_AVG".format(twistTempName)
-                    mc.shadingNode("plusMinusAverage", n=avgFootRot, au=True)
-                    mc.setAttr("{0}.operation".format(avgFootRot), 2)  # set to average
-                    mc.connectAttr("{0}.rotate{1}".format(nextJnt, rotVal), "{0}.input1D[0]".format(avgFootRot))
+            # creates twists
+            mc.duplicate(twistJntToDel, n=twistTemp)
+            twistJnts.append(twistTemp)
+            # we want to parent these under the leg or to the new bones
+            if x == 0:
+                mc.parent(twistTemp, bndTwistee)
+            else:
+                mc.parent(twistTemp, twistJnts[x - 1])
+                # connect the values to the length of the leg. We can skip the first one since it's at the leg base
+                mc.setAttr("{0}.translateX".format(twistTemp), nextJntIncrement)
 
-                    avgFootRotInv = "{0}RotTwistInvert_AVG".format(twistTempName)
-                    mc.shadingNode("multiplyDivide", n=avgFootRotInv, au=True)
+                mc.connectAttr("{0}.outputX".format(multNodePercent), "{0}.rotateX".format(twistTemp))
+            mc.connectAttr("{0}.outputX".format(multNodeSX), "{0}.scaleX".format(twistTemp))
 
-                    if leftRight is self.valLeft:
-                        lrm = 1
-                    else:
-                        lrm = -1
-                    mc.connectAttr("{0}.rotateY".format(ctrlIKFoot), "{0}.input1X".format(avgFootRotInv))
-                    mc.setAttr("{0}.input2X".format(avgFootRotInv), lrm)
+        ####
+        # if we're using ankleTwist, we want an average of the ctrlIKFoot and the ankleTwist
+        # otherwise, we use the default
 
-                    mc.connectAttr("{0}.outputX".format(avgFootRotInv), "{0}.input1D[1]".format(avgFootRot))
-
-                # if we're using ankleTwist, we want an average of the ctrlIKFoot and the ankleTwist
-                # otherwise, we use the default
-                if useAnkleTwist:
-                    mnRXinput1X = "{0}.output1D".format(avgFootRot)
-                else:
-                    mnRXinput1X = "{0}.rotate{1}".format(nextJnt, rotVal)
-
-                multNodeRX = "{0}_ROT_MUL".format(nameValMul)  # note: this is a test name
-                mc.shadingNode("multiplyDivide", n=multNodeRX, au=True)
-                mc.setAttr("{0}.operation".format(multNodeRX), 1)
-                mc.setAttr("{0}.input2X".format(multNodeRX), valx * twistInverse * m)
-                mc.connectAttr(mnRXinput1X, "{0}.input1X".format(multNodeRX))
-
-                if "upper" in val:
-                    legType = self.upperTwistVal
-                elif "lower" in val:
-                    legType = self.lowerTwistVal
-
-                multNodeTwist = "{0}_TWIST_MUL".format(nameValMul)  # note: this is a test name
-                mc.shadingNode("multiplyDivide", n=multNodeTwist, au=True)
-                mc.setAttr("{0}.operation".format(multNodeTwist), 1)
-                mc.connectAttr("{0}.{1}".format(ctrlFootSettings, legType), "{0}.input1X".format(multNodeTwist))
-                mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodeTwist))
-
-                mc.connectAttr("{0}.outputX".format(multNodeTwist), "{0}.rotateX".format(twistTempName))
-
-                twistJntsSubgroup.append(twistTemp[0])
-
-                '''twistExpression += "{0}.rotateX = {1}.rotateX * {2}*{3}.{4};\n".format(twistTempName, nextJnt,
-                                                                                       valx * twistInverse,
-                                                                                       ctrlFootSettings, legType)'''
-                geoJntArray.append(twistTempName)
-
-            mc.delete(twistJnt)
-
-            twistJnts.append(twistJntsSubgroup)
-
-            twistExpression += "\n"
-
-        return geoJntArray
+        mc.delete(twistJntToDel)
+        return twistJnts
 
     def tgpCreateLimbFKIFList(self, jntsTemp, textToReplace="", textReplacement="", stripLastVal=0, deleteThis=True,
                               renameThis=True, addToEnd="", *args):
@@ -405,7 +422,6 @@ class pcCreateRigAlt03Legs(UI):
         return jntsReturn
 
     def makeBlendBasic(self, jntsSrc1, jntsSrc2, jntsTgt, ctrl, ctrlAttr, rotate, translate, override=False, *args):
-
         blndNodeTrans = []
         blndNodeRot = []
         # colour2 is at 0, colour1 is at 1
@@ -471,8 +487,6 @@ class pcCreateRigAlt03Legs(UI):
         return jntsReturn
 
     def createFKCtrls(self, fkJnts, colourTU, leftRight, *args):
-
-
         if leftRight == self.valLeft:
             m = 1
         else:
@@ -533,7 +547,6 @@ class pcCreateRigAlt03Legs(UI):
         return fkJnts
 
     def makeFKStretch(self, fkJnts, *args):
-
         ctrlFKLengthKeyArray = []
         for i in range(len(fkJnts)):
             fkJnt = fkJnts[i]
@@ -584,7 +597,6 @@ class pcCreateRigAlt03Legs(UI):
         mc.scale(.9, xz=True)
         mc.scale(1.2, z=True)
 
-
         mc.select("{0}.cv[3:8]".format(ctrlIKFoot))
         mc.move(m * size * 1.4, moveZ=True, r=True)
 
@@ -592,7 +604,8 @@ class pcCreateRigAlt03Legs(UI):
         mc.move(size * .1, moveX=True, r=True)
 
         mc.select("{0}.cv[:]".format(ctrlIKFoot))
-        mc.move( -size * .1, moveX=True, r=True) # this may be a point you need to personalize for the rig more than usual
+        mc.move(-size * .1, moveX=True,
+                r=True)  # this may be a point you need to personalize for the rig more than usual
 
         mc.makeIdentity(ctrlIKFoot, apply=True)
         mc.select(cl=True)
@@ -635,7 +648,6 @@ class pcCreateRigAlt03Legs(UI):
         return ikLegs
 
     def makeIKStretch(self, ikJnts, leftRight, ctrlIKFoot, *args):
-
         if leftRight == self.valLeft:
             # need to make adjustments for the values making a mirror
             m = 1
@@ -697,7 +709,6 @@ class pcCreateRigAlt03Legs(UI):
         return locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray
 
     def createDistanceDimensionNode(self, startLoc, endLoc, lenNodeName, toHide=False):
-
         distDimShape = mc.distanceDimension(sp=(0, 0, 0), ep=(0, 0, 0))
         mc.connectAttr("{0}.worldPosition".format(startLoc), "{0}.startPoint".format(distDimShape), f=True)
         mc.connectAttr("{0}.worldPosition".format(endLoc), "{0}.endPoint".format(distDimShape), f=True)
@@ -995,7 +1006,6 @@ class pcCreateRigAlt03Legs(UI):
         return
 
     def createNonUniformStretchNoFlip(self, ctrlIKFoot, leftRight, animCrvNoFlip, ikJntsNoFlip, *args):
-
         akUpperLegLen = "autoKneeUpperLegLength"
         mc.addAttr(ctrlIKFoot, longName=akUpperLegLen, at="float", k=True, min=0, dv=1)
         akLowerLegLen = "autoKneeLowerLegLength"
@@ -1081,7 +1091,6 @@ class pcCreateRigAlt03Legs(UI):
                     disSnapUpper, disSnapLower,
                     leftRight,
                     ctrlRootTrans, *args):
-
         # move the objects into a grp_leg
         grpLeg = "GRP_{0}leg".format(leftRight)
         mc.group(n=grpLeg, w=True, em=True)
@@ -1129,7 +1138,6 @@ class pcCreateRigAlt03Legs(UI):
                  grpDNTTorso, ctrlRootTrans,
                  ctrlFootSettings,
                  leftRight, *args):
-
         locHipSpace = "LOC_hipSpace_{0}leg".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locHipSpace)
         todelete = mc.pointConstraint(grpBNDConst, locHipSpace)
@@ -1167,7 +1175,6 @@ class pcCreateRigAlt03Legs(UI):
         return
 
     def setOrientLegDriver(self, ctrlLimb, enumName, driven, locArray, *args):
-
         rangeVal = len(locArray)
         rangeValNeg = rangeVal * -1
         w0w1Attr = mc.listAttr(driven)[rangeValNeg:]
@@ -1191,7 +1198,6 @@ class pcCreateRigAlt03Legs(UI):
                 CRU.lockHideCtrls(locArray[i], scale=True, visibility=True)
 
     def fkHipTwistFix(self, grpBNDConst, ctrlFootSettings, fkikBlendName, leftRight, *args):
-
         blndOrntChoice = "{0}leg_BNDOrientChoice".format(leftRight)
         mc.shadingNode("blendColors", au=True, name=blndOrntChoice)
         orntConst = mc.listRelatives(grpBNDConst, type="orientConstraint")[0]
@@ -1216,7 +1222,6 @@ class pcCreateRigAlt03Legs(UI):
                       disSnapUpper, disSnapLower,
                       blndNdUpperStretchChoice, blndNdLowerStretchChoice,
                       leftRight, *args):
-
         if leftRight == self.valLeft:
             m = 1
         else:
@@ -1302,7 +1307,6 @@ class pcCreateRigAlt03Legs(UI):
 
     def setIKStretchOption(self, ctrlFootSettings, ikJntsPV, ikJntsNoFlip, legLens,
                            leftRight, *args):
-
         # this is a test for personal expansion ideas
         # this needs to be later on, so we put this at the end
         ikStretchAttr = "IK_stretch"
@@ -1424,7 +1428,6 @@ class pcCreateRigAlt03Legs(UI):
                         geoJntArray,
 
                         *args):
-
         # create the FK and IK joints
         jntsTemp = mc.duplicate(bndJnts[0], rc=True)
         fkJnts = self.renameIKFKLimbs(jntsTemp, textToReplace="_BND_", textReplacement="_FK_", stripLastVal=1,
@@ -1495,14 +1498,21 @@ class pcCreateRigAlt03Legs(UI):
 
         # we need to put this here in case we have the ankleTwist option
         if self.checkboxTwists:
-            geoJntArray = self.makeTwists(3, bndJnts[:2], geoJntArray, ctrlFootSettings, ctrlIKFoot, leftRight)
+            mkTwists = 4
+            geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[0], bndJnts[1], ctrlFootSettings,
+                                                ctrlIKFoot, leftRight)
+            geoJntArray.extend(geoJntArrayExtend)
+            if self.checkAnkleTwist:
+                # use the foot for the foot twist
+                geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
+                                                    ctrlIKFoot, leftRight, fkikBlendName, )
+            else:
+                geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[2], ctrlFootSettings,
+                                                    ctrlIKFoot, leftRight)
+            geoJntArray.extend(geoJntArrayExtend)
 
         if self.checkGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
-
-            jntLegs = [x for x in geoJntArray if "Leg" in x[-3:] or "seg" in x.lower()]
-
-            CRU.tgpSetGeoManualStretch(jntLegs, keyWord="Seg")
 
             if not self.checkboxTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
@@ -1562,7 +1572,7 @@ class pcCreateRigAlt03Legs(UI):
         # return
 
     def tgpMakeBC(self, *args):
-        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
+        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
