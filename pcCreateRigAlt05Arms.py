@@ -263,12 +263,7 @@ class pcCreateRigAlt05Arms(UI):
         return ctrlArmSettings, fkikBlendName, fkVis, ikVis
 
     def bindArmTwists(self, twistJntsArrayOfArrays, leftRight, ikArms, *args):
-        uAxis = None
-        if leftRight == self.valLeft:
-            m = 1
-        else:
-            m = -1
-            uAxis = 5
+
 
         bindJntTwistStart = "JNT_{0}arm_bindStart".format(leftRight)
         bindJntTwistMid = "JNT_{0}arm_bindMid".format(leftRight)
@@ -309,8 +304,23 @@ class pcCreateRigAlt05Arms(UI):
         hdlLowerArm = ikArms[1][0]
 
         # the right upperArm seemd to do better with closestZ instead of negative Z
-        self.advancedTwistControls(hdlUpperArm, bindJntTwistStart, bindJntTwistMid, m, uAxis)
-        self.advancedTwistControls(hdlLowerArm, bindJntTwistMid, bindJntTwistEnd, m)
+        # alternatively, using Positive Y works
+        if leftRight == self.valLeft:
+            # this may need tweaking depending on the model
+            uArmUV = [0, -1, 0]
+            uArmUV2 = [0, -1, 0]
+
+            lArmUV = [0, 0, 1]
+            lArmUV2 = [0, 0, 1]
+        else:
+            uArmUV = [0, 1, 0]
+            uArmUV2 = [0, -1, 0]
+
+            lArmUV = [0, 0, -1]
+            lArmUV2 = [0, 0, -1]
+
+        self.advancedTwistControls(hdlUpperArm, bindJntTwistStart, bindJntTwistMid, uArmUV, uArmUV2, 1)
+        self.advancedTwistControls(hdlLowerArm, bindJntTwistMid, bindJntTwistEnd, lArmUV, lArmUV2, 4)
         ##########
 
         for i in range(len(cycleVis)):
@@ -328,7 +338,7 @@ class pcCreateRigAlt05Arms(UI):
         scls = mc.skinCluster(endJnt, startJnt, crvToUse, name=skinName, toSelectedBones=True,
                               bindMethod=0, skinMethod=0, nw=1, maximumInfluences=2)[0]
 
-    def advancedTwistControls(self, hdlArm, startJnt, endJnt, m, uAxis=None):
+    def advancedTwistControls(self, hdlArm, startJnt, endJnt, armUV, armUV2, uAxis=None):
         # this one may need a bit of tweaking manually
         if uAxis is None:
             uAxis = 4
@@ -342,17 +352,18 @@ class pcCreateRigAlt05Arms(UI):
 
         # up to positive Y / negative z
         mc.setAttr('{0}.dWorldUpAxis'.format(hdlArm), uAxis)
-        vm = m * 1
 
         # Up Vector and Up Vector 2 to 0, 0, 1
         # they may need to be opposite values on the left/right
-        mc.setAttr('{0}.dWorldUpVectorX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), vm)
 
-        mc.setAttr('{0}.dWorldUpVectorEndX'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), 0)
-        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), vm)
+
+        mc.setAttr('{0}.dWorldUpVectorX'.format(hdlArm), armUV[0])
+        mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), armUV[1])
+        mc.setAttr('{0}.dWorldUpVectorZ'.format(hdlArm), armUV[2])
+
+        mc.setAttr('{0}.dWorldUpVectorEndX'.format(hdlArm), armUV2[0])
+        mc.setAttr('{0}.dWorldUpVectorEndY'.format(hdlArm), armUV2[1])
+        mc.setAttr('{0}.dWorldUpVectorEndZ'.format(hdlArm), armUV2[2])
 
         # connects the joints to the right place
         mc.connectAttr(startJnt + ".worldMatrix[0]", hdlArm + ".dWorldUpMatrix")
@@ -1035,6 +1046,8 @@ class pcCreateRigAlt05Arms(UI):
         mc.parent(bndJnts[0], ikJnts[0], bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd, grpDNTArm)
         mc.parent(grpIKConstArm, grpArmTwist, grpDNTArm)
         mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
+        for i in range(len(twistJntsArrayOfArrays)):
+            mc.parent(twistJntsArrayOfArrays[i][0], grpDNTArm)
 
         if dontSkipIkBnd:
             mc.parent(ikBndJnts[0], grpDNTArm)
@@ -1490,7 +1503,8 @@ class pcCreateRigAlt05Arms(UI):
                                                                                  ikArms)
 
         # upperArm parentConstraints start, lowerArm parentConstraints mid, hand parentConstraints end
-        mc.parentConstraint(jntArmArray[0], bindJntTwistStart)
+        mc.pointConstraint(jntArmArray[0], bindJntTwistStart)
+        # mc.parentConstraint(jntArmArray[0], bindJntTwistStart) # this is the default, but I am experimenting a little
         mc.parentConstraint(jntArmArray[1], bindJntTwistMid)
         mc.parentConstraint(jntArmArray[2], bindJntTwistEnd)
 
@@ -1502,9 +1516,9 @@ class pcCreateRigAlt05Arms(UI):
         # FK Scale Geometry
 
         crvInfoUpper, armNrmlzDivUpper = self.makeBndStretchTwists(bndJnts[0], crvArms[0], twistJntsArrayOfArrays[0],
-                                                                     leftRight)
+                                                                   leftRight)
         crvInfoLower, armNrmlzDivLower = self.makeBndStretchTwists(bndJnts[1], crvArms[1], twistJntsArrayOfArrays[1],
-                                                                     leftRight)
+                                                                   leftRight)
         ##########
 
         ##########

@@ -9,6 +9,7 @@ import maya.cmds as mc
 from functools import partial
 import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+
 reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
@@ -660,10 +661,9 @@ class pcCreateRigAlt02Head(UI):
             eyeGrpArray.append(mc.group(ctrlEye, name=grpEye))
 
             # moves the eye into posiiton
-            todelete = mc.parentConstraint(eyeArray[i], eyeGrpArray[i], mo=False)
-            mc.delete(todelete)
+            mc.matchTransform(eyeGrpArray[i], eyeArray[i], pos=True, rot=True)
 
-            mc.move(radiusBase * 20, eyeGrpArray[i], z=True, r=True)
+            mc.move(radiusBase * 20, eyeGrpArray[i], z=True, r=True, os=True)
 
         # Create the eyes control
         eyesCtrlName = "CTRL_eyes"
@@ -879,7 +879,7 @@ class pcCreateRigAlt02Head(UI):
         return
 
     def tgpMakeBC(self, *args):
-        symmetry = CRU.checkSymmetry() # we want symmetry turned off for this process
+        # symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 

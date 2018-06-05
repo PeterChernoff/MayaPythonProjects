@@ -248,7 +248,7 @@ class pcCreateRigAlt03Legs(UI):
 
         ctrlTwistValAttr = bndTwistee.split("{0}".format(breakVal))[1]
         ctrlTwistValAttrName = "{0}Twist".format(ctrlTwistValAttr)
-        mc.addAttr(ctrlFootSettings, longName=ctrlTwistValAttr, at="float", k=True, min=0, max=1, dv=1)
+        mc.addAttr(ctrlFootSettings, longName=ctrlTwistValAttrName, at="float", k=True, min=0, max=1, dv=1)
 
         twistJntsSubgroup = []
         nextJnt = mc.listRelatives(bndTwistee, c=True, type="joint")[0]  # this is for the length
@@ -301,7 +301,7 @@ class pcCreateRigAlt03Legs(UI):
                                              "PercentTwists_MUL")  # note: this is a test name
         mc.shadingNode("multiplyDivide", n=multNodePercent, au=True)
         mc.setAttr("{0}.operation".format(multNodePercent), 1)
-        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ctrlTwistValAttr), "{0}.input1X".format(multNodePercent))
+        mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ctrlTwistValAttrName), "{0}.input1X".format(multNodePercent))
         mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodePercent))
 
         if "foot" in nextJnt:
