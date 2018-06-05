@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 
-class pcCreateRigAlt08RenameBlendshapeCopies():
+class pcCreateRigAlt00DRenameBlendshapeCopies():
     def __init__(self):
         mshChar = 'emma_body_GEO'
 

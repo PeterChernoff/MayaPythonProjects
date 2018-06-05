@@ -1,7 +1,7 @@
 import maya.cmds as mc
 
 
-class pcCreateRigAltFKIKSwitching():
+class pcCreateRigAlt00BFKIKSwitching():
     def __init__(self):
         self.window = "bcWindow"
         self.title = "pcRigHands"

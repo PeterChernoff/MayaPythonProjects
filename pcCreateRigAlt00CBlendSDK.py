@@ -16,7 +16,7 @@ reload(pcCreateRigAlt00AUtilities)
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRigAlt07BlendSDK(UI):
+class pcCreateRigAlt00CBlendSDK(UI):
     def __init__(self):
 
         self.window = "bcWindow"
