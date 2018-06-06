@@ -878,3 +878,58 @@ class pcCreateRigUtilities:
                 return None
 
         return returner
+
+    @staticmethod
+    def tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
+
+        if pcCreateRigUtilities.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        if loadBtn is not None:
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        parent = selName
+        child = mc.listRelatives(selName, ad=True, type="transform")
+        # collect the joints in an array
+        locArray = [parent]
+        # reverse the order of the children joints
+        child.reverse()
+
+        # add to the current list
+        locArray.extend(child)
+        locArraySorted = []
+        for i in range(len(locArray)):
+            sels = mc.listRelatives(locArray[i], c=True, s=True)
+            if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
+                locArraySorted.append(locArray[i])
+
+        locRoot = selName
+        locArray = locArraySorted
+        return locArray
+
+    @staticmethod
+    def tgpLoadLocsBtn(loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+        # hierarchy
+        selLoad = []
+        selLoad = mc.ls(sl=True, fl=True, type="transform")
+
+        if (len(selLoad) != 1):
+            mc.warning("Select only the {0}".format(objectDesc))
+            return
+        else:
+            selName = selLoad[0]
+            # get the children joints
+            returner = pcCreateRigUtilities.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            if returner is None:
+                return None
+
+        return returner

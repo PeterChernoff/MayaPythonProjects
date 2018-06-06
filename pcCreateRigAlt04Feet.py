@@ -87,65 +87,13 @@ class pcCreateRigAlt04Feet(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadLocsBtn("locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
+        self.selSrc1 = CRU.tgpLoadLocsBtn("locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
         self.selSrc2 = CRU.tgpLoadTxBtn("ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control", ["CTRL", "foot"],
                                         "control")
         print(self.selSrc2)
-
-    def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-            selName = self.selLoad[0]
-            returner = self.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-
-            if returner is None:
-                return None
-
-        return self.locArray
-
-    def tgpGetLocs(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="transform")
-        # collect the joints in an array
-        self.locArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.locArray.extend(self.child)
-        locArraySorted = []
-        for i in range(len(self.locArray)):
-            sels = mc.listRelatives(self.locArray[i], c=True, s=True)
-            if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
-                locArraySorted.append(self.locArray[i])
-
-        self.locRoot = selName
-        self.locArray = locArraySorted
-        return self.locArray
 
     def createFootRollAll(self, ctrlIKFoot,
                           locHeel, locBall, locToe,

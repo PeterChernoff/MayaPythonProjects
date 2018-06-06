@@ -107,8 +107,8 @@ class pcCreateRigAlt06Hand(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadLocsBtn("locPalmLoad_tf", "locator", "Inner Palm Locator", ["loc", "palmInner"],
-                                           "locator")
+        self.selSrc2 = CRU.tgpLoadLocsBtn("locPalmLoad_tf", "locator", "Inner Palm Locator", ["loc", "palmInner"],
+                                          "locator")
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
@@ -130,60 +130,6 @@ class pcCreateRigAlt06Hand(UI):
         self.selSrc6 = CRU.tgpLoadTxBtn("ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
                                         ["ctrl", "arm", "settings", ], "control")
         print(self.selSrc6)
-
-    def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-            selName = self.selLoad[0]
-            # get the children joints
-            returner = CRU.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            if returner is None:
-                return None
-
-        return returner
-
-    def tgpLoadLocMethod(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        if loadBtn is not None:
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="transform")
-        # collect the joints in an array
-        self.locArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.locArray.extend(self.child)
-        locArraySorted = []
-        for i in range(len(self.locArray)):
-            sels = mc.listRelatives(self.locArray[i], c=True, s=True)
-            if objectType in mc.objectType(sels) or objectType == mc.objectType(sels):
-                locArraySorted.append(self.locArray[i])
-
-        self.locRoot = selName
-        self.locArray = locArraySorted
-
-        return self.locArray
 
     def getJntArray(self, jointArray, fingerType, subType=None):
         if subType is None:
@@ -1092,7 +1038,7 @@ class pcCreateRigAlt06Hand(UI):
 
         locPalm = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
         locArray = CRU.tgpGetLocs(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
-                                         ["loc", "palmInner"], "locator")
+                                  ["loc", "palmInner"], "locator")
 
         jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
         jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
@@ -1119,7 +1065,6 @@ class pcCreateRigAlt06Hand(UI):
             return
 
         jointArrayBaseHand = jntFingerNames[:]
-
 
         if mirrorSel == 1:
             mirrorRig = False
