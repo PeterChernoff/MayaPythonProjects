@@ -19,113 +19,18 @@ reload(pcCreateRigAlt00AUtilities)
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRigAlt06Hand(object):
-    def __init__(self):
+class pcCreateRigAlt06HandsCode(object):
+    def __init__(self, lrSel=1, mirrorSel=2,
+                 cbGeo=True,
+                 jntFingerNamesCheck="JNT_BND_l_handBase", locPalmCheck="LOC_l_palmInner",
+                 jntBindEndCheck="JNT_l_arm_bindEnd", ctrlRootTransCheck="CTRL_rootTransform",
+                 jntArmHandBndCheck="JNT_BND_l_hand", ctrlSettingsCheck="CTRL_settings_l_arm"):
 
-        self.tgpMakeBC()
-
-    def createCustom(self, *args):
-        # selection type
-
-        mc.rowColumnLayout(nc=2, cw=[(1, 500), (2, 500)], cs=[1, 5], rs=[1, 3])
-
-        mc.text(l="Select The Hand Base Joint: ")
-        mc.text(l="")
-        mc.separator(st="in", h=17, w=500)
-        mc.setParent("..")
-        mc.rowColumnLayout(nc=3, cw=[(1, 125), (2, 150), (3, 150)], cs=[1, 5], rs=[1, 3],
-                           cal=([1, "left"], [2, "left"], [3, "left"],))
-
-        mc.text(l="Mirror Hand As Well?")
-        # mc.setParent("..")
-        mc.radioButtonGrp("selHandMirrorType_rbg", la2=["No", "Yes"], nrb=2, sl=2, cw2=[50, 50], )
-        mc.text(l="")
-        mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
-
-        mc.rowColumnLayout(nc=3, cw=[(1, 100), (2, 200), (3, 150)], cs=[1, 5], rs=[1, 3],
-                           cal=([1, "left"], [2, "left"], [3, "left"],))
-        mc.text(l="Initial Limb: ")
-        mc.radioButtonGrp("selHandType_rbg", la2=["Left", "Right"], nrb=2, sl=1, cw2=[50, 50], )
-        mc.setParent("..")
-        mc.separator(st="in", h=20, w=500)
-
-        # sources
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
-        mc.text(bgc=(0.85, 0.65, 0.25), l="handBase Joint: ")
-        mc.textFieldButtonGrp("jntFingersLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_handBase")
-
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Palm Loc: ")
-        mc.textFieldButtonGrp("locPalmLoad_tf", cw=(1, 322), bl="  Load  ", tx="LOC_l_palmInner")
-
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Bind End: ")
-        mc.textFieldButtonGrp("jntBindEndLoad_tf", cw=(1, 322), bl="  Load  ", tx="JNT_l_arm_bindEnd")
-
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Root Transform\nControl: ")
-        mc.textFieldButtonGrp("rootTrans_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_rootTransform")
-
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Arm's Hand Joint: ")
-        mc.textFieldButtonGrp("jntHandLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="JNT_BND_l_hand")
-
-        mc.text(bgc=(0.85, 0.65, 0.25), l="Arm Control\nSettings: ")
-        mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", cw=(1, 322), bl="  Load  ", tx="CTRL_settings_l_arm")
-
-        mc.setParent("..")
-
-        mc.separator(st="in", h=20, w=500)
-
-        mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 370)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
-
-        mc.setParent("..")
-
-        # load buttons
-        #
-
-        mc.textFieldButtonGrp("jntFingersLoad_tfbg", e=True, bc=self.loadSrc1Btn)
-        mc.textFieldButtonGrp("locPalmLoad_tf", e=True, bc=self.loadSrc2Btn)
-        mc.textFieldButtonGrp("jntBindEndLoad_tf", e=True, bc=self.loadSrc3Btn)
-        mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc4Btn)
-        mc.textFieldButtonGrp("jntHandLoad_tfbg", e=True, bc=self.loadSrc5Btn)
-        mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", e=True, bc=self.loadSrc6Btn)
-
-        self.selLoad = []
-        self.jntsArray = []
-        self.locArray = []
-        mc.showWindow(self.window)
-
-    def createButtonCmd(self, *args):
-        self.tgpMakeBC()
-
-    def loadSrc1Btn(self):
-        self.selSrc1 = CRU.tgpLoadJntsBtn("jntFingersLoad_tfbg", "joint", "Hand Base Joint", ["jnt", "handBase"],
-                                          "joint")
-        print(self.selSrc1)
-
-    def loadSrc2Btn(self):
-        self.selSrc2 = CRU.tgpLoadLocsBtn("locPalmLoad_tf", "locator", "Inner Palm Locator", ["loc", "palmInner"],
-                                          "locator")
-        print(self.selSrc2)
-
-    def loadSrc3Btn(self):
-        self.selSrc3 = CRU.tgpLoadTxBtn("jntBindEndLoad_tf", "joint", "Hand Base Joint", ["jnt", "arm", "bindEnd"],
-                                        "joint")
-        print(self.selSrc3)
-
-    def loadSrc4Btn(self):
-        self.selSrc4 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform\nControl",
-                                        ["ctrl", "rootTransform"], "control")
-        print(self.selSrc4)
-
-    def loadSrc5Btn(self):
-        self.selSrc5 = CRU.tgpLoadTxBtn("jntHandLoad_tfbg", "joint", "Hand Joint",
-                                        ["jnt", "bnd", "hand", ], "joint")
-        print(self.selSrc5)
-
-    def loadSrc6Btn(self):
-        self.selSrc6 = CRU.tgpLoadTxBtn("ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
-                                        ["ctrl", "arm", "settings", ], "control")
-        print(self.selSrc6)
+        self.tgpMakeBC(lrSel, mirrorSel,
+                       cbGeo,
+                       jntFingerNamesCheck, locPalmCheck,
+                       jntBindEndCheck, ctrlRootTransCheck,
+                       jntArmHandBndCheck, ctrlSettingsCheck)
 
     def getJntArray(self, jointArray, fingerType, subType=None):
         if subType is None:
@@ -767,7 +672,7 @@ class pcCreateRigAlt06Hand(object):
                                          "BND")  # [jntThumbs, jntPointer, jntMiddle, jntRing, jntPink]
 
         # here we would skin the hand if we had skinning turned on
-        if self.checkGeo:
+        if self.cbGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
             geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
             skinPalm = "{0}palmSkin".format(leftRight)
@@ -944,7 +849,7 @@ class pcCreateRigAlt06Hand(object):
                 skipJoints = 1
             self.addFingerStretch(ctrlTIRMP[i], cmpdCtrlTIMRP[i], skipJoints)
 
-        if self.checkGeo:
+        if self.cbGeo:
             for i in range(len(orntTIMRP)):
                 if i == 0:
                     skipJoints = 1
@@ -953,7 +858,7 @@ class pcCreateRigAlt06Hand(object):
                 self.makeFingerGeoStretch(orntTIMRP[i], bndTIMRP[i], skipJoints, leftRight)
 
         # Attach to Arm
-        if not self.checkGeo:
+        if not self.cbGeo:
             geoPalm = None
         self.addHandToArm(jntBindEnd, jntFKBase, bndBaseHand, jntArmHandBnd, jntConstHand, locArray, grpCtrlHand,
                           grpHDL, ctrlRootTrans, geoPalm, leftRight)
@@ -964,7 +869,7 @@ class pcCreateRigAlt06Hand(object):
         self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIRMP,
                                   bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP)
 
-        if self.checkGeo:
+        if self.cbGeo:
             # turn off the inherits transform
             mc.setAttr("{0}.inheritsTransform".format(geoPalm), 0)
 
@@ -1020,11 +925,14 @@ class pcCreateRigAlt06Hand(object):
                 mc.parent(locMirror[i], locMirror[i - 1])
         return locMirror
 
-    def tgpMakeBC(self, *args):
+    def tgpMakeBC(self, lrSel=None, mirrorSel=None,
+                  cbGeo=None,
+                  jntFingerNamesCheck=None, locPalmCheck=None, jntBindEndCheck=None, ctrlRootTransCheck=None,
+                  jntArmHandBndCheck=None, ctrlSettingsCheck=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
-        checkSelLeft = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
-        if checkSelLeft == 1:
+        lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
+        if lrSel == 1:
             isLeft = True
             leftRight = CRU.valLeft
             leftRightMirror = CRU.valRight
@@ -1039,7 +947,16 @@ class pcCreateRigAlt06Hand(object):
 
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
 
-        jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
+        if cbGeo is None:
+            self.cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        else:
+            self.cbGeo = cbGeo
+
+        if jntFingerNamesCheck is None:
+            jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
+            passVal = "jntFingersLoad_tfbg"
+        else:
+            passVal = None
         try:
             fingerRoot = jntFingerNamesCheck
 
@@ -1051,38 +968,55 @@ class pcCreateRigAlt06Hand(object):
             mc.warning("You are selecting the incorrect side for the fingers control")
             return
 
-        jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
+        jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, passVal, "joint", "Hand Base Joint",
                                         ["jnt", "handBase"], "joint")
 
-        self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-
-        locPalm = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
-        if not (CRU.checkLeftRight(isLeft, locPalm)):
+        if locPalmCheck is None:
+            locPalmCheck = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
+            passVal = "locPalmLoad_tf"
+        else:
+            passVal = None
+        if not (CRU.checkLeftRight(isLeft, locPalmCheck)):
             # if the values are not lined up properly, break out
             mc.warning("You are selecting the incorrect side for the locators")
             return
-        locArray = CRU.tgpGetLocs(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
+        locArray = CRU.tgpGetLocs(locPalmCheck, passVal, "locator", "Inner Palm Locator",
                                   ["loc", "palmInner"], "locator")
 
-        jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+        if jntBindEndCheck is None:
+            jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+            passVal = "jntBindEndLoad_tf"
+        else:
+            passVal = None
         if not (CRU.checkLeftRight(isLeft, jntBindEndCheck)):
             # if the values are not lined up properly, break out
             mc.warning("You are selecting the incorrect side for the bind end")
             return
-        jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
+        jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, passVal, "joint", "Hand Base Joint",
                                   ["jnt", "arm", "bindEnd"],
                                   "joint")
-
-        ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
+        if ctrlRootTransCheck is None:
+            ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+            passVal = "rootTrans_tfbg"
+        else:
+            passVal = None
+        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, passVal , "nurbsCurve", "Root Control",
                                      ["CTRL", "rootTransform"], "control")
 
-        jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
-        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, "jntHandLoad_tfbg", "joint", "Hand Joint",
+        if jntArmHandBndCheck is None:
+            jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
+            passVal = "jntHandLoad_tfbg"
+        else:
+            passVal = None
+        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, passVal , "joint", "Hand Joint",
                                      ["jnt", "bnd", "hand", ], "joint")
 
-        ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
-        ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
+        if ctrlSettingsCheck is None:
+            ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
+            passVal = "ctrlSettingsLoad_tfbg"
+        else:
+            passVal = None
+        ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, passVal, "nurbsCurve", "Arm Control Setting",
                                     ["ctrl", "arm", "settings", ], "control")
 
         jointArrayBaseHand = jntFingerNames[:]
