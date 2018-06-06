@@ -358,23 +358,8 @@ class pcCreateRigAlt04Feet(UI):
     def tgpMakeBC(self, *args):
 
         # symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
-
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
-        locName = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
-        locNames = CRU.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
-
-        ctrlIKFootCheck = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
-        ctrlIKFoot = CRU.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
-                                  ["CTRL", "foot"], "control")
-
-        try:
-            locFootRoot = locNames[0]
-
-        except:
-            mc.warning("No locator selected!")
-            return
-        locArray = locNames
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -385,7 +370,6 @@ class pcCreateRigAlt04Feet(UI):
             isLeft = True
             leftRight = CRU.valLeft
             leftRightMirror = CRU.valRight
-
         else:
             isLeft = False
             leftRight = CRU.valRight
@@ -393,6 +377,30 @@ class pcCreateRigAlt04Feet(UI):
 
         leftRightReplace = "_" + leftRight
         leftRightReplaceMirror = "_" + leftRightMirror
+
+        locName = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
+        try:
+            locFootRoot = locName
+
+        except:
+            mc.warning("No locator selected!")
+            return
+
+        locNames = CRU.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
+        if not (CRU.checkLeftRight(isLeft, locFootRoot)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the locator")
+            return
+
+        ctrlIKFootCheck = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
+        ctrlIKFoot = CRU.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
+                                  ["CTRL", "foot"], "control")
+        if not (CRU.checkLeftRight(isLeft, ctrlIKFoot)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the IK leg control")
+            return
+        
+        locArray = locNames
 
         # make sure the selections are not empty
         checkList = [locNames]
@@ -405,15 +413,6 @@ class pcCreateRigAlt04Feet(UI):
             return
         else:
             # CRU.createLocatorToDelete()
-            if not (CRU.checkLeftRight(isLeft, locFootRoot)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the locator")
-                return
-
-            if not (CRU.checkLeftRight(isLeft, ctrlIKFoot)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the IK leg control")
-                return
 
             if mirrorRig:
                 # we want to get the foot before we add anything to it. When doing this programmatically, it's easier

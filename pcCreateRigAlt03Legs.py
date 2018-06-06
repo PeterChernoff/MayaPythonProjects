@@ -1037,7 +1037,7 @@ class pcCreateRigAlt03Legs(UI):
         return grpIKConst, grpBNDConst, grpFKConst
 
     def hipSetup(self, grpBNDConst, grpIKConst, grpFKConst,
-                 jntIKHip, checkboxHip,
+                 jntIKHip,
                  grpDNTTorso, ctrlRootTrans,
                  ctrlFootSettings,
                  leftRight, *args):
@@ -1050,7 +1050,7 @@ class pcCreateRigAlt03Legs(UI):
         mc.pointConstraint(locHipSpace, grpIKConst)
         mc.pointConstraint(locHipSpace, grpFKConst)
 
-        if checkboxHip:
+        if self.checkboxHip:
             locArray = []
 
             # Set up the hip space stuff
@@ -1327,7 +1327,7 @@ class pcCreateRigAlt03Legs(UI):
                         colourTU,
                         leftRight, isLeft,
                         ctrlRootTrans,
-                        jntIKHip, checkboxHip,
+                        jntIKHip,
                         grpDNTTorso,
                         geoJntArray,
 
@@ -1455,7 +1455,7 @@ class pcCreateRigAlt03Legs(UI):
                                                                ctrlRootTrans)
 
         self.hipSetup(grpBNDConst, grpIKConst, grpFKConst,
-                      jntIKHip, checkboxHip,
+                      jntIKHip,
                       grpDNTTorso, ctrlRootTrans,
                       ctrlFootSettings,
                       leftRight)
@@ -1483,8 +1483,26 @@ class pcCreateRigAlt03Legs(UI):
         self.checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
         self.checkAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
         self.checkSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
-
         self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        self.checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+
+        if mirrorSel == 1:
+            mirrorRig = False
+        else:
+            mirrorRig = True
+
+        if checkSelLeft == 1:
+            isLeft = True
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
+        else:
+            isLeft = False
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
 
         jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
         jntIKHip = CRU.tgpGetTx(jntIKHipCheck, "jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
@@ -1516,6 +1534,16 @@ class pcCreateRigAlt03Legs(UI):
             return
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
+        try:
+            jntLegRoot = bndJnt
+        except:
+            mc.warning("No joint selected!")
+            return
+
+        if not (CRU.checkLeftRight(isLeft, jntLegRoot)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the leg")
+            return
         bndJnts = CRU.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
 
         checkList = bndJnts
@@ -1524,32 +1552,6 @@ class pcCreateRigAlt03Legs(UI):
 
         geoJntArray = bndJnts[:]
 
-        checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
-
-        try:
-            jntLegRoot = bndJnts[0]
-        except:
-            mc.warning("No joint selected!")
-            return
-
-        if mirrorSel == 1:
-            mirrorRig = False
-        else:
-            mirrorRig = True
-
-        if checkSelLeft == 1:
-            isLeft = True
-            leftRight = self.valLeft
-            leftRightMirror = self.valRight
-            colourTU = CRU.clrLeftFK
-            colourTUMirror = CRU.clrRightFK
-        else:
-            isLeft = False
-            leftRight = self.valRight
-            leftRightMirror = self.valLeft
-            colourTU = CRU.clrRightFK
-            colourTUMirror = CRU.clrLeftFK
-
         # make sure the selections are not empty
         # However, editing them out is too much hassle,  it's easier just to leave them both false
         if ((checkList[0] == "") or checkList[0] is None):
@@ -1557,10 +1559,6 @@ class pcCreateRigAlt03Legs(UI):
             return
         else:
             # CRU.createLocatorToDelete()
-            if not (CRU.checkLeftRight(isLeft, jntLegRoot)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the leg")
-                return
 
             if mirrorRig:
                 toReplace = "_" + leftRight
@@ -1578,14 +1576,14 @@ class pcCreateRigAlt03Legs(UI):
                         geoJntArrayMirror.append(mb)
                 isLeftMirror = not isLeft
 
-            self.makeLegComplete(bndJnts, colourTU, leftRight, isLeft, ctrlRootTrans, jntIKHip, checkboxHip,
+            self.makeLegComplete(bndJnts, colourTU, leftRight, isLeft, ctrlRootTrans, jntIKHip,
                                  grpDNTTorso, geoJntArray, )
 
             if mirrorRig:
                 print("Mirroring")
 
                 self.makeLegComplete(bndJntsMirror, colourTUMirror, leftRightMirror, isLeftMirror, ctrlRootTrans,
-                                     jntIKHip, checkboxHip,
+                                     jntIKHip,
                                      grpDNTTorso, geoJntArrayMirror, )
 
             # reset the symmetry to the default because otherwise we might get wonky results

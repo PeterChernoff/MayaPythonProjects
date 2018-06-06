@@ -750,7 +750,7 @@ class pcCreateRigAlt06Hand(UI):
         return
 
     def makeFingersComplete(self, jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans, ctrlSettings,
-                            checkGeo, leftRight, colourTU, *args):
+                            leftRight, colourTU, *args):
 
         for i in range(len(locArray)):
             if isinstance(locArray[i], int):
@@ -771,7 +771,7 @@ class pcCreateRigAlt06Hand(UI):
                                          "BND")  # [jntThumbs, jntPointer, jntMiddle, jntRing, jntPink]
 
         # here we would skin the hand if we had skinning turned on
-        if checkGeo:
+        if self.checkGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
             geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
             skinPalm = "{0}palmSkin".format(leftRight)
@@ -948,7 +948,7 @@ class pcCreateRigAlt06Hand(UI):
                 skipJoints = 1
             self.addFingerStretch(ctrlTIRMP[i], cmpdCtrlTIMRP[i], skipJoints)
 
-        if checkGeo:
+        if self.checkGeo:
             for i in range(len(orntTIMRP)):
                 if i == 0:
                     skipJoints = 1
@@ -957,7 +957,7 @@ class pcCreateRigAlt06Hand(UI):
                 self.makeFingerGeoStretch(orntTIMRP[i], bndTIMRP[i], skipJoints, leftRight)
 
         # Attach to Arm
-        if not checkGeo:
+        if not self.checkGeo:
             geoPalm = None
         self.addHandToArm(jntBindEnd, jntFKBase, bndBaseHand, jntArmHandBnd, jntConstHand, locArray, grpCtrlHand,
                           grpHDL, ctrlRootTrans, geoPalm, leftRight)
@@ -968,7 +968,7 @@ class pcCreateRigAlt06Hand(UI):
         self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIRMP,
                                   bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP)
 
-        if checkGeo:
+        if self.checkGeo:
             # turn off the inherits transform
             mc.setAttr("{0}.inheritsTransform".format(geoPalm), 0)
 
@@ -1028,19 +1028,51 @@ class pcCreateRigAlt06Hand(UI):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
+        if checkSelLeft == 1:
+            isLeft = True
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
+        else:
+            isLeft = False
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
+
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
 
         jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
+        try:
+            fingerRoot = jntFingerNamesCheck
+
+        except:
+            mc.warning("No control selected!")
+            return
+        if not (CRU.checkLeftRight(isLeft, fingerRoot)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the fingers control")
+            return
+
         jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
                                         ["jnt", "handBase"], "joint")
 
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         locPalm = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
+        if not (CRU.checkLeftRight(isLeft, locPalm)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the locators")
+            return
         locArray = CRU.tgpGetLocs(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
                                   ["loc", "palmInner"], "locator")
 
         jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+        if not (CRU.checkLeftRight(isLeft, jntBindEndCheck)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the bind end")
+            return
         jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
                                   ["jnt", "arm", "bindEnd"],
                                   "joint")
@@ -1057,32 +1089,12 @@ class pcCreateRigAlt06Hand(UI):
         ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
                                     ["ctrl", "arm", "settings", ], "control")
 
-        try:
-            fingerRoot = jntFingerNames[0]
-
-        except:
-            mc.warning("No control selected!")
-            return
-
         jointArrayBaseHand = jntFingerNames[:]
 
         if mirrorSel == 1:
             mirrorRig = False
         else:
             mirrorRig = True
-
-        if checkSelLeft == 1:
-            isLeft = True
-            leftRight = CRU.valLeft
-            leftRightMirror = CRU.valRight
-            colourTU = CRU.clrLeftFK
-            colourTUMirror = CRU.clrRightFK
-        else:
-            isLeft = False
-            leftRight = CRU.valRight
-            leftRightMirror = CRU.valLeft
-            colourTU = CRU.clrRightFK
-            colourTUMirror = CRU.clrLeftFK
 
         toReplace = "_" + leftRight
         toReplaceMirror = "_" + leftRightMirror
@@ -1097,20 +1109,6 @@ class pcCreateRigAlt06Hand(UI):
         else:
 
             # CRU.createLocatorToDelete()
-            if not (CRU.checkLeftRight(isLeft, fingerRoot)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the fingers control")
-                return
-
-            if not (CRU.checkLeftRight(isLeft, locPalm)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the locators")
-                return
-
-            if not (CRU.checkLeftRight(isLeft, jntBindEnd)):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the bind end")
-                return
 
             if mirrorRig:
                 # we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
@@ -1127,7 +1125,7 @@ class pcCreateRigAlt06Hand(UI):
 
             self.makeFingersComplete(jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans,
                                      ctrlSettings,
-                                     checkGeo, leftRight, colourTU)
+                                     leftRight, colourTU)
             if mirrorRig:
                 print("Mirroring")
 
@@ -1137,7 +1135,7 @@ class pcCreateRigAlt06Hand(UI):
 
                 self.makeFingersComplete(jointArrayBaseHandMirror, locArrayMirror, jntBindEndMirror,
                                          jntArmHandBndMirror, ctrlRootTrans, ctrlSettingsMirror,
-                                         checkGeo, leftRightMirror, colourTUMirror)
+                                         leftRightMirror, colourTUMirror)
 
             # reset the symmetry to the default because otherwise we might get wonky results
             # mc.symmetricModelling(symmetry=symmetry)

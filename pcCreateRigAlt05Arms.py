@@ -1277,7 +1277,7 @@ class pcCreateRigAlt05Arms(UI):
                         jntIKShoulder, ctrlRoot,
                         grpDNTTorso,
                         grpSpineToggle,
-                        cbSpecialStretch, checkGeo, checkToggleSpineStretch,
+                        cbSpecialStretch,
                         geoJntArray, *args):
 
         '''uArmLen = mc.getAttr("{0}.tx".format(mc.listRelatives(jntArmArray[0])[0]))
@@ -1418,13 +1418,13 @@ class pcCreateRigAlt05Arms(UI):
                                                                                                       locShldrTemp,
                                                                                                       leftRight)
 
-        if checkGeo:
+        if self.checkGeo:
             self.makeShoulderStretchGeo(jntShoulders, leftRight)
 
         ctrlShoulder = self.makeShoulderControl(jntShoulders, locShldrTemp, ctrlArmSettings, leftRight)
 
         # It's fine to put this here
-        if checkGeo:
+        if self.checkGeo:
             defFKIKBlend = mc.getAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName))
             mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
@@ -1545,7 +1545,7 @@ class pcCreateRigAlt05Arms(UI):
             self.makeArmFKIKComplete(bndJnts, fkJnts, ctrlIKArm)
 
         # appendix B
-        if checkToggleSpineStretch:
+        if self.checkToggleSpineStretch:
             self.setSpineStretchToggle(grpSpineToggle, grpShoulder)
         return
 
@@ -1794,16 +1794,37 @@ class pcCreateRigAlt05Arms(UI):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
         checkSelLeft = mc.radioButtonGrp("selArmType_rbg", q=True, select=True)
+        if checkSelLeft == 1:
+            isLeft = True
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
+            colourTU = CRU.clrLeftFK
+            colourTUMirror = CRU.clrRightFK
+        else:
+            isLeft = False
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
+            colourTU = CRU.clrRightFK
+            colourTUMirror = CRU.clrLeftFK
+
+        toReplace = "_" + leftRight
+        toReplaceWith = "_" + leftRightMirror
+
         mirrorSel = mc.radioButtonGrp("selArmMirrorType_rbg", q=True, select=True)
 
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         self.switchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
-
-        checkToggleSpineStretch = mc.checkBox("selStretchSpineToggle_cb", q=True, v=True)
+        self.checkToggleSpineStretch = mc.checkBox("selStretchSpineToggle_cb", q=True, v=True)
 
         bndJnt = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
+        # checks if the starting joint is correct to the direction we want
+        if not (CRU.checkLeftRight(isLeft, bndJnt)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the root arm joint")
+            return
         bndJnts = CRU.tgpGetJnts(bndJnt, "jointArmsLoad_tfbg", "joint", "Root Upper Arm Joint",
                                  ["JNT", "BND", "upperArm"])
+        jntArmArray = bndJnts[:]
 
         geoJntArray = bndJnts[:]
         cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
@@ -1819,6 +1840,11 @@ class pcCreateRigAlt05Arms(UI):
                                 "control")
 
         jntShoulderRootCheck = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
+        # checks if the starting joint is correct to the direction we want
+        if not (CRU.checkLeftRight(isLeft, jntShoulderRootCheck)):
+            # if the values are not lined up properly, break out
+            mc.warning("You are selecting the incorrect side for the root shoulder joint")
+            return
         jntShoulderRoot = CRU.tgpGetTx(jntShoulderRootCheck, "jointShoulderJntLoad_tfbg", "joint",
                                        "Root Shoulder Joint",
                                        ["JNT", "BND", "shoulder"])
@@ -1827,7 +1853,7 @@ class pcCreateRigAlt05Arms(UI):
         jntIKShoulder = CRU.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
                                      ["JNT", "_IK_", "shoulder"])
 
-        if checkToggleSpineStretch:
+        if self.checkToggleSpineStretch:
             grpSpineToggleCheck = mc.textFieldButtonGrp("grpheadShoulders_tfbg", q=True, text=True)
             grpSpineToggle = CRU.tgpGetTx(grpSpineToggleCheck, "grpheadShoulders_tfbg", "transform",
                                           "Head Shoulders Group", ["GRP", "head", "shoulders"],
@@ -1837,28 +1863,6 @@ class pcCreateRigAlt05Arms(UI):
             mirrorRig = False
         else:
             mirrorRig = True
-
-        jntArmArray = bndJnts[:]
-
-        if checkSelLeft == 1:
-            isLeft = True
-            leftRight = "l_"
-            leftRightMirror = "r_"
-            colourTU = CRU.clrLeftFK
-            colourTUMirror = CRU.clrRightFK
-            leftRight = CRU.valLeft
-            leftRightMirror = CRU.valRight
-        else:
-            isLeft = False
-            leftRight = "r_"
-            leftRightMirror = "l_"
-            colourTU = CRU.clrRightFK
-            colourTUMirror = CRU.clrLeftFK
-            leftRight = CRU.valRight
-            leftRightMirror = CRU.valLeft
-
-        toReplace = "_" + leftRight
-        toReplaceWith = "_" + leftRightMirror
 
         # make sure the selections are not empty
         checkList = [bndJnts]
@@ -1871,12 +1875,6 @@ class pcCreateRigAlt05Arms(UI):
         else:
 
             # CRU.createLocatorToDelete()
-
-            # checks if the starting joint is correct to the direction we want
-            if not (CRU.checkLeftRight(isLeft, jntArmArray[0])):
-                # if the values are not lined up properly, break out
-                mc.warning("You are selecting the incorrect side for the root shoulder joint")
-                return
 
             if mirrorRig:
                 mirrorBase = mc.mirrorJoint(jntArmArray[0], mirrorYZ=True, mirrorBehavior=True,
@@ -1891,7 +1889,7 @@ class pcCreateRigAlt05Arms(UI):
                                  jntIKShoulder, ctrlRoot,
                                  grpDNTTorso,
                                  grpSpineToggle,
-                                 cbSpecialStretch, checkGeo, checkToggleSpineStretch,
+                                 cbSpecialStretch,
                                  geoJntArray)
 
             if mirrorRig:
@@ -1914,7 +1912,7 @@ class pcCreateRigAlt05Arms(UI):
                                      jntIKShoulder, ctrlRoot,
                                      grpDNTTorso,
                                      grpSpineToggle,
-                                     cbSpecialStretch, checkGeo, checkToggleSpineStretch,
+                                     cbSpecialStretch,
                                      geoJntArrayMirror)
 
             # reset the symmetry to the default because otherwise we might get wonky results
