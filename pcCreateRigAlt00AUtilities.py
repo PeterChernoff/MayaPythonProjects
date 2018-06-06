@@ -1,6 +1,5 @@
 import maya.cmds as mc
 
-
 class pcCreateRigUtilities:
     clrBodyFK = 17
     clrBodyIK = 28
@@ -791,3 +790,46 @@ class pcCreateRigUtilities:
         if symmetry != 0:
             mc.symmetricModelling(symmetry=0)
         return symmetry
+
+
+    @staticmethod
+    def tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
+
+        if pcCreateRigUtilities.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+
+        if loadBtn is not None:
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        # get the children joints
+        parent = selName
+        child = mc.listRelatives(selName, ad=True, type="joint")
+        # collect the joints in an array
+        jointArray = [parent]
+        # reverse the order of the children joints
+        child.reverse()
+
+        # add to the current list
+        jointArray.extend(child)
+
+        return jointArray
+
+    @staticmethod
+    def tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+
+        if pcCreateRigUtilities.checkObjectType(selName) != objectType:
+            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+            return
+
+        if not all(word.lower() in selName.lower() for word in keywords):
+            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
+            return
+        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        return selName
