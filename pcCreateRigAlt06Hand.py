@@ -101,7 +101,7 @@ class pcCreateRigAlt06Hand(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadJntsBtn("jntFingersLoad_tfbg", "joint", "Hand Base Joint", ["jnt", "handBase"],
+        self.selSrc1 = CRU.tgpLoadJntsBtn("jntFingersLoad_tfbg", "joint", "Hand Base Joint", ["jnt", "handBase"],
                                            "joint")
         print(self.selSrc1)
 
@@ -181,56 +181,6 @@ class pcCreateRigAlt06Hand(UI):
         self.locArray = locArraySorted
 
         return self.locArray
-
-    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-
-            selName = self.selLoad[0]
-
-            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-
-            if returner is None:
-                return None
-
-        return self.jointArray
-
-    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="joint")
-        # collect the joints in an array
-        self.jointArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArray.extend(self.child)
-
-        # removes if the last joint is End
-        self.jointRoot = selName
-        return self.jointArray
 
     def getJntArray(self, jointArray, fingerType, subType=None):
         if subType is None:
@@ -1133,7 +1083,7 @@ class pcCreateRigAlt06Hand(UI):
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
 
         jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
-        jntFingerNames = self.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
+        jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
                                          ["jnt", "handBase"], "joint")
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
@@ -1165,13 +1115,13 @@ class pcCreateRigAlt06Hand(UI):
             locArray = self.locArray'''
 
         try:
-            fingerRoot = self.jointArray[0]
+            fingerRoot = jntFingerNames[0]
 
         except:
             mc.warning("No control selected!")
             return
 
-        jointArrayBaseHand = self.jointArray[:]
+        jointArrayBaseHand = jntFingerNames[:]
 
         self.valLeft = "l_"
         self.valRight = "r_"

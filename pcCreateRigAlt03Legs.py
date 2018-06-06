@@ -104,7 +104,7 @@ class pcCreateRigAlt03Legs(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
+        self.selSrc1 = CRU.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
@@ -132,53 +132,6 @@ class pcCreateRigAlt03Legs(UI):
                                          ["GRP", "DO", "NOT", "TOUCH"],
                                          "group")
         print(self.selSrc6)
-
-    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="joint")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the root joint")
-            return
-        else:
-
-            selName = self.selLoad[0]
-            returner = CRU.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            if returner is None:
-                return None
-
-        return self.jointArray
-
-    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="joint")
-        # collect the joints in an array
-        self.jointArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArray.extend(self.child)
-
-        self.jointRoot = selName
-        return self.jointArray
 
     def makeTwists(self, mkTwists, bndTwistee, bndTwister, ctrlFootSettings, ctrlIKFoot,
                    leftRight, fkikBlendName=None, *args):
@@ -1566,7 +1519,7 @@ class pcCreateRigAlt03Legs(UI):
             return
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
+        bndJnts = CRU.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Leg Joint", ["JNT", "upper", "Leg"])
 
         checkList = bndJnts
         if checkList is None:

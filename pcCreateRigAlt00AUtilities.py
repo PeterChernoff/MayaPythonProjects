@@ -854,3 +854,24 @@ class pcCreateRigUtilities:
             selName = pcCreateRigUtilities.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
             return selName
+
+    @staticmethod
+    def tgpLoadJntsBtn(loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+        # hierarchy
+        selLoad = []
+        selLoad = mc.ls(sl=True, fl=True, type=objectType)
+        if (len(selLoad) != 1):
+            mc.warning("Select only the {0}".format(objectDesc))
+            return
+        else:
+
+            selName = selLoad[0]
+
+            returner = pcCreateRigUtilities.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+
+            if returner is None:
+                return None
+
+        return returner

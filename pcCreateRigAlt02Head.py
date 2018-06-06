@@ -104,6 +104,7 @@ class pcCreateRigAlt02Head(UI):
         mc.textFieldButtonGrp("rootTrans_tfbg", e=True, bc=self.loadSrc4Btn)
         mc.textFieldButtonGrp("jntHead_tfbg", e=True, bc=self.loadSrc5Btn)
         mc.textFieldButtonGrp("ctrlShoulderLoad_tf", e=True, bc=self.loadSrc6Btn)
+        mc.textFieldButtonGrp("jntSpineEndLoad_tf", e=True, bc=self.loadSrc7Btn)
 
         mc.showWindow(self.window)
 
@@ -139,10 +140,10 @@ class pcCreateRigAlt02Head(UI):
         self.selSrc6 = CRU.tgpLoadTxBtn("ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
                                          ["CTRL", "shoulder"], "Control")
 
-    def loadSrc6Btn(self):
-        self.selSrc6 = CRU.tgpLoadTxBtn("jntSpineEndLoad_tf", "joint", "Spine End",
+    def loadSrc7Btn(self):
+        self.selSrc7 = CRU.tgpLoadTxBtn("jntSpineEndLoad_tf", "joint", "Spine End",
                                          ["JNT", "BND", "spineEnd"])
-        print(self.selSrc6)
+        print(self.selSrc7)
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -162,7 +163,7 @@ class pcCreateRigAlt02Head(UI):
             if returner is None:
                 return None
 
-        return self.jointArray
+        return returner
 
     def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
         if objectNickname is None:
@@ -175,7 +176,9 @@ class pcCreateRigAlt02Head(UI):
         if not all(word.lower() in selName.lower() for word in keywords):
             mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
             return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        if loadBtn is not None:
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
         # get the children joints
         self.parent = selName
