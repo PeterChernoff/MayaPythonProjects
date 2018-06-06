@@ -9,6 +9,7 @@ import maya.cmds as mc
 from functools import partial
 import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+
 reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
@@ -102,7 +103,7 @@ class pcCreateRigAlt06Hand(UI):
 
     def loadSrc1Btn(self):
         self.selSrc1 = CRU.tgpLoadJntsBtn("jntFingersLoad_tfbg", "joint", "Hand Base Joint", ["jnt", "handBase"],
-                                           "joint")
+                                          "joint")
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
@@ -112,22 +113,22 @@ class pcCreateRigAlt06Hand(UI):
 
     def loadSrc3Btn(self):
         self.selSrc3 = CRU.tgpLoadTxBtn("jntBindEndLoad_tf", "joint", "Hand Base Joint", ["jnt", "arm", "bindEnd"],
-                                         "joint")
+                                        "joint")
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
         self.selSrc4 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform\nControl",
-                                         ["ctrl", "rootTransform"], "control")
+                                        ["ctrl", "rootTransform"], "control")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
         self.selSrc5 = CRU.tgpLoadTxBtn("jntHandLoad_tfbg", "joint", "Hand Joint",
-                                         ["jnt", "bnd", "hand", ], "joint")
+                                        ["jnt", "bnd", "hand", ], "joint")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
         self.selSrc6 = CRU.tgpLoadTxBtn("ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
-                                         ["ctrl", "arm", "settings", ], "control")
+                                        ["ctrl", "arm", "settings", ], "control")
         print(self.selSrc6)
 
     def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
@@ -143,11 +144,11 @@ class pcCreateRigAlt06Hand(UI):
         else:
             selName = self.selLoad[0]
             # get the children joints
-            returner = self.tgpLoadLocMethod(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            returner = CRU.tgpGetLocs(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
             if returner is None:
                 return None
 
-        return self.locArray
+        return returner
 
     def tgpLoadLocMethod(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -160,8 +161,10 @@ class pcCreateRigAlt06Hand(UI):
         if not all(word.lower() in selName.lower() for word in keywords):
             mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
             return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+        if loadBtn is not None:
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
 
+        # get the children joints
         self.parent = selName
         self.child = mc.listRelatives(selName, ad=True, type="transform")
         # collect the joints in an array
@@ -623,7 +626,7 @@ class pcCreateRigAlt06Hand(UI):
     def makePalmRaise(self, ctrlHand, locArray, leftRight):
         palmAttr = "palmRaise"
 
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -830,7 +833,7 @@ class pcCreateRigAlt06Hand(UI):
             # we only want to skin the relevant bones
             geoHandSkin = [bndBaseHand]
             for i in range(len(bndTIMRP)):
-                if i == 0 :
+                if i == 0:
                     geoHandSkin.extend(bndTIMRP[i][1:-2])
                 else:
                     geoHandSkin.extend(bndTIMRP[i][:-3])
@@ -916,10 +919,10 @@ class pcCreateRigAlt06Hand(UI):
         mc.select("{0}.cv[7:9] ".format(ctrlHand))
         mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
 
-        mc.move(0, -.35, -dist/2, r=True, os=True)
+        mc.move(0, -.35, -dist / 2, r=True, os=True)
 
         mc.select("{0}.cv[2:5] ".format(ctrlHand))
-        mc.move(0, -0, dist/2, r=True, os=True)
+        mc.move(0, -0, dist / 2, r=True, os=True)
         mc.select(cl=True)
         mc.makeIdentity(ctrlHand, apply=True)
         CRU.layerEdit(ctrlHand, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
@@ -1078,41 +1081,35 @@ class pcCreateRigAlt06Hand(UI):
     def tgpMakeBC(self, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
-
         checkSelLeft = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
 
         jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
         jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, "jntFingersLoad_tfbg", "joint", "Hand Base Joint",
-                                         ["jnt", "handBase"], "joint")
+                                        ["jnt", "handBase"], "joint")
 
         checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         locPalm = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
-        locArray = self.tgpLoadLocMethod(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
+        locArray = CRU.tgpGetLocs(locPalm, "locPalmLoad_tf", "locator", "Inner Palm Locator",
                                          ["loc", "palmInner"], "locator")
 
         jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
         jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
-                                   ["jnt", "arm", "bindEnd"],
-                                   "joint")
+                                  ["jnt", "arm", "bindEnd"],
+                                  "joint")
 
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
         ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
-                                      ["CTRL", "rootTransform"], "control")
+                                     ["CTRL", "rootTransform"], "control")
 
         jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
         jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, "jntHandLoad_tfbg", "joint", "Hand Joint",
-                                      ["jnt", "bnd", "hand", ], "joint")
+                                     ["jnt", "bnd", "hand", ], "joint")
 
         ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
         ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
-                                     ["ctrl", "arm", "settings", ], "control")
-
-        '''if len(self.locArray) == 0:
-            locArray = self.tgpLoadLocMethod(locPalm)
-        else:
-            locArray = self.locArray'''
+                                    ["ctrl", "arm", "settings", ], "control")
 
         try:
             fingerRoot = jntFingerNames[0]
@@ -1123,8 +1120,6 @@ class pcCreateRigAlt06Hand(UI):
 
         jointArrayBaseHand = jntFingerNames[:]
 
-        self.valLeft = "l_"
-        self.valRight = "r_"
 
         if mirrorSel == 1:
             mirrorRig = False
@@ -1133,20 +1128,16 @@ class pcCreateRigAlt06Hand(UI):
 
         if checkSelLeft == 1:
             isLeft = True
-            leftRight = "l_"
-            leftRightMirror = "r_"
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
             colourTU = CRU.clrLeftFK
             colourTUMirror = CRU.clrRightFK
-            leftRight = self.valLeft
-            leftRightMirror = self.valRight
         else:
             isLeft = False
-            leftRight = "r_"
-            leftRightMirror = "l_"
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
             colourTU = CRU.clrRightFK
             colourTUMirror = CRU.clrLeftFK
-            leftRight = self.valRight
-            leftRightMirror = self.valLeft
 
         toReplace = "_" + leftRight
         toReplaceMirror = "_" + leftRightMirror

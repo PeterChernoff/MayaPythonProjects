@@ -23,8 +23,6 @@ from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 class pcCreateRigAlt05Arms(UI):
     def __init__(self):
-        self.valLeft = "l_"
-        self.valRight = "r_"
 
         self.window = "bcWindow"
         self.title = "pcRigArms"
@@ -116,34 +114,34 @@ class pcCreateRigAlt05Arms(UI):
 
     def loadSrc1Btn(self):
         self.selSrc1 = CRU.tgpLoadJntsBtn("jointArmsLoad_tfbg", "joint", "Root Upper Arm Joint",
-                                           ["JNT", "BND", "upperArm"])
+                                          ["JNT", "BND", "upperArm"])
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
         self.selSrc2 = CRU.tgpLoadTxBtn("jointShoulderJntLoad_tfbg", "joint", "Root Shoulder Joint",
-                                         ["JNT", "BND", "shoulder"])
+                                        ["JNT", "BND", "shoulder"])
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
         self.selSrc3 = CRU.tgpLoadTxBtn("jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
-                                         ["JNT", "_IK_", "shoulder"])
+                                        ["JNT", "_IK_", "shoulder"])
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
         self.selSrc4 = CRU.tgpLoadTxBtn("grpTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
-                                         ["GRP", "DO_NOT_TOUCH", "torso"],
-                                         "Group")
+                                        ["GRP", "DO_NOT_TOUCH", "torso"],
+                                        "Group")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
         self.selSrc5 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Control", ["CTRL", "rootTransform"],
-                                         "control")
+                                        "control")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
         self.selSrc6 = CRU.tgpLoadTxBtn("grpheadShoulders_tfbg", "transform", "Head Shoulders Group",
-                                         ["GRP", "head", "shoulders"],
-                                         "group")
+                                        ["GRP", "head", "shoulders"],
+                                        "group")
         print(self.selSrc6)
 
     def createSettings(self, jntArmArray, isLeft, name, colourTU, fkJnts, ikJnts, bndJnts, ctrlIKArm, *args):
@@ -228,7 +226,7 @@ class pcCreateRigAlt05Arms(UI):
 
         # the right upperArm seemd to do better with closestZ instead of negative Z
         # alternatively, using Positive Y works
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             # this may need tweaking depending on the model
             uArmUV = [0, -1, 0]
             uArmUV2 = [0, -1, 0]
@@ -345,7 +343,7 @@ class pcCreateRigAlt05Arms(UI):
         return crvInfo, armNrmlzDiv
 
     def makeBndStretchTwists(self, bndJnt, crvArm, twistJnts, leftRight):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -394,7 +392,7 @@ class pcCreateRigAlt05Arms(UI):
 
     def makeIKStretch(self, bindJntTwistStart, bindJntTwistEnd, ikJnts, ctrlIKArm, leftRight):
 
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
             m = 1
         else:
@@ -458,7 +456,7 @@ class pcCreateRigAlt05Arms(UI):
         return locIKDistStart, locIKDistEnd, distIKLen, distIKLenShape, ctrlIKLengthKeyArray
 
     def makeElbowCtrl(self, leftRight, ikJnts, hdlArm, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = -1
         else:
             m = 1
@@ -696,7 +694,7 @@ class pcCreateRigAlt05Arms(UI):
         return locShldrTemp, ikShoulder
 
     def makeShoulderStretchJoint(self, jntShoulders, locShldr, leftRight):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
             m = 1
         else:
@@ -788,7 +786,7 @@ class pcCreateRigAlt05Arms(UI):
 
         defShoulderLen = mc.getAttr("{0}.translateX".format(jntShoulders[-1]))
         # create a pyramid
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -950,7 +948,7 @@ class pcCreateRigAlt05Arms(UI):
         ctrlGimbalCorrSubShp = mc.listRelatives(toDelete, s=True)[0]
 
         mc.select(toDelete + ".cv[:]")
-        if leftRight is self.valLeft:
+        if leftRight is CRU.valLeft:
             m = -1
         else:
             m = 1
@@ -1086,7 +1084,7 @@ class pcCreateRigAlt05Arms(UI):
                    crvInfoLower, armNrmlzDivLower,
                    twistJntsUpper, twistJntsLower,
                    leftRight):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -1628,7 +1626,7 @@ class pcCreateRigAlt05Arms(UI):
         return geoJntArray, twistJntsArrayOfArrays'''
 
     def makeTwists(self, numTwists, jntArmArray, geoJntArray, leftRight, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             locRotZ = 0
         else:
             locRotZ = 180
@@ -1648,7 +1646,7 @@ class pcCreateRigAlt05Arms(UI):
             nextJntIncrement = nextJntXVal / (numTwistsM1)
             twistJnt = mc.duplicate(val, po=True, n="ToDelete")
             mc.rotate(locRotZ, twistJnt, z=True, os=True, r=True)
-            if leftRight == self.valRight:
+            if leftRight == CRU.valRight:
                 mc.makeIdentity(twistJnt, r=True, a=True)
 
             # create the joint twists at the proper location
@@ -1805,7 +1803,7 @@ class pcCreateRigAlt05Arms(UI):
 
         bndJnt = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
         bndJnts = CRU.tgpGetJnts(bndJnt, "jointArmsLoad_tfbg", "joint", "Root Upper Arm Joint",
-                                  ["JNT", "BND", "upperArm"])
+                                 ["JNT", "BND", "upperArm"])
 
         geoJntArray = bndJnts[:]
         cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
@@ -1848,16 +1846,16 @@ class pcCreateRigAlt05Arms(UI):
             leftRightMirror = "r_"
             colourTU = CRU.clrLeftFK
             colourTUMirror = CRU.clrRightFK
-            leftRight = self.valLeft
-            leftRightMirror = self.valRight
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
         else:
             isLeft = False
             leftRight = "r_"
             leftRightMirror = "l_"
             colourTU = CRU.clrRightFK
             colourTUMirror = CRU.clrLeftFK
-            leftRight = self.valRight
-            leftRightMirror = self.valLeft
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
 
         toReplace = "_" + leftRight
         toReplaceWith = "_" + leftRightMirror

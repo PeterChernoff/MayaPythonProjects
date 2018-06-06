@@ -9,6 +9,7 @@ import maya.cmds as mc
 from functools import partial
 import tgpBaseUI
 from tgpBaseUI import BaseUI as UI
+
 reload(tgpBaseUI)
 
 '''
@@ -91,7 +92,7 @@ class pcCreateRigAlt04Feet(UI):
 
     def loadSrc2Btn(self):
         self.selSrc2 = CRU.tgpLoadTxBtn("ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control", ["CTRL", "foot"],
-                                         "control")
+                                        "control")
         print(self.selSrc2)
 
     def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
@@ -413,11 +414,11 @@ class pcCreateRigAlt04Feet(UI):
         checkSelLeft = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
         locName = mc.textFieldButtonGrp("locLoad_tfbg", q=True, text=True)
-        locNames = self.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
+        locNames = CRU.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
 
         ctrlIKFootCheck = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
         ctrlIKFoot = CRU.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
-                                   ["CTRL", "foot"], "control")
+                                  ["CTRL", "foot"], "control")
 
         try:
             locFootRoot = locNames[0]
@@ -434,13 +435,13 @@ class pcCreateRigAlt04Feet(UI):
 
         if checkSelLeft == 1:
             isLeft = True
-            leftRight = "l_"
-            leftRightMirror = "r_"
+            leftRight = CRU.valLeft
+            leftRightMirror = CRU.valRight
 
         else:
             isLeft = False
-            leftRight = "r_"
-            leftRightMirror = "l_"
+            leftRight = CRU.valRight
+            leftRightMirror = CRU.valLeft
 
         leftRightReplace = "_" + leftRight
         leftRightReplaceMirror = "_" + leftRightMirror

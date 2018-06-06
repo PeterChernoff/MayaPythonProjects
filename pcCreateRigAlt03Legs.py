@@ -113,24 +113,24 @@ class pcCreateRigAlt03Legs(UI):
 
     def loadSrc3Btn(self):
         self.selSrc3 = CRU.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
-                                         ["GRP", "DO", "NOT", "TOUCH"],
-                                         "group")
+                                        ["GRP", "DO", "NOT", "TOUCH"],
+                                        "group")
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
         self.selSrc4 = CRU.tgpLoadTxBtn("ctrlBody_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
-                                         "control")
+                                        "control")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
         self.selSrc5 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
-                                         ["CTRL", "rootTransform"], "control")
+                                        ["CTRL", "rootTransform"], "control")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
         self.selSrc6 = CRU.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
-                                         ["GRP", "DO", "NOT", "TOUCH"],
-                                         "group")
+                                        ["GRP", "DO", "NOT", "TOUCH"],
+                                        "group")
         print(self.selSrc6)
 
     def makeTwists(self, mkTwists, bndTwistee, bndTwister, ctrlFootSettings, ctrlIKFoot,
@@ -236,7 +236,7 @@ class pcCreateRigAlt03Legs(UI):
             mc.connectAttr("{0}.outputX".format(setupFKFootMul), "{0}.input1X".format(setupFKFootMulOffset))
             mc.setAttr("{0}.input2X".format(setupFKFootMulOffset), 2)
 
-            if leftRight is self.valLeft:
+            if leftRight is CRU.valLeft:
                 lrm = -1
             else:
                 lrm = 1
@@ -384,7 +384,7 @@ class pcCreateRigAlt03Legs(UI):
         return jntsReturn
 
     def createFKCtrls(self, fkJnts, colourTU, leftRight, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -481,7 +481,7 @@ class pcCreateRigAlt03Legs(UI):
         ikJntBall = [x for x in ikJnts if "ball" in x[-4:]][0]
         ikJntToe = [x for x in ikJnts if "toe" in x][0]
 
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -551,7 +551,7 @@ class pcCreateRigAlt03Legs(UI):
         return ikLegs
 
     def makeIKStretch(self, ikJnts, leftRight, ctrlIKFoot, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
             m = 1
         else:
@@ -625,7 +625,7 @@ class pcCreateRigAlt03Legs(UI):
         return lenNodeNameShape
 
     def createNoFlipIKLeg(self, ikJnts, ctrlIKFoot, ikLegs, leftRight, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -669,7 +669,7 @@ class pcCreateRigAlt03Legs(UI):
 
     def createDualKnee(self, ikJnts, ctrlIKFoot, ikLegs, grpNoFlipKnee, locIKLegLenEnd, locIKLegLenStart,
                        ctrlFootSettings, leftRight, newLayerNameIK, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -821,7 +821,7 @@ class pcCreateRigAlt03Legs(UI):
         return dupsTrack, dupsMove, returnLeg, animationCurves, locStartArray, lenArray
 
     def createSnappableKnee(self, ikJntsPV, ctrlKnee, leftRight, ctrlIKFoot, animCrvPV, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -1125,7 +1125,7 @@ class pcCreateRigAlt03Legs(UI):
                       disSnapUpper, disSnapLower,
                       blndNdUpperStretchChoice, blndNdLowerStretchChoice,
                       leftRight, *args):
-        if leftRight == self.valLeft:
+        if leftRight == CRU.valLeft:
             m = 1
         else:
             m = -1
@@ -1501,9 +1501,6 @@ class pcCreateRigAlt03Legs(UI):
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
         ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
                                      ["CTRL", "rootTransform"], "control")
-
-        self.valLeft = "l_"
-        self.valRight = "r_"
 
         if not jntIKHip:
             mc.warning("You need to select the IK Hip Control")

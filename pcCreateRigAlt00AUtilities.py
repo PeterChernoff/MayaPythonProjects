@@ -14,6 +14,9 @@ class pcCreateRigUtilities:
 
     clrHandCtrl = [0.65, 0.8, 0]
 
+    valLeft = "l_"
+    valRight = "r_"
+
     @staticmethod
     def setupCtrl(s, size=3, orientVal=(1, 0, 0), colourTU=5, sectionsTU=None,
                   addPrefix=False, boxDimensionsLWH=None, override=True, ):
