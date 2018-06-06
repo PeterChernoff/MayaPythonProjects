@@ -437,6 +437,9 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def checkObjectType(val, *args):
+        if not mc.objExists(val):
+            mc.warning("Object does not exist!")
+            return None
         sels = mc.listRelatives(val, children=True, shapes=True, f=True)
         if "transform" in mc.objectType(val) and sels != None:
             # if there are children, it's not just a transform
@@ -826,6 +829,8 @@ class pcCreateRigUtilities:
 
     @staticmethod
     def tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+        if objectNickname is None:
+            objectNickname = objectType
 
         if pcCreateRigUtilities.checkObjectType(selName) != objectType:
             mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
@@ -834,7 +839,9 @@ class pcCreateRigUtilities:
         if not all(word.lower() in selName.lower() for word in keywords):
             mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
             return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
+
+        if loadBtn is not None:
+            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
         return selName
 
     @staticmethod

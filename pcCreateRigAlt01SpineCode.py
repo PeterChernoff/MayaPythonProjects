@@ -18,7 +18,7 @@ reload(pcCreateRigAlt00AUtilities)
 class pcCreateRigAlt01SpineCode(object):
     def __init__(self, checkGeo=True, checkStretch=True, bndJnt="JNT_BND_spine1"):
         # default passes these values
-        self.tgpMakeBC(checkGeo, checkStretch, "JNT_BND_spine1")
+        self.tgpMakeBC(checkGeo, checkStretch, bndJnt)
 
     def createIKSpline(self, jntStart, jntEnd, *args):
 
@@ -372,14 +372,18 @@ class pcCreateRigAlt01SpineCode(object):
 
     def tgpMakeBC(self, checkGeo=None, checkStretch=None, bndJnt=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
-        if checkGeo is not None:
+        if checkGeo is None:
             checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        if checkStretch is not None:
+        if checkStretch is None:
             checkStretch = mc.checkBox("selStretch_cb", q=True, v=True)
 
-        if bndJnt is not None or bndJnt == "":
+        if bndJnt is None or bndJnt == "":
             bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        bndJnts = CRU.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Spine BND", ["JNT", "_BND_", "spine", "1"])
+            passVal = "jointLoad_tfbg"
+
+        else:
+            passVal = None
+        bndJnts = CRU.tgpGetJnts(bndJnt, passVal, "joint", "Root Spine BND", ["JNT", "_BND_", "spine", "1"])
 
         # make sure the selections are not empty
         checkList = [bndJnts]

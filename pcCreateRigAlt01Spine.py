@@ -14,12 +14,10 @@ reload(tgpBaseUI)
 
 import pcCreateRigAlt00AUtilities
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
-
 reload(pcCreateRigAlt00AUtilities)
 
 import pcCreateRigAlt01SpineCode
 from pcCreateRigAlt01SpineCode import pcCreateRigAlt01SpineCode as CRA1
-
 reload(pcCreateRigAlt01SpineCode)
 
 
