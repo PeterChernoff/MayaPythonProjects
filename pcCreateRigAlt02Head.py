@@ -112,7 +112,7 @@ class pcCreateRigAlt02Head(UI):
         self.tgpMakeBC()
 
     def loadSrc1Btn(self):
-        self.selSrc1 = self.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
+        self.selSrc1 = CRU.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
@@ -145,7 +145,7 @@ class pcCreateRigAlt02Head(UI):
                                          ["JNT", "BND", "spineEnd"])
         print(self.selSrc7)
 
-    def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+    def tgpLoadJntsHeadBtnExtra(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
             objectNickname = objectType
         # hierarchy
@@ -158,14 +158,14 @@ class pcCreateRigAlt02Head(UI):
 
             selName = self.selLoad[0]
 
-            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            returner = self.tgpGetHeadJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
             if returner is None:
                 return None
 
         return returner
 
-    def tgpGetJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
+    def tgpGetHeadJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
         if objectNickname is None:
             objectNickname = objectType
 
@@ -184,56 +184,6 @@ class pcCreateRigAlt02Head(UI):
         self.parent = selName
         self.child = mc.listRelatives(selName, ad=True, type="joint")
         # collect the joints in an array
-        self.jointArray = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArray.extend(self.child)
-
-        self.jointArrayNeck = [x for x in self.jointArray if "neck" in x]
-        # removes if the last joint is End
-        # checks if the last three letters are "End"
-        self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
-        self.jointArray = [x for x in self.jointArray if "End" not in x[-3:]]
-        return self.jointArray
-
-    def tgpLoadJntsHeadBtnExtra(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-
-            selName = self.selLoad[0]
-
-            returner = self.tgpGetHeadJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            if returner is None:
-                return None
-
-        return self.jointArrayHead
-
-    def tgpGetHeadJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="joint")
-        # collect the joints in an array
         self.jointArrayHead = [self.parent]
         # reverse the order of the children joints
         self.child.reverse()
@@ -242,8 +192,6 @@ class pcCreateRigAlt02Head(UI):
         self.jointArrayHead.extend(self.child)
 
         # removes if the last joint is End
-        # checks if the last three letters are "End"
-        self.jointEndArrayHead = [x for x in self.jointArrayHead if "End" in x[-3:]]
         self.jointArrayHead = [x for x in self.jointArrayHead if "End" not in x[-3:]]
 
         return self.jointArrayHead
@@ -864,7 +812,12 @@ class pcCreateRigAlt02Head(UI):
                                      ["CTRL", "rootTransform"], "control")
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
+        bndJnts = CRU.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
+
+        # gets us most of the geos
+        jntArrayNoEnd = [x for x in bndJnts if "End" not in x]
+        jntArray = bndJnts[:]
+        jntEnd = jntArray[-1]
 
         # make sure the selections are not empty
         checkList = bndJnts
@@ -874,10 +827,6 @@ class pcCreateRigAlt02Head(UI):
         checkList2 = []
         jntArrayHead = None
 
-        # gets us most of the geos
-        jntArrayNoEnd = [x for x in self.jointArray if "End" not in x]
-        jntArray = self.jointArrayNeck[:]
-        jntEnd = jntArray[-1]
 
         jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
         eyesSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
