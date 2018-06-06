@@ -132,69 +132,19 @@ class pcCreateRigAlt02Head(UI):
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
-        self.selSrc5 = self.tgpLoadJntsHeadBtnExtra("jntHead_tfbg", "joint", "Head Joint",
+        self.selSrc5 = CRU.tgpLoadJntsBtn("jntHead_tfbg", "joint", "Head Joint",
                                                     ["JNT", "BND", "head"])
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
         self.selSrc6 = CRU.tgpLoadTxBtn("ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
                                          ["CTRL", "shoulder"], "Control")
+        print(self.selSrc6)
 
     def loadSrc7Btn(self):
         self.selSrc7 = CRU.tgpLoadTxBtn("jntSpineEndLoad_tf", "joint", "Spine End",
                                          ["JNT", "BND", "spineEnd"])
         print(self.selSrc7)
-
-    def tgpLoadJntsHeadBtnExtra(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-        # hierarchy
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type=objectType)
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-
-            selName = self.selLoad[0]
-
-            returner = self.tgpGetHeadJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-
-            if returner is None:
-                return None
-
-        return returner
-
-    def tgpGetHeadJnts(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-
-        if loadBtn is not None:
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-        # get the children joints
-        self.parent = selName
-        self.child = mc.listRelatives(selName, ad=True, type="joint")
-        # collect the joints in an array
-        self.jointArrayHead = [self.parent]
-        # reverse the order of the children joints
-        self.child.reverse()
-
-        # add to the current list
-        self.jointArrayHead.extend(self.child)
-
-        # removes if the last joint is End
-        self.jointArrayHead = [x for x in self.jointArrayHead if "End" not in x[-3:]]
-
-        return self.jointArrayHead
 
     def createIKSpline(self, jntStart, jntEnd, name, *args):
 
@@ -841,7 +791,8 @@ class pcCreateRigAlt02Head(UI):
         # only include if eyes or jaws
         if checkHead:
             jntHead = mc.textFieldButtonGrp("jntHead_tfbg", q=True, text=True)
-            jntHeads = self.tgpGetHeadJnts(jntHead, "jntHead_tfbg", "joint", "Head Joint", ["JNT", "BND", "head"])
+            jntHeads = CRU.tgpGetJnts(jntHead, "jntHead_tfbg", "joint", "Head Joint", ["JNT", "BND", "head"])
+            jntHeads = [x for x in jntHeads if "End" not in x[-3:]]
 
             jntArrayHead = jntHeads[:]
             checkList2 = jntHeads
