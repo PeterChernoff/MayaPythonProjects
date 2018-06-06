@@ -112,8 +112,8 @@ class pcCreateRigAlt02HeadTest(UI):
         mc.showWindow(self.window)
 
     def createButtonCmd(self, *args):
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+        cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        cbSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         jntIKShoulderCheck = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
         grpTorsoDNTCheck = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
@@ -125,18 +125,18 @@ class pcCreateRigAlt02HeadTest(UI):
         ctrlShoulderCheck = mc.textFieldButtonGrp("ctrlShoulderLoad_tf", q=True, text=True)
         jntSpineEndCheck = mc.textFieldButtonGrp("jntSpineEndLoad_tf", q=True, text=True)
 
-        jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
-        eyesSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
+        cbJaw = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
+        cbEyes = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
 
-        torsoSel = mc.checkBoxGrp("setStretch_rgp", q=True, v1=True)
-        neckSel = mc.checkBoxGrp("setStretch_rgp", q=True, v2=True)
+        cbTorso = mc.checkBoxGrp("setStretch_rgp", q=True, v1=True)
+        cbNeck = mc.checkBoxGrp("setStretch_rgp", q=True, v2=True)
 
-        cra2 = CRA2(checkGeo, checkboxSpine,
+        cra2 = CRA2(cbGeo, cbSpine,
                     jntIKShoulderCheck, grpTorsoDNTCheck,
                     ctrlRootTransCheck, bndJnt, jntHead,
                     ctrlShoulderCheck, jntSpineEndCheck,
-                    jawSel, eyesSel,
-                    torsoSel, neckSel, )
+                    cbJaw, cbEyes,
+                    cbTorso, cbNeck, )
 
     def loadSrc1Btn(self):
         self.selSrc1 = CRU.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])

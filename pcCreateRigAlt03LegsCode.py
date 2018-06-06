@@ -21,12 +21,12 @@ from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 class pcCreateRigAlt03LegsCode(object):
     def __init__(self, mirrorSel=2, lrSel=1,
-                 checkboxTwists=True, checkAnkleTwist=True, checkSwitchSetup=True, checkGeo=True, checkboxHip=True,
+                 cbTwists=True, cbAnkleTwist=True, cbSwitchSetup=True, cbGeo=True, cbHip=True,
                  bndJnt="JNT_BND_l_upperLeg", jntIKHipCheck="JNT_IK_hip", grpDNTTorsoCheck="GRP_DO_NOT_TOUCH_torso",
                  ctrlBodyCheck="CTRL_body", ctrlRootTransCheck="CTRL_rootTransform"):
 
         self.tgpMakeBC(mirrorSel, lrSel,
-                       checkboxTwists, checkAnkleTwist, checkSwitchSetup, checkGeo, checkboxHip,
+                       cbTwists, cbAnkleTwist, cbSwitchSetup, cbGeo, cbHip,
                        bndJnt, jntIKHipCheck, grpDNTTorsoCheck,
                        ctrlBodyCheck, ctrlRootTransCheck)
 
@@ -99,7 +99,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodePercent))
 
         if "foot" in nextJnt:
-            if self.checkAnkleTwist:
+            if self.cbAnkleTwist:
                 rotVal = "X"
             else:
                 rotVal = "Z"
@@ -310,7 +310,7 @@ class pcCreateRigAlt03LegsCode(object):
                     mc.move(legLen * 0.5, 0, -legLen * 0.05, r=True, os=True)
                     set = True
             else:
-                if self.checkAnkleTwist:
+                if self.cbAnkleTwist:
                     footJnt = "ankleTwist"
                     orientVal = (0, 1, 0)
                     turn = True
@@ -371,7 +371,7 @@ class pcCreateRigAlt03LegsCode(object):
         return ctrlFKLengthKeyArray
 
     def createIKLegs(self, ikJnts, newLayerNameIK, leftRight, *args):
-        if self.checkAnkleTwist:
+        if self.cbAnkleTwist:
             ikJntAnkle = [x for x in ikJnts if "ankleTwist" in x[-10:]][0]
             ikJntEnd = [x for x in ikJnts if "legEnd" in x[-6:]][0]
         ikJntFoot = [x for x in ikJnts if "foot" in x[-4:]][0]
@@ -413,7 +413,7 @@ class pcCreateRigAlt03LegsCode(object):
         CRU.layerEdit(ctrlIKFoot, newLayerName=newLayerNameIK)
         CRU.changeRotateOrder(ctrlIKFoot, "ZXY")
 
-        if self.checkAnkleTwist:
+        if self.cbAnkleTwist:
             ikJntFootUse = ikJntEnd
         else:
             ikJntFootUse = ikJntFoot
@@ -454,7 +454,7 @@ class pcCreateRigAlt03LegsCode(object):
         else:
             m = -1
         # creates locators that measure distance for the leg
-        if self.checkAnkleTwist:
+        if self.cbAnkleTwist:
             ikJntFoot = [x for x in ikJnts if "legEnd" in x[-6:]][0]
         else:
             ikJntFoot = [x for x in ikJnts if "foot" in x[-4:]][0]
@@ -697,7 +697,7 @@ class pcCreateRigAlt03LegsCode(object):
 
                 if "CTRL" in dupReplace:
                     toDelete.append(dupReplace)
-                if self.checkAnkleTwist:
+                if self.cbAnkleTwist:
                     if "ankleTwist" in dupReplace:
                         toDelete.append(dupReplace)
                 else:
@@ -947,7 +947,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.pointConstraint(locHipSpace, grpIKConst)
         mc.pointConstraint(locHipSpace, grpFKConst)
 
-        if self.checkboxHip:
+        if self.cbHip:
             locArray = []
 
             # Set up the hip space stuff
@@ -1200,7 +1200,7 @@ class pcCreateRigAlt03LegsCode(object):
             fkSwitchJnts.append(rename)
 
         # put the ankleTwist under foot
-        if self.checkAnkleTwist:
+        if self.cbAnkleTwist:
             CRU.lockHideCtrls(jntAnkleTwistSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
             mc.parent(jntAnkleTwistSwitch, bndFoot)
             mc.setAttr("{0}.visibility".format(jntAnkleTwistSwitch), False)
@@ -1298,12 +1298,12 @@ class pcCreateRigAlt03LegsCode(object):
         ctrlIKFoot, ikLegs, ikBall, ikToe = self.createIKLegs(ikJnts, newLayerNameIK, leftRight)
 
         # we need to put this here in case we have the ankleTwist option
-        if self.checkboxTwists:
+        if self.cbTwists:
             mkTwists = 4
             geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[0], bndJnts[1], ctrlFootSettings,
                                                 ctrlIKFoot, leftRight)
             geoJntArray.extend(geoJntArrayExtend)
-            if self.checkAnkleTwist:
+            if self.cbAnkleTwist:
                 # use the foot for the foot twist
                 geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
                                                     ctrlIKFoot, leftRight, fkikBlendName, )
@@ -1312,10 +1312,10 @@ class pcCreateRigAlt03LegsCode(object):
                                                     ctrlIKFoot, leftRight)
             geoJntArray.extend(geoJntArrayExtend)
 
-        if self.checkGeo:
+        if self.cbGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
 
-            if not self.checkboxTwists:
+            if not self.cbTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
                 CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Seg", stretch=True)
 
@@ -1367,13 +1367,13 @@ class pcCreateRigAlt03LegsCode(object):
         self.cleanLeg(ctrlFootSettings, ctrlIKFoot, ctrlKnee, grpKnee, fkJnts)
         # creates the ability to turn on and off the stretch
         self.setIKStretchOption(ctrlFootSettings, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
-        if self.checkSwitchSetup:
+        if self.cbSwitchSetup:
             self.makeLegFKIKComplete(bndJnts, fkJnts, ctrlIKFoot)
 
         # return
 
     def tgpMakeBC(self, mirrorSel=None, lrSel=None,
-                  checkboxTwists=None, checkAnkleTwist=None, checkSwitchSetup=None, checkGeo=None, checkboxHip=None,
+                  cbTwists=None, cbAnkleTwist=None, cbSwitchSetup=None, cbGeo=None, cbHip=None,
                   bndJnt=None, jntIKHipCheck=None, grpDNTTorsoCheck=None,
                   ctrlBodyCheck=None, ctrlRootTransCheck=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
@@ -1382,26 +1382,26 @@ class pcCreateRigAlt03LegsCode(object):
         if lrSel is None:
             lrSel = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
 
-        if checkboxTwists is None:
-            self.checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
+        if cbTwists is None:
+            self.cbTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
         else:
-            self.checkboxTwists = checkboxTwists
-        if checkAnkleTwist is None:
-            self.checkAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
+            self.cbTwists = cbTwists
+        if cbAnkleTwist is None:
+            self.cbAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
         else:
-            self.checkAnkleTwist = checkAnkleTwist
-        if checkSwitchSetup is None:
-            self.checkSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
+            self.cbAnkleTwist = cbAnkleTwist
+        if cbSwitchSetup is None:
+            self.cbSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
         else:
-            self.checkSwitchSetup = checkSwitchSetup
-        if checkGeo is None:
-            self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+            self.cbSwitchSetup = cbSwitchSetup
+        if cbGeo is None:
+            self.cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         else:
-            self.checkGeo = checkGeo
-        if checkboxHip:
-            self.checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+            self.cbGeo = cbGeo
+        if cbHip:
+            self.cbHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
         else:
-            self.checkboxHip = checkboxHip
+            self.cbHip = cbHip
 
         if mirrorSel == 1:
             mirrorRig = False

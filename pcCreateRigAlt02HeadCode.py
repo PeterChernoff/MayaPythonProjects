@@ -20,20 +20,20 @@ reload(pcCreateRigAlt00AUtilities)
 
 
 class pcCreateRigAlt02HeadCode(object):
-    def __init__(self, checkGeo=True, checkboxSpine=True,
+    def __init__(self, cbGeo=True, cbSpine=True,
                  jntIKShoulderCheck="JNT_IK_shoulder", grpTorsoDNTCheck="GRP_DO_NOT_TOUCH_torso",
                  ctrlRootTransCheck="CTRL_rootTransform", bndJnt="JNT_BND_neck1", jntHead="JNT_BND_head",
                  ctrlShoulderCheck="CTRL_shoulder", jntSpineEndCheck="JNT_BND_spineEnd",
-                 jawSel=True, eyesSel=True,
-                 torsoSel=True, neckSel=True, ):
+                 cbJaw=True, cbEyes=True,
+                 cbTorso=True, cbNeck=True, ):
 
-        self.tgpMakeBC(checkGeo, checkboxSpine,
+        self.tgpMakeBC(cbGeo, cbSpine,
                        jntIKShoulderCheck, grpTorsoDNTCheck,
                        ctrlRootTransCheck, bndJnt, jntHead,
                        ctrlShoulderCheck, jntSpineEndCheck,
 
-                       jawSel, eyesSel,
-                       torsoSel, neckSel)
+                       cbJaw, cbEyes,
+                       cbTorso, cbNeck)
 
     def createIKSpline(self, jntStart, jntEnd, name, *args):
 
@@ -265,13 +265,13 @@ class pcCreateRigAlt02HeadCode(object):
         mc.setAttr("{0}.inheritsTransform".format(crvNeck), False)
         return
 
-    def createNeckShoulderLoc(self, checkboxSpine, jntIKShoulder, ikNeckBase, fkJnts, *args):
+    def createNeckShoulderLoc(self, cbSpine, jntIKShoulder, ikNeckBase, fkJnts, *args):
         locConstNeckShoulder = mc.spaceLocator(p=(0, 0, 0), name="LOC_const_neckShoulder")[0]
         # move to the base of the neck
         todelete = mc.pointConstraint(ikNeckBase, locConstNeckShoulder)
         mc.delete(todelete)
 
-        if checkboxSpine:
+        if cbSpine:
             mc.parent(locConstNeckShoulder, jntIKShoulder)
 
         # Create a group for the FKNeck joint
@@ -512,8 +512,8 @@ class pcCreateRigAlt02HeadCode(object):
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
         return grpHeadDNT
 
-    def neckCleanUpExtras(self, jawSel, grpJaw, ctrlJaw,
-                          eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
+    def neckCleanUpExtras(self, cbJaw, grpJaw, ctrlJaw,
+                          cbEyes, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
                           grpHeadDNT, jntArrayHead,
                           ikNeckEnd, checkHead,
 
@@ -521,11 +521,11 @@ class pcCreateRigAlt02HeadCode(object):
         if checkHead:
             mc.parent(jntArrayHead[0], grpHeadDNT)
 
-        if jawSel:
+        if cbJaw:
             CRU.lockHideCtrls(grpJaw, translate=True, rotate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ctrlJaw, translate=True, scale=True, visibility=True)
 
-        if eyesSel:
+        if cbEyes:
             # lock and hide the group values for the eyes
             CRU.lockHideCtrls(eyesGrp, translate=True, rotate=True, scale=True, visibility=True)
             for i in range(len(eyeGrpArray)):
@@ -632,17 +632,17 @@ class pcCreateRigAlt02HeadCode(object):
         CRU.setDriverDrivenValues(ctrlHead, stretchable, neckPrntConstr, neckPrntConstrVals[1], 1, 0)
         return
 
-    def tgpMakeBC(self, checkGeo=None, checkboxSpine=None,
+    def tgpMakeBC(self, cbGeo=None, cbSpine=None,
                   jntIKShoulderCheck=None, grpTorsoDNTCheck=None,
                   ctrlRootTransCheck=None, bndJnt=None, jntHead=None,
                   ctrlShoulderCheck=None, jntSpineEndCheck=None,
-                  jawSel=None, eyesSel=None,
-                  torsoSel=None, neckSel=None, *args):
+                  cbJaw=None, cbEyes=None,
+                  cbTorso=None, cbNeck=None, *args):
         # symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
-        if checkGeo is None:
-            checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        if checkboxSpine is None:
-            checkboxSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+        if cbGeo is None:
+            cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        if cbSpine is None:
+            cbSpine = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         ##########
         # We want to be able to have space switching regardless
@@ -694,20 +694,20 @@ class pcCreateRigAlt02HeadCode(object):
         checkList2 = []
         jntArrayHead = None
 
-        if jawSel is None:
-            jawSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
-        if eyesSel is None:
-            eyesSel = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
-        if jawSel or eyesSel:
+        if cbJaw is None:
+            cbJaw = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v1=True)
+        if cbEyes is None:
+            cbEyes = mc.checkBoxGrp("attrSelExtra_rbg", q=True, v2=True)
+        if cbJaw or cbEyes:
             checkHead = True
         else:
             checkHead = False
 
-        if torsoSel is None:
-            torsoSel = mc.checkBoxGrp("setStretch_rgp", q=True, v1=True)
+        if cbTorso is None:
+            cbTorso = mc.checkBoxGrp("setStretch_rgp", q=True, v1=True)
 
-        if neckSel is None:
-            neckSel = mc.checkBoxGrp("setStretch_rgp", q=True, v2=True)
+        if cbNeck is None:
+            cbNeck = mc.checkBoxGrp("setStretch_rgp", q=True, v2=True)
 
         # only include if eyes or jaws
         if checkHead:
@@ -728,10 +728,10 @@ class pcCreateRigAlt02HeadCode(object):
             if "head" not in checkList2[0]:
                 mc.warning("Make the first selection the root head joint")
                 return
-        if eyesSel:
+        if cbEyes:
             eyeArray = [x for x in jntArrayHead if "eye" in x]
 
-        if torsoSel:
+        if cbTorso:
             if ctrlShoulderCheck is None:
                 ctrlShoulderCheck = mc.textFieldButtonGrp("ctrlShoulderLoad_tf", q=True, text=True)
                 passVal = "ctrlShoulderLoad_tf"
@@ -780,7 +780,7 @@ class pcCreateRigAlt02HeadCode(object):
 
             # Space Switching Shoulders
             # In case we want to attach it to the body
-            locConstNeckShoulder, grpNeckFK = self.createNeckShoulderLoc(checkboxSpine, jntIKShoulder, ikNeckBase,
+            locConstNeckShoulder, grpNeckFK = self.createNeckShoulderLoc(cbSpine, jntIKShoulder, ikNeckBase,
                                                                          fkJnts, )
             # to delete test: see if the headGRP is where I'm supposed to be
             # self.createSpaceSwitching(ctrlHead, jntIKShoulder, ctrlRootTrans, fkJnts, grpTorsoDNT)
@@ -791,12 +791,12 @@ class pcCreateRigAlt02HeadCode(object):
                 mc.parentConstraint(ikNeckEnd, jntArrayHead[0], mo=True)
 
             # we can create eyes and jaw
-            if jawSel:
+            if cbJaw:
                 grpJaw, ctrlJaw = self.createJawCtrls(jntArrayHead, jntHead, grpHead)
             else:
                 grpJaw, ctrlJaw = None, None
 
-            if eyesSel:
+            if cbEyes:
                 eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp, = self.createEyeControls(eyeArray, ctrlHead,
                                                                                        ctrlRootTrans)
             else:
@@ -805,24 +805,24 @@ class pcCreateRigAlt02HeadCode(object):
             grpHeadDNT = self.neckCleanUp(jntArray, fkJnts, ikNeckBase, ikNeckEnd, hdlNeck, crvNeck, grpHead, grpNeckFK,
                                           ctrlHead)
 
-            if torsoSel:
+            if cbTorso:
                 self.toggleStretchTorso(locConstNeckShoulder, locHeadShoulder, jntIKShoulder, grpTorsoDNT, jntSpineEnd,
                                         ctrlShoulder)
 
-            if neckSel:
+            if cbNeck:
                 neckStretch_blnd, stretchable = self.makeNeckStretchable(neckInfo, globalScaleNormalizeDiv,
                                                                          splineStretchNameDiv, ctrlHead)
                 if checkHead:
                     self.toggleStretchNeck(jntEnd, grpHeadDNT, ctrlHead, stretchable, ikNeckEnd, jntHead)
 
             # it will be easier just to grab the groups above it
-            self.neckCleanUpExtras(jawSel, grpJaw, ctrlJaw,
-                                   eyesSel, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
+            self.neckCleanUpExtras(cbJaw, grpJaw, ctrlJaw,
+                                   cbEyes, eyeCtrlArray, eyesCtrl, eyeGrpArray, eyesGrp,
                                    grpHeadDNT, jntArrayHead,
                                    ikNeckEnd, checkHead,
                                    )
 
-            if checkGeo:
+            if cbGeo:
                 CRU.tgpSetGeo(jntArrayNoEnd, setLayer=True)
                 checkHeadExists = ["GEO_l_gland", "GEO_r_gland", "GEO_teethUpper"]
                 checkJawExists = ["GEO_teethLower"]
@@ -830,7 +830,7 @@ class pcCreateRigAlt02HeadCode(object):
                 if checkHead:
                     CRU.tgpSetGeo(jntArrayHead, setLayer=True)
                     setHead = jntHeads[0]
-                    if jawSel:
+                    if cbJaw:
                         setJaw = [x for x in jntHeads if "jaw" in x.lower()][-1]
                     else:
                         setJaw = jntHeads[0]

@@ -107,11 +107,11 @@ class pcCreateRigAlt03LegsTest(UI):
         mirrorSel = mc.radioButtonGrp("selLegMirrorType_rbg", q=True, select=True)
         lrSel = mc.radioButtonGrp("selLegType_rbg", q=True, select=True)
 
-        checkboxTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
-        checkAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
-        checkSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        checkboxHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
+        cbTwists = mc.checkBox("selCreateTwists_cb", q=True, v=True)
+        cbAnkleTwist = mc.checkBox("selAnkleTwist_cb", q=True, v=True)
+        cbSwitchSetup = mc.checkBox("selAddIKFKSwitching_cb", q=True, v=True)
+        cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        cbHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
@@ -120,7 +120,7 @@ class pcCreateRigAlt03LegsTest(UI):
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
 
         cra3 = CRA3(mirrorSel, lrSel,
-                    checkboxTwists,checkAnkleTwist, checkSwitchSetup, checkGeo, checkboxHip,
+                    cbTwists,cbAnkleTwist, cbSwitchSetup, cbGeo, cbHip,
                     bndJnt, jntIKHipCheck, grpDNTTorsoCheck,
                     ctrlBodyCheck, ctrlRootTransCheck
                     )

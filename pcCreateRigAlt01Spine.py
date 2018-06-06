@@ -58,10 +58,10 @@ class pcCreateRigAlt01SpineTest(UI):
         mc.showWindow(self.window)
 
     def createButtonCmd(self, *args):
-        checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        checkStretch = mc.checkBox("selStretch_cb", q=True, v=True)
+        cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        cbStretch = mc.checkBox("selStretch_cb", q=True, v=True)
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
-        cra1 = CRA1(checkGeo, checkStretch, bndJnt)
+        cra1 = CRA1(cbGeo, cbStretch, bndJnt)
 
     def loadSrc1Btn(self):
         self.selSrc1 = CRU.tgpLoadJntsBtn("jointLoad_tfbg", "joint", "Root Spine BND", ["JNT", "_BND_", "spine", "1"])

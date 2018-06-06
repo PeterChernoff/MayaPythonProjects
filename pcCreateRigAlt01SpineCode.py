@@ -16,9 +16,9 @@ reload(pcCreateRigAlt00AUtilities)
 
 
 class pcCreateRigAlt01SpineCode(object):
-    def __init__(self, checkGeo=True, checkStretch=True, bndJnt="JNT_BND_spine1"):
+    def __init__(self, cbGeo=True, cbStretch=True, bndJnt="JNT_BND_spine1"):
         # default passes these values
-        self.tgpMakeBC(checkGeo, checkStretch, bndJnt)
+        self.tgpMakeBC(cbGeo, cbStretch, bndJnt)
 
     def createIKSpline(self, jntStart, jntEnd, *args):
 
@@ -370,12 +370,12 @@ class pcCreateRigAlt01SpineCode(object):
 
         return
 
-    def tgpMakeBC(self, checkGeo=None, checkStretch=None, bndJnt=None, *args):
+    def tgpMakeBC(self, cbGeo=None, cbStretch=None, bndJnt=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
-        if checkGeo is None:
-            checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        if checkStretch is None:
-            checkStretch = mc.checkBox("selStretch_cb", q=True, v=True)
+        if cbGeo is None:
+            cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        if cbStretch is None:
+            cbStretch = mc.checkBox("selStretch_cb", q=True, v=True)
 
         if bndJnt is None or bndJnt == "":
             bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
@@ -449,11 +449,11 @@ class pcCreateRigAlt01SpineCode(object):
             # we don't clean this one up yet
             globalScaleNormalizeDiv = self.createRootTransform(ctrlBody, grpTorso, spineInfo, spineStretchNameDiv)
 
-            if checkStretch:
+            if cbStretch:
                 self.makeSpineStretchable(spineIKCtrls, globalScaleNormalizeDiv, spineStretchNameDiv, spineInfo)
 
             # make the last thing we do the geometry
-            if checkGeo:
+            if cbGeo:
                 CRU.tgpSetGeo(jntArray, "JNT_BND_", setLayer=True)
                 try:
                     CRU.tgpSetGeo([spineIKs[0]], "JNT_IK_", setLayer=True)
