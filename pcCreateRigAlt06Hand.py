@@ -111,22 +111,22 @@ class pcCreateRigAlt06Hand(UI):
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("jntBindEndLoad_tf", "joint", "Hand Base Joint", ["jnt", "arm", "bindEnd"],
+        self.selSrc3 = CRU.tgpLoadTxBtn("jntBindEndLoad_tf", "joint", "Hand Base Joint", ["jnt", "arm", "bindEnd"],
                                          "joint")
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.selSrc4 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform\nControl",
+        self.selSrc4 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform\nControl",
                                          ["ctrl", "rootTransform"], "control")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
-        self.selSrc5 = self.tgpLoadTxBtn("jntHandLoad_tfbg", "joint", "Hand Joint",
+        self.selSrc5 = CRU.tgpLoadTxBtn("jntHandLoad_tfbg", "joint", "Hand Joint",
                                          ["jnt", "bnd", "hand", ], "joint")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
-        self.selSrc6 = self.tgpLoadTxBtn("ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
+        self.selSrc6 = CRU.tgpLoadTxBtn("ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
                                          ["ctrl", "arm", "settings", ], "control")
         print(self.selSrc6)
 
@@ -181,22 +181,6 @@ class pcCreateRigAlt06Hand(UI):
         self.locArray = locArraySorted
 
         return self.locArray
-
-    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-            selName = self.selLoad[0]
-            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-
-            return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:

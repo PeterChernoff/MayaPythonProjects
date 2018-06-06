@@ -108,46 +108,30 @@ class pcCreateRigAlt03Legs(UI):
         print(self.selSrc1)
 
     def loadSrc2Btn(self):
-        self.selSrc2 = self.tgpLoadTxBtn("jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
+        self.selSrc2 = CRU.tgpLoadTxBtn("jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
         print(self.selSrc2)
 
     def loadSrc3Btn(self):
-        self.selSrc3 = self.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
+        self.selSrc3 = CRU.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
                                          ["GRP", "DO", "NOT", "TOUCH"],
                                          "group")
         print(self.selSrc3)
 
     def loadSrc4Btn(self):
-        self.selSrc4 = self.tgpLoadTxBtn("ctrlBody_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
+        self.selSrc4 = CRU.tgpLoadTxBtn("ctrlBody_tfbg", "nurbsCurve", "COG Control", ["CTRL", "COG"],
                                          "control")
         print(self.selSrc4)
 
     def loadSrc5Btn(self):
-        self.selSrc5 = self.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
+        self.selSrc5 = CRU.tgpLoadTxBtn("rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
                                          ["CTRL", "rootTransform"], "control")
         print(self.selSrc5)
 
     def loadSrc6Btn(self):
-        self.selSrc6 = self.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
+        self.selSrc6 = CRU.tgpLoadTxBtn("grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
                                          ["GRP", "DO", "NOT", "TOUCH"],
                                          "group")
         print(self.selSrc6)
-
-    def tgpLoadTxBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
-        if objectNickname is None:
-            objectNickname = objectType
-
-        self.selLoad = []
-        self.selLoad = mc.ls(sl=True, fl=True, type="transform")
-
-        if (len(self.selLoad) != 1):
-            mc.warning("Select only the {0}".format(objectDesc))
-            return
-        else:
-            selName = self.selLoad[0]
-            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-
-            return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:

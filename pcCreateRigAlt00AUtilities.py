@@ -833,3 +833,24 @@ class pcCreateRigUtilities:
             return
         mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
         return selName
+
+    @staticmethod
+    def tgpLoadTxBtn(loadBtn, objectType, objectDesc, keywords, objectNickname=None):
+        if objectNickname is None:
+            objectNickname = objectType
+
+        selLoad = []
+        selLoad = mc.ls(sl=True, fl=True, type="transform")
+
+        if (len(selLoad) != 1):
+            mc.warning("Select only the {0}".format(objectDesc))
+            return
+        else:
+            if pcCreateRigUtilities.checkObjectType(selLoad[0]) != objectType:
+                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
+                return
+            selName = selLoad[0]
+
+            selName = pcCreateRigUtilities.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+
+            return selName
