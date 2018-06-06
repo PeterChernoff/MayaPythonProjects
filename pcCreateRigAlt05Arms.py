@@ -130,7 +130,8 @@ class pcCreateRigAlt05ArmsTest(UI):
 
         cra5 = CRA5(mirrorSel, lrSel,
                  cbGeo, cbSwitchSetup, cbToggleSpineStretch, cbSpecialStretch,
-                 bndJnt, jntShoulderRootCheck, jntIKShoulderCheck, grpDNTTorsoCheck,
+                 bndJnt, jntShoulderRootCheck,
+                    jntIKShoulderCheck, grpDNTTorsoCheck,
                  ctrlRootCheck, grpSpineToggleCheck)
 
     def loadSrc1Btn(self):

@@ -24,8 +24,9 @@ from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 class pcCreateRigAlt05ArmsCode(object):
     def __init__(self, mirrorSel=2, lrSel=1,
                  cbGeo=True, cbSwitchSetup=True, cbToggleSpineStretch=True, cbSpecialStretch=True,
-                 bndJnt=None, jntShoulderRootCheck=None, jntIKShoulderCheck=None, grpDNTTorsoCheck=None,
-                 ctrlRootCheck=None, grpSpineToggleCheck=None):
+                 bndJnt="JNT_BND_l_upperArm", jntShoulderRootCheck="JNT_BND_l_shoulderBase",
+                 jntIKShoulderCheck="JNT_IK_shoulder", grpDNTTorsoCheck="GRP_DO_NOT_TOUCH_torso",
+                 ctrlRootCheck="CTRL_rootTransform", grpSpineToggleCheck="GRP_head_shoulders"):
 
         self.tgpMakeBC(mirrorSel, lrSel,
                        cbGeo, cbSwitchSetup, cbToggleSpineStretch, cbSpecialStretch,
@@ -1717,6 +1718,7 @@ class pcCreateRigAlt05ArmsCode(object):
             self.cbToggleSpineStretch = mc.checkBox("selStretchSpineToggle_cb", q=True, v=True)
         else:
             self.cbToggleSpineStretch = cbToggleSpineStretch
+
         if bndJnt is None:
             bndJnt = mc.textFieldButtonGrp("jointArmsLoad_tfbg", q=True, text=True)
             passVal = "jointArmsLoad_tfbg"

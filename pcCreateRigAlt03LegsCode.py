@@ -1398,7 +1398,7 @@ class pcCreateRigAlt03LegsCode(object):
             self.cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
         else:
             self.cbGeo = cbGeo
-        if cbHip:
+        if cbHip is None:
             self.cbHip = mc.checkBox("selSpineEnd_cb", q=True, v=True)
         else:
             self.cbHip = cbHip
@@ -1421,14 +1421,14 @@ class pcCreateRigAlt03LegsCode(object):
             colourTU = CRU.clrRightFK
             colourTUMirror = CRU.clrLeftFK
 
-        if jntIKHipCheck is not None:
+        if jntIKHipCheck is None:
             jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
             passVal = "jntIKHip_tfbg"
         else:
             passVal = None
         jntIKHip = CRU.tgpGetTx(jntIKHipCheck, passVal, "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
 
-        if grpDNTTorsoCheck is not None:
+        if grpDNTTorsoCheck is None:
             grpDNTTorsoCheck = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
             passVal = "grpTorsoDNT_tfbg"
         else:
@@ -1436,7 +1436,7 @@ class pcCreateRigAlt03LegsCode(object):
         grpDNTTorso = CRU.tgpGetTx(grpDNTTorsoCheck, passVal, "transform", "Torso DO NOT TOUCH",
                                    ["GRP", "DO", "NOT", "TOUCH"],
                                    "group")
-        if ctrlBodyCheck is not None:
+        if ctrlBodyCheck is None:
             ctrlBodyCheck = mc.textFieldButtonGrp("ctrlBody_tfbg", q=True, text=True)
             passVal = "ctrlBody_tfbg"
         else:
@@ -1444,7 +1444,7 @@ class pcCreateRigAlt03LegsCode(object):
         ctrlBody = CRU.tgpGetTx(ctrlBodyCheck, passVal, "nurbsCurve", "Body Control", ["CTRL", "body"],
                                 "control")
 
-        if ctrlRootTransCheck is not None:
+        if ctrlRootTransCheck is None:
             ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
             passVal = "rootTrans_tfbg"
         else:
@@ -1465,7 +1465,7 @@ class pcCreateRigAlt03LegsCode(object):
             mc.warning("You need to select the Root Transform Control")
             return
 
-        if bndJnt is not None:
+        if bndJnt is None:
             bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
             passVal = "jointLoad_tfbg"
         else:

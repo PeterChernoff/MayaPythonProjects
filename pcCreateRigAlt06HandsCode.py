@@ -931,7 +931,8 @@ class pcCreateRigAlt06HandsCode(object):
                   jntArmHandBndCheck=None, ctrlSettingsCheck=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
 
-        lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
+        if lrSel is None:
+            lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
         if lrSel == 1:
             isLeft = True
             leftRight = CRU.valLeft
@@ -944,8 +945,8 @@ class pcCreateRigAlt06HandsCode(object):
             leftRightMirror = CRU.valLeft
             colourTU = CRU.clrRightFK
             colourTUMirror = CRU.clrLeftFK
-
-        mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
+        if mirrorSel is None:
+            mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
 
         if cbGeo is None:
             self.cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)

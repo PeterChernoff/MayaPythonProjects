@@ -711,7 +711,7 @@ class pcCreateRigAlt02HeadCode(object):
 
         # only include if eyes or jaws
         if checkHead:
-            if jntHead is not None or jntHead == "":
+            if jntHead is None or jntHead == "":
                 jntHead = mc.textFieldButtonGrp("jntHead_tfbg", q=True, text=True)
                 passVal = "jntHead_tfbg"
 
