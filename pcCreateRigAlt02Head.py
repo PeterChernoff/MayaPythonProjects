@@ -160,25 +160,9 @@ class pcCreateRigAlt02Head(UI):
                 return
             selName = self.selLoad[0]
 
-            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            '''if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)'''
             return selName
-
-    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -885,20 +869,19 @@ class pcCreateRigAlt02Head(UI):
 
         # We want to be able to have space switching regardless
         jntIKShoulderCheck = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
-        jntIKShoulder = self.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
-                                      ["JNT", "_IK_", "shoulder"], "control")
+        jntIKShoulder = CRU.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
+                                     ["JNT", "_IK_", "shoulder"], "control")
 
         grpTorsoDNTCheck = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
-        grpTorsoDNT = self.tgpGetTx(grpTorsoDNTCheck, "grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
-                                    ["GRP", "DO", "NOT", "TOUCH"], "group")
+        grpTorsoDNT = CRU.tgpGetTx(grpTorsoDNTCheck, "grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
+                                   ["GRP", "DO", "NOT", "TOUCH"], "group")
 
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        ctrlRootTrans = self.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
-                                      ["CTRL", "rootTransform"], "control")
+        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
+                                     ["CTRL", "rootTransform"], "control")
 
         bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
         bndJnts = self.tgpGetJnts(bndJnt, "jointLoad_tfbg", "joint", "Root Neck Joint", ["JNT", "BND", "neck", "1"])
-        jntEnd = self.jointEndArray[:]
 
         # make sure the selections are not empty
         checkList = bndJnts
@@ -939,11 +922,11 @@ class pcCreateRigAlt02Head(UI):
 
         if torsoSel:
             ctrlShoulderCheck = mc.textFieldButtonGrp("ctrlShoulderLoad_tf", q=True, text=True)
-            ctrlShoulder = self.tgpGetTx(ctrlShoulderCheck, "ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
-                                         ["CTRL", "shoulder"], "Control")
+            ctrlShoulder = CRU.tgpGetTx(ctrlShoulderCheck, "ctrlShoulderLoad_tf", "nurbsCurve", "Shoulder Control",
+                                        ["CTRL", "shoulder"], "Control")
             jntSpineEndCheck = mc.textFieldButtonGrp("jntSpineEndLoad_tf", q=True, text=True)
-            jntSpineEnd = self.tgpGetTx(jntSpineEndCheck, "jntSpineEndLoad_tf", "joint", "Spine End",
-                                        ["JNT", "BND", "spineEnd"])
+            jntSpineEnd = CRU.tgpGetTx(jntSpineEndCheck, "jntSpineEndLoad_tf", "joint", "Spine End",
+                                       ["JNT", "BND", "spineEnd"])
 
         jntArrayLen = len(jntArray)
 

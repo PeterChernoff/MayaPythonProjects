@@ -106,29 +106,9 @@ class pcCreateRigAlt04Feet(UI):
             return
         else:
             selName = self.selLoad[0]
-            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
-            '''if CRU.checkObjectType(self.selLoad[0]) != objectType:
-                mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-                return
-            selName = self.selLoad[0]
+            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
-            if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-                return
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)'''
             return selName
-
-    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-        return selName
 
     def tgpLoadLocsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -452,7 +432,7 @@ class pcCreateRigAlt04Feet(UI):
         locNames = self.tgpGetLocs(locName, "locLoad_tfbg", "locator", "Heel Locator", ["LOC", "heel"])
 
         ctrlIKFootCheck = mc.textFieldButtonGrp("ctrlIKFootLoad_tf", q=True, text=True)
-        ctrlIKFoot = self.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
+        ctrlIKFoot = CRU.tgpGetTx(ctrlIKFootCheck, "ctrlIKFootLoad_tf", "nurbsCurve", "IK Foot Control",
                                    ["CTRL", "foot"], "control")
 
         try:

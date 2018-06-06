@@ -158,21 +158,9 @@ class pcCreateRigAlt05Arms(UI):
             return
         else:
             selName = self.selLoad[0]
-            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
             return selName
-
-    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -218,7 +206,6 @@ class pcCreateRigAlt05Arms(UI):
         # add to the current list
         self.jointArray.extend(self.child)
 
-        # removes if the last joint is End
         self.jointRoot = selName
         return self.jointArray
 
@@ -263,7 +250,6 @@ class pcCreateRigAlt05Arms(UI):
         return ctrlArmSettings, fkikBlendName, fkVis, ikVis
 
     def bindArmTwists(self, twistJntsArrayOfArrays, leftRight, ikArms, *args):
-
 
         bindJntTwistStart = "JNT_{0}arm_bindStart".format(leftRight)
         bindJntTwistMid = "JNT_{0}arm_bindMid".format(leftRight)
@@ -355,7 +341,6 @@ class pcCreateRigAlt05Arms(UI):
 
         # Up Vector and Up Vector 2 to 0, 0, 1
         # they may need to be opposite values on the left/right
-
 
         mc.setAttr('{0}.dWorldUpVectorX'.format(hdlArm), armUV[0])
         mc.setAttr('{0}.dWorldUpVectorY'.format(hdlArm), armUV[1])
@@ -925,85 +910,6 @@ class pcCreateRigAlt05Arms(UI):
 
         mc.parentConstraint(jntIKShoulder, grpShoulder, mo=True)
         return grpShoulder, grpDNTShoulder
-
-    '''def organizeArmBak(self, ctrlRoot, bndJnts, ikJnts, fkJnts,
-                       bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
-                       twistJntsArrayOfArrays,
-                       grpIKVisArm, grpIKConstArm, grpArmTwist,
-                       distArmElbow, distElbowHand, distIKArmLen,
-                       locDistArmElbowStart, locIKDistArmStart,
-                       ctrlElbow,
-                       jntShoulders,
-                       leftRight, ikBndJnts=None):
-
-        if ikBndJnts is None:
-            dontSkipIkBnd = False
-
-        else:
-            dontSkipIkBnd = True
-            # group all arm nodes under the arm
-        grpArm = "GRP_{0}arm".format(leftRight)
-        mc.group(n=grpArm, em=True, w=True)
-        mc.parent(bndJnts[0], fkJnts[0], ikJnts[0], bindJntTwistEnd, bindJntTwistMid, bindJntTwistStart, grpArm)
-
-        mc.parent(grpIKVisArm, grpIKConstArm, grpArmTwist, grpArm)
-        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpArm)
-        mc.parent(ctrlElbow, grpArm)
-
-        if dontSkipIkBnd:
-            mc.parent(ikBndJnts[0], grpArm)
-
-        for i in range(len(twistJntsArrayOfArrays)):
-            mc.parent(twistJntsArrayOfArrays[i][0], grpArm)
-
-        mc.parent(grpArm, ctrlRoot)
-
-        ##########
-        # organize the do not touch arm
-        grpDNTArm = "GRP_DO_NOT_TOUCH_{0}arm".format(leftRight)
-        mc.group(n=grpDNTArm, em=True, w=True)
-        mc.parent(grpDNTArm, grpArm)
-        # group everything so far except GRP_IK_vis, CTRL_l_elbow, and the FK  Jnts
-        mc.parent(bndJnts[0], ikJnts[0], bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd, grpDNTArm)
-        mc.parent(grpIKConstArm, grpArmTwist, grpDNTArm)
-        mc.parent(locDistArmElbowStart, locIKDistArmStart, distArmElbow, distElbowHand, distIKArmLen, grpDNTArm)
-
-        if dontSkipIkBnd:
-            mc.parent(ikBndJnts[0], grpDNTArm)
-
-        # Group JNT_IK_l_upperArm, LOC_l_upperArm_to_elbowLengthStart, LOC_IK_l_arm_lengthStart
-        grpIKConstArmBase = "GRP_IKConst_{0}armBase".format(leftRight)
-        mc.group(n=grpIKConstArmBase, em=True, w=True)
-        mc.parent(grpIKConstArmBase, grpDNTArm)
-
-        # move the pivot to the base of the arm
-        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
-        mc.xform(grpIKConstArmBase, ws=True, pivots=pivotTranslate)
-        mc.parent(ikJnts[0], locDistArmElbowStart, locIKDistArmStart, grpIKConstArmBase)
-
-        if dontSkipIkBnd:
-            mc.parent(ikBndJnts[0], grpIKConstArmBase)
-        # create a space locator
-        locShoulderSpace = "LOC_shoulderSpace_{0}arm".format(leftRight)
-        mc.spaceLocator(p=(0, 0, 0), name=locShoulderSpace)
-
-        mc.matchTransform(locShoulderSpace, jntShoulders[-1], pos=True)
-        # CRU.constrainMove(jntShoulders[-1], locShoulderSpace, point=True)
-        mc.parent(locShoulderSpace, jntShoulders[-1])
-
-        mc.pointConstraint(locShoulderSpace, grpIKConstArmBase)
-        ##########
-        grpBNDConstArm = "GRP_BNDConst_{0}arm".format(leftRight)
-        mc.group(n=grpBNDConstArm, em=True, w=True)
-        mc.parent(grpBNDConstArm, grpDNTArm)
-        mc.parent(bndJnts[0], grpBNDConstArm)
-
-        # move to the pivot of the upper arm joint
-        pivotTranslate = mc.xform(bndJnts[0], q=True, ws=True, rotatePivot=True)
-        mc.xform(grpBNDConstArm, ws=True, pivots=pivotTranslate)
-        mc.pointConstraint(locShoulderSpace, grpBNDConstArm)
-
-        return grpArm, grpDNTArm, grpIKConstArmBase, grpBNDConstArm, locShoulderSpace'''
 
     def organizeArm(self, ctrlRoot, bndJnts, ikJnts, fkJnts,
                     bindJntTwistStart, bindJntTwistMid, bindJntTwistEnd,
@@ -1968,29 +1874,29 @@ class pcCreateRigAlt05Arms(UI):
         cbSpecialStretch = mc.checkBox("selSpecialStretch_cb", q=True, v=True)
 
         grpDNTTorsoCheck = mc.textFieldButtonGrp("grpTorsoDNTLoad_tf", q=True, text=True)
-        grpDNTTorso = self.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
-                                    ["GRP", "DO_NOT_TOUCH", "torso"],
-                                    "Group")
+        grpDNTTorso = CRU.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNTLoad_tf", "transform", "DO NOT TOUCH Torso Group",
+                                   ["GRP", "DO_NOT_TOUCH", "torso"],
+                                   "Group")
 
         ctrlRootCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        ctrlRoot = self.tgpGetTx(ctrlRootCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
-                                 ["CTRL", "rootTransform"],
-                                 "control")
+        ctrlRoot = CRU.tgpGetTx(ctrlRootCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
+                                ["CTRL", "rootTransform"],
+                                "control")
 
         jntShoulderRootCheck = mc.textFieldButtonGrp("jointShoulderJntLoad_tfbg", q=True, text=True)
-        jntShoulderRoot = self.tgpGetTx(jntShoulderRootCheck, "jointShoulderJntLoad_tfbg", "joint",
-                                        "Root Shoulder Joint",
-                                        ["JNT", "BND", "shoulder"])
+        jntShoulderRoot = CRU.tgpGetTx(jntShoulderRootCheck, "jointShoulderJntLoad_tfbg", "joint",
+                                       "Root Shoulder Joint",
+                                       ["JNT", "BND", "shoulder"])
 
         jntIKShoulderCheck = mc.textFieldButtonGrp("jntIKShoulderLoad_tf", q=True, text=True)
-        jntIKShoulder = self.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
-                                      ["JNT", "_IK_", "shoulder"])
+        jntIKShoulder = CRU.tgpGetTx(jntIKShoulderCheck, "jntIKShoulderLoad_tf", "joint", "IK Shoulder Joint",
+                                     ["JNT", "_IK_", "shoulder"])
 
         if checkToggleSpineStretch:
             grpSpineToggleCheck = mc.textFieldButtonGrp("grpheadShoulders_tfbg", q=True, text=True)
-            grpSpineToggle = self.tgpGetTx(grpSpineToggleCheck, "grpheadShoulders_tfbg", "transform",
-                                           "Head Shoulders Group", ["GRP", "head", "shoulders"],
-                                           "group")
+            grpSpineToggle = CRU.tgpGetTx(grpSpineToggleCheck, "grpheadShoulders_tfbg", "transform",
+                                          "Head Shoulders Group", ["GRP", "head", "shoulders"],
+                                          "group")
 
         if mirrorSel == 1:
             mirrorRig = False

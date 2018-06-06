@@ -145,21 +145,9 @@ class pcCreateRigAlt03Legs(UI):
             return
         else:
             selName = self.selLoad[0]
-            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
             return selName
-
-    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -174,32 +162,9 @@ class pcCreateRigAlt03Legs(UI):
         else:
 
             selName = self.selLoad[0]
-            returner = self.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            returner = CRU.tgpGetJnts(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
             if returner is None:
                 return None
-            '''if not all(word.lower() in selName.lower() for word in keywords):
-                mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-
-                return
-
-            mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-
-            # get the children joints
-            self.parent = self.selLoad[0]
-            self.child = mc.listRelatives(self.selLoad, ad=True, type="joint")
-            # collect the joints in an array
-            self.jointArray = [self.parent]
-            # reverse the order of the children joints
-            self.child.reverse()
-
-            # add to the current list
-            self.jointArray.extend(self.child)
-
-            # removes if the last joint is End
-            # checks if the last three letters are "End"
-            self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
-
-            self.jointRoot = self.selLoad[0]'''
 
         return self.jointArray
 
@@ -213,7 +178,6 @@ class pcCreateRigAlt03Legs(UI):
 
         if not all(word.lower() in selName.lower() for word in keywords):
             mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-
             return
 
         mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
@@ -228,10 +192,6 @@ class pcCreateRigAlt03Legs(UI):
 
         # add to the current list
         self.jointArray.extend(self.child)
-
-        # removes if the last joint is End
-        # checks if the last three letters are "End"
-        self.jointEndArray = [x for x in self.jointArray if "End" in x[-3:]]
 
         self.jointRoot = selName
         return self.jointArray
@@ -1590,20 +1550,20 @@ class pcCreateRigAlt03Legs(UI):
         self.checkGeo = mc.checkBox("selGeo_cb", q=True, v=True)
 
         jntIKHipCheck = mc.textFieldButtonGrp("jntIKHip_tfbg", q=True, text=True)
-        jntIKHip = self.tgpGetTx(jntIKHipCheck, "jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
+        jntIKHip = CRU.tgpGetTx(jntIKHipCheck, "jntIKHip_tfbg", "joint", "IK Hip Joint", ["JNT", "hip", "IK"])
 
         grpDNTTorsoCheck = mc.textFieldButtonGrp("grpTorsoDNT_tfbg", q=True, text=True)
-        grpDNTTorso = self.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
-                                    ["GRP", "DO", "NOT", "TOUCH"],
-                                    "group")
+        grpDNTTorso = CRU.tgpGetTx(grpDNTTorsoCheck, "grpTorsoDNT_tfbg", "transform", "Torso DO NOT TOUCH",
+                                   ["GRP", "DO", "NOT", "TOUCH"],
+                                   "group")
 
         ctrlBodyCheck = mc.textFieldButtonGrp("ctrlBody_tfbg", q=True, text=True)
-        ctrlBody = self.tgpGetTx(ctrlBodyCheck, "ctrlBody_tfbg", "nurbsCurve", "Body Control", ["CTRL", "body"],
-                                 "control")
+        ctrlBody = CRU.tgpGetTx(ctrlBodyCheck, "ctrlBody_tfbg", "nurbsCurve", "Body Control", ["CTRL", "body"],
+                                "control")
 
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        ctrlRootTrans = self.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
-                                      ["CTRL", "rootTransform"], "control")
+        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Transform Control",
+                                     ["CTRL", "rootTransform"], "control")
 
         self.valLeft = "l_"
         self.valRight = "r_"

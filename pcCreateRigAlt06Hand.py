@@ -194,21 +194,9 @@ class pcCreateRigAlt06Hand(UI):
             return
         else:
             selName = self.selLoad[0]
-            selName = self.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
+            selName = CRU.tgpGetTx(selName, loadBtn, objectType, objectDesc, keywords, objectNickname)
 
             return selName
-
-    def tgpGetTx(self, selName, loadBtn, objectType, objectDesc, keywords, objectNickname=None, ):
-
-        if CRU.checkObjectType(selName) != objectType:
-            mc.warning("{0} should be a {1}".format(objectDesc, objectNickname))
-            return
-
-        if not all(word.lower() in selName.lower() for word in keywords):
-            mc.warning("That is the wrong {0}. Select the {1}".format(objectNickname, objectDesc))
-            return
-        mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
-        return selName
 
     def tgpLoadJntsBtn(self, loadBtn, objectType, objectDesc, keywords, objectNickname=None):
         if objectNickname is None:
@@ -1171,20 +1159,20 @@ class pcCreateRigAlt06Hand(UI):
                                          ["loc", "palmInner"], "locator")
 
         jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
-        jntBindEnd = self.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
+        jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, "jntBindEndLoad_tf", "joint", "Hand Base Joint",
                                    ["jnt", "arm", "bindEnd"],
                                    "joint")
 
         ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-        ctrlRootTrans = self.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
+        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, "rootTrans_tfbg", "nurbsCurve", "Root Control",
                                       ["CTRL", "rootTransform"], "control")
 
         jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
-        jntArmHandBnd = self.tgpGetTx(jntArmHandBndCheck, "jntHandLoad_tfbg", "joint", "Hand Joint",
+        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, "jntHandLoad_tfbg", "joint", "Hand Joint",
                                       ["jnt", "bnd", "hand", ], "joint")
 
         ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
-        ctrlSettings = self.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
+        ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, "ctrlSettingsLoad_tfbg", "nurbsCurve", "Arm Control Setting",
                                      ["ctrl", "arm", "settings", ], "control")
 
         '''if len(self.locArray) == 0:
