@@ -33,14 +33,15 @@ from pcCreateRigAlt06HandsCode import pcCreateRigAlt06HandsCode as CRA6
 
 
 class pcCreateRigAlt00ECreateRig(object):
-    def __init__(self):
-        self.runProgram()
+    def __init__(self, cbGeo=True):
 
-    def runProgram(self):
+        self.runProgram(cbGeo)
+
+    def runProgram(self, cbGeo):
         # runs the code to create a rig
-        cra1 = CRA1()
-        cra2 = CRA2()
-        cra3 = CRA3()
-        cra4 = CRA4()
-        cra5 = CRA5()
-        cra6 = CRA6()
+        CRA1(cbGeo=cbGeo)
+        CRA2(cbGeo=cbGeo)
+        CRA3(cbGeo=cbGeo)
+        CRA4()
+        CRA5(cbGeo=cbGeo)
+        CRA6(cbGeo=cbGeo)

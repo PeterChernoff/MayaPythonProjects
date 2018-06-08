@@ -1258,7 +1258,11 @@ class pcCreateRigAlt03LegsCode(object):
         CRU.layerEdit(bndJnts, bndLayer=True)
 
         # the jnt_BND_lyr is supposed to be for the skinning joints
-        altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
+        if self.cbTwists:
+            # we want to not have the legs in the bnd layer if we have twists
+            altBnds = [x for x in bndJnts if "leg" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
+        else:
+            altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
 
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 
@@ -1303,6 +1307,10 @@ class pcCreateRigAlt03LegsCode(object):
             geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[0], bndJnts[1], ctrlFootSettings,
                                                 ctrlIKFoot, leftRight)
             geoJntArray.extend(geoJntArrayExtend)
+            altBnds = geoJntArrayExtend[-1]
+            CRU.layerEdit(geoJntArrayExtend, bndLayer=True, noRecurse=True)
+            CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
+
             if self.cbAnkleTwist:
                 # use the foot for the foot twist
                 geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
@@ -1310,6 +1318,10 @@ class pcCreateRigAlt03LegsCode(object):
             else:
                 geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[2], ctrlFootSettings,
                                                     ctrlIKFoot, leftRight)
+            altBnds = geoJntArrayExtend[-1]
+
+            CRU.layerEdit(geoJntArrayExtend, bndLayer=True, noRecurse=True)
+            CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
             geoJntArray.extend(geoJntArrayExtend)
 
         if self.cbGeo:
