@@ -48,7 +48,7 @@ class pcCreateRigAlt00CBlendSDK(UI):
         mc.rowColumnLayout(nc=2, cw=[(1, 100), (2, 380)], cs=[1, 5], rs=[1, 3])
 
         mc.text(bgc=(0.85, 0.65, 0.25), l="Geometry: ")
-        mc.textFieldButtonGrp("mshCharLoad_tf", cw=(1, 322), bl="  Load  ", tx="emma_body_GEO")
+        mc.textFieldButtonGrp("mshCharLoad_tf", cw=(1, 322), bl="  Load  ", tx="GEO_woman")
 
         mc.setParent("..")
         mc.separator(st="in", h=15, w=500)

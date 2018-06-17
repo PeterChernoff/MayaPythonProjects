@@ -1,5 +1,9 @@
 import maya.cmds as mc
 
+import pcCreateRigAlt00AUtilities
+
+reload(pcCreateRigAlt00AUtilities)
+
 import pcCreateRigAlt01SpineCode
 
 reload(pcCreateRigAlt01SpineCode)
@@ -30,11 +34,11 @@ from pcCreateRigAlt03LegsCode import pcCreateRigAlt03LegsCode as CRA3
 from pcCreateRigAlt04FeetCode import pcCreateRigAlt04FeetCode as CRA4
 from pcCreateRigAlt05ArmsCode import pcCreateRigAlt05ArmsCode as CRA5
 from pcCreateRigAlt06HandsCode import pcCreateRigAlt06HandsCode as CRA6
+from pcCreateRigAlt06HandsCodeAdjust import pcCreateRigAlt06HandsCodeAdjust as CRA6A
 
 
 class pcCreateRigAlt00ECreateRig(object):
     def __init__(self, cbGeo=True):
-
         self.runProgram(cbGeo)
 
     def runProgram(self, cbGeo):
@@ -45,3 +49,4 @@ class pcCreateRigAlt00ECreateRig(object):
         CRA4()
         CRA5(cbGeo=cbGeo)
         CRA6(cbGeo=cbGeo)
+        CRA6A()

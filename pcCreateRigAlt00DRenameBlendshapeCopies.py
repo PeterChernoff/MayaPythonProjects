@@ -2,7 +2,7 @@ import maya.cmds as cmds
 
 class pcCreateRigAlt00DRenameBlendshapeCopies():
     def __init__(self):
-        mshChar = 'emma_body_GEO'
+        mshChar = 'GEO_woman'
 
         self.tgpMakeBC(mshChar)
 
@@ -15,6 +15,7 @@ class pcCreateRigAlt00DRenameBlendshapeCopies():
         blndVals = cmds.aliasAttr(blndName, q=True)
         # print("blndVals {0}".format(blndVals))
 
+        # takes a value that is labelled as copy and renames it to its opposite
         for i in range(len(blndVals)):
             if "_Copy" in blndVals[i][-5:]:
                 toRename = blndVals[i][:-5]

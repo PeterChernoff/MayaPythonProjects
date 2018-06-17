@@ -51,8 +51,10 @@ class pcCreateRigAlt05ArmsCode(object):
         # NOTE: we make the default value 0.5 for testing purposes
         mc.addAttr(ctrlArmSettings, longName=fkikBlendName, niceName=fkikBlendNiceName, at="float", k=True, min=0,
                    max=1, dv=1)
-        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
-
+        if isLeft:
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
+        else:
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 1)
         CRU.makeBlendBasic(fkJnts, ikJnts, bndJnts, ctrlArmSettings, fkikBlendName, rotate=True, translate=True)
         # connect the visibility of the controllers
         fkVis = "FK_visibility"
@@ -1470,49 +1472,6 @@ class pcCreateRigAlt05ArmsCode(object):
         CRU.lockHideCtrls(ctrlIKSwitch, visibility=True)
 
         return ctrlIKSwitch
-
-    '''def makeTwistsBak(self, numTwists, jntArmArray, geoJntArray, *args):
-        numTwistsM1 = numTwists - 1
-
-        twists = numTwists
-        twistJntsArrayOfArrays = []
-
-        for i in range(len(jntArmArray)):
-            if "Arm" not in jntArmArray[i]:
-                # skip everything if there's no arm in the
-                continue
-            twistJntsSubgroup = []
-            val = str(jntArmArray[i])
-            nextJnt = mc.listRelatives(val, c=True, type="joint")[0]
-            nextJntXVal = mc.getAttr("{0}.tx".format(nextJnt))
-            nextJntIncrement = nextJntXVal / (numTwistsM1)
-            twistJnt = mc.duplicate(val, po=True, n="ToDelete")
-
-            # create the joint twists at the proper location
-            for x in range(twists):
-                valx = x + 1
-                twistTempName = "{0}_seg{1}".format(val, valx)
-
-                twistTemp = mc.duplicate(twistJnt, n=twistTempName)[0]
-
-                twistJntsSubgroup.append(twistTemp)
-
-                mc.parent(twistTemp, jntArmArray[i])
-                mc.setAttr("{0}.tx".format(twistTempName), nextJntIncrement * x)
-                if x != 0:
-                    # we want to skip for the first value for parenting the subjoints
-
-                    mc.parent(twistTemp, twistJntsSubgroup[x - 1])
-
-                geoJntArray.append(twistTempName)
-            # puts the top value into worldspace
-            mc.parent(twistJntsSubgroup[0], w=True)
-
-            mc.delete(twistJnt)
-
-            twistJntsArrayOfArrays.append(twistJntsSubgroup)
-
-        return geoJntArray, twistJntsArrayOfArrays'''
 
     def makeTwists(self, numTwists, jntArmArray, geoJntArray, leftRight, *args):
         if leftRight == CRU.valLeft:
