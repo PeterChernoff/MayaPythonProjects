@@ -32,7 +32,12 @@ class pcCreateRigAlt03LegsCode(object):
 
     def makeTwists(self, mkTwists, bndTwistee, bndTwister, ctrlFootSettings, ctrlIKFoot,
                    leftRight, fkikBlendName=None, *args):
-        mc.setAttr("{0}.fkik_blend".format(ctrlFootSettings), 0)  # to delete
+        '''if leftRight == CRU.valLeft:
+            setVal = 0
+        else:
+            setVal = 1
+        # this was more for testing purposes
+        mc.setAttr("{0}.fkik_blend".format(ctrlFootSettings), setVal)'''
         # colourTU and isLeft is for a special part of the code which lets us create a foot control
         numTwistsP1 = mkTwists + 1
         twists = mkTwists
@@ -462,19 +467,20 @@ class pcCreateRigAlt03LegsCode(object):
         # create the starting space locator for the distance node
         locIKLegLenStart = "LOC_IK_{0}leg_lengthStart".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locIKLegLenStart)
-        todelete = mc.pointConstraint(ikJnts[0], locIKLegLenStart)
-        mc.delete(todelete)
 
+        mc.matchTransform(locIKLegLenStart, ikJnts[0], pos=True)
         locIKLegLenEnd = "LOC_IK_{0}leg_lengthEnd".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locIKLegLenEnd)
-        todelete = mc.pointConstraint(ikJntFoot, locIKLegLenEnd)
-        mc.delete(todelete)
 
-        disIKLeg = "DIST_IK_{0}leg_length".format(leftRight)
-        disIKLegShape = CRU.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
-        mc.parent(locIKLegLenEnd, ctrlIKFoot)
+        mc.matchTransform(locIKLegLenEnd, ikJntFoot, pos=True)
 
         driverAttr = "distance"
+        disIKLeg = "DIST_IK_{0}leg_length".format(leftRight)
+        disIKLegShape = CRU.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
+
+
+        mc.parent(locIKLegLenEnd, ctrlIKFoot)
+
         driverLen = mc.getAttr("{0}.{1}".format(disIKLegShape, driverAttr)) * m
 
         upperLegLen = mc.getAttr("{0}.translateX".format(ikJnts[1]))
@@ -1313,16 +1319,16 @@ class pcCreateRigAlt03LegsCode(object):
 
             if self.cbAnkleTwist:
                 # use the foot for the foot twist
-                geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
+                geoJntArrayExtend2 = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
                                                     ctrlIKFoot, leftRight, fkikBlendName, )
             else:
-                geoJntArrayExtend = self.makeTwists(mkTwists, bndJnts[1], bndJnts[2], ctrlFootSettings,
+                geoJntArrayExtend2 = self.makeTwists(mkTwists, bndJnts[1], bndJnts[2], ctrlFootSettings,
                                                     ctrlIKFoot, leftRight)
-            altBnds = geoJntArrayExtend[-1]
+            altBnds = geoJntArrayExtend2[-1]
 
-            CRU.layerEdit(geoJntArrayExtend, bndLayer=True, noRecurse=True)
+            CRU.layerEdit(geoJntArrayExtend2, bndLayer=True, noRecurse=True)
             CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
-            geoJntArray.extend(geoJntArrayExtend)
+            geoJntArray.extend(geoJntArrayExtend2)
 
         if self.cbGeo:
             CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
@@ -1381,6 +1387,13 @@ class pcCreateRigAlt03LegsCode(object):
         self.setIKStretchOption(ctrlFootSettings, ikJntsPV, ikJntsNoFlip, ikLegStretchLens, leftRight, )
         if self.cbSwitchSetup:
             self.makeLegFKIKComplete(bndJnts, fkJnts, ctrlIKFoot)
+
+        if isLeft:
+            setVal = 0
+        else:
+            setVal = 1
+
+        mc.setAttr("{0}.fkik_blend".format(ctrlFootSettings), setVal)
 
         # return
 
