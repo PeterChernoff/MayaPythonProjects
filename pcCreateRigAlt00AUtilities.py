@@ -764,6 +764,8 @@ class pcCreateRigUtilities:
         lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
         dist = mc.getAttr("{0}.distance".format(lenNodeNameShape))
         mc.delete(lenNodeName, startLoc, endLoc)
+        toDelete = mc.ls('locator*', type="transform")
+        mc.delete(toDelete) # we shouldn't have any extra locators at this point, but the distance node automatically creates one
         return dist
 
     @staticmethod
