@@ -471,7 +471,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.delete(todelete)
 
         disIKLeg = "DIST_IK_{0}leg_length".format(leftRight)
-        disIKLegShape = self.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
+        disIKLegShape = CRU.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
         mc.parent(locIKLegLenEnd, ctrlIKFoot)
 
         driverAttr = "distance"
@@ -736,7 +736,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.delete(todelete)
 
         disSnapUpper = "DIST_{0}upperLeg_to_knee_length".format(leftRight)
-        disSnapUpperShape = self.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
+        disSnapUpperShape = CRU.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
                                                              disSnapUpper)
         toHide.append(locSnapUpperToKneeEnd)
         toHide.append(locSnapUpperToKneeStart)
@@ -755,7 +755,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.delete(todelete)
 
         disSnapLower = "DIST_{0}knee_to_foot_length".format(leftRight)
-        disSnapLowerShape = self.createDistanceDimensionNode(locSnapKneeToFootStart, locSnapKneeToFootEnd, disSnapLower)
+        disSnapLowerShape = CRU.createDistanceDimensionNode(locSnapKneeToFootStart, locSnapKneeToFootEnd, disSnapLower)
         toHide.append(locSnapKneeToFootStart)
         toHide.append(locSnapKneeToFootEnd)
         toHide.append(disSnapLower)
