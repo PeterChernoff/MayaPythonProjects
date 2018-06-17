@@ -230,7 +230,7 @@ class pcCreateRigAlt06HandsCode(object):
 
         return
 
-    def makeFingersCompound(self, ctrlTIRMP, fingerAttr, cmpdCtrlTIMRP, isHand=False):
+    def makeFingersCompound(self, ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP, isHand=False):
         # sets up the curls
 
         for i in range(len(cmpdCtrlTIMRP)):
@@ -316,9 +316,9 @@ class pcCreateRigAlt06HandsCode(object):
             drvnAttr3 = "ry"
             drvnAttr4 = "rz"
             if isHand:
-                ctrlPass = ctrlTIRMP
+                ctrlPass = ctrlTIMRP
             else:
-                ctrlPass = ctrlTIRMP[i]
+                ctrlPass = ctrlTIMRP[i]
 
             self.makeFingersAttr(ctrlPass, fingerAttr[0], cmpdCtrlTIMRP[i], valPos1, valNeg1, drvnAttr1, passVals1)
             self.makeFingersAttr(ctrlPass, fingerAttr[1], cmpdCtrlTIMRP[i], valPos2, valNeg2, drvnAttr2, passVals2)
@@ -498,7 +498,7 @@ class pcCreateRigAlt06HandsCode(object):
         CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[0], "rx", -90, 90, modifyBoth="spline")
         return
 
-    def cleanPalms(self, locArray, grpHDL, ctrlHand, ctrlTIRMP, jntConstHand, leftRight):
+    def cleanPalms(self, locArray, grpHDL, ctrlHand, ctrlTIMRP, jntConstHand, leftRight):
 
         # hide these values
         mc.setAttr("{0}.visibility".format(locArray[0]), False)
@@ -507,7 +507,7 @@ class pcCreateRigAlt06HandsCode(object):
         # create group for controls
         grpCtrlHand = "GRP_CTRL_{0}hand".format(leftRight)
         mc.group(n=grpCtrlHand, w=True, em=True)
-        addHand = ctrlTIRMP[:]
+        addHand = ctrlTIMRP[:]
         addHand.append(ctrlHand)
         mc.parent(addHand, grpCtrlHand)
 
@@ -517,16 +517,16 @@ class pcCreateRigAlt06HandsCode(object):
 
         return grpCtrlHand
 
-    def makeSpreadFix(self, cmpdCtrlTIMRP, ctrlTIRMP, ctrlHand):
+    def makeSpreadFix(self, cmpdCtrlTIMRP, ctrlTIMRP, ctrlHand):
         fingerValsNeg = [-35, -8, -4, 1, 7]
         fingerValsPos = [15, 25, 5, -10, -30]
         for i in range(len(cmpdCtrlTIMRP)):
 
             if i == 0:
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", -10, 35,
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", -10, 35,
                                           modifyBoth="linear")
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20,
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20,
                                           modifyBoth="linear")
 
                 CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
@@ -534,10 +534,10 @@ class pcCreateRigAlt06HandsCode(object):
                 CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20, modifyBoth="linear")
 
             # sets the JNT_cmpdCTRL_finger1
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", -10, fingerValsNeg[i],
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", -10, fingerValsNeg[i],
                                       modifyBoth="linear")
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 10, fingerValsPos[i],
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 10, fingerValsPos[i],
                                       modifyBoth="linear")
 
             CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
@@ -608,7 +608,7 @@ class pcCreateRigAlt06HandsCode(object):
         return
 
     def cleanupFingersMethod(self, jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand,
-                             ctrlTIRMP, bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP):
+                             ctrlTIMRP, bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP):
         # lock and hide various traits
         CRU.lockHideCtrls(jntFKBase, translate=True, rotate=True, scale=True, visibility=True)
         CRU.lockHideCtrls(grpCtrlHand, translate=True, rotate=True, scale=True, visibility=True)
@@ -633,7 +633,7 @@ class pcCreateRigAlt06HandsCode(object):
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], translate=True, toLock=False)
 
             # hide the controls stuff
-            CRU.lockHideCtrls(ctrlTIRMP[i], translate=True, scale=True, visibility=True, rotate=True, )
+            CRU.lockHideCtrls(ctrlTIMRP[i], translate=True, scale=True, visibility=True, rotate=True, )
 
         CRU.lockHideCtrls(ctrlHand, translate=True, scale=True, visibility=True, rotate=True, )
 
@@ -718,7 +718,7 @@ class pcCreateRigAlt06HandsCode(object):
         self.connectHandJoints(fkTIMRP, bndTIMRP, cmpdCtrlTIMRP, orntTIMRP)
 
         #  Compound finger controls
-        ctrlTIRMP = []
+        ctrlTIMRP = []
         handsLayer = "hands_cmpdCTRL_LYR"
         for i in range(len(bndTIMRP)):
             orientVal = (1, 0, 0)
@@ -733,35 +733,35 @@ class pcCreateRigAlt06HandsCode(object):
             else:
                 CRU.constrainMove(bndTIMRP[i][0], ctrlName, parent=True)
                 mc.move(0, 2, 0, ctrlName, r=True)
-            ctrlTIRMP.append(ctrlName)
+            ctrlTIMRP.append(ctrlName)
             mc.makeIdentity(ctrlName, apply=True)
 
-        CRU.layerEdit(ctrlTIRMP, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
+        CRU.layerEdit(ctrlTIMRP, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
 
         valsMinMaxDef = [-10, 10, 0]
         fingerAttr = ["curl", "scrunch", "lean", "relax", "spread"]
-        for i in range(len(ctrlTIRMP)):
+        for i in range(len(ctrlTIMRP)):
             # add the attributes
             for j in range(len(fingerAttr)):
                 minVal = valsMinMaxDef[0]
                 maxVal = valsMinMaxDef[1]
                 defVal = valsMinMaxDef[2]
 
-                mc.addAttr(ctrlTIRMP[i], longName=fingerAttr[j], at="float", k=True, min=minVal,
+                mc.addAttr(ctrlTIMRP[i], longName=fingerAttr[j], at="float", k=True, min=minVal,
                            max=maxVal, dv=defVal)
 
-        self.makeFingersCompound(ctrlTIRMP, fingerAttr, cmpdCtrlTIMRP)
+        self.makeFingersCompound(ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP)
 
         # create the hand
         ctrlHand = "CTRL_{0}hand".format(leftRight)
         orientVal = (1, 0, 0)
         size = 0.5
         mc.circle(nr=orientVal, r=size, n=ctrlHand, sections=10)
-        CRU.constrainMove([ctrlTIRMP[2], ctrlTIRMP[3]], ctrlHand, parent=True)
+        CRU.constrainMove([ctrlTIMRP[2], ctrlTIMRP[3]], ctrlHand, parent=True)
         mc.select("{0}.cv[:]".format(ctrlHand))
         mc.scale(1, 1.45, 1, r=True, os=True)
 
-        dist = CRU.getDistance(ctrlTIRMP[1], ctrlTIRMP[4]) + 1
+        dist = CRU.getDistance(ctrlTIMRP[1], ctrlTIMRP[4]) + 1
 
         mc.select("{0}.cv[7:9] ".format(ctrlHand))
         mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
@@ -836,18 +836,18 @@ class pcCreateRigAlt06HandsCode(object):
         self.makeSideRoll(ctrlHand, locArray)
 
         # Cleaning Up
-        grpCtrlHand = self.cleanPalms(locArray, grpHDL, ctrlHand, ctrlTIRMP, jntConstHand, leftRight)
+        grpCtrlHand = self.cleanPalms(locArray, grpHDL, ctrlHand, ctrlTIMRP, jntConstHand, leftRight)
         # Spread  Fix
-        self.makeSpreadFix(cmpdCtrlTIMRP, ctrlTIRMP, ctrlHand)
+        self.makeSpreadFix(cmpdCtrlTIMRP, ctrlTIMRP, ctrlHand)
 
         # Hand global transform and cleanup
         # finger stretch
-        for i in range(len(ctrlTIRMP)):
+        for i in range(len(ctrlTIMRP)):
             if i == 0:
                 skipJoints = 2
             else:
                 skipJoints = 1
-            self.addFingerStretch(ctrlTIRMP[i], cmpdCtrlTIMRP[i], skipJoints)
+            self.addFingerStretch(ctrlTIMRP[i], cmpdCtrlTIMRP[i], skipJoints)
 
         if self.cbGeo:
             for i in range(len(orntTIMRP)):
@@ -866,7 +866,7 @@ class pcCreateRigAlt06HandsCode(object):
         # Visibility Attributes
         self.setVisibilityModifiers(ctrlSettings, grpCtrlHand, jntFKBase)
 
-        self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIRMP,
+        self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIMRP,
                                   bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP)
 
         if self.cbGeo:
