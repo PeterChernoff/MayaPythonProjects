@@ -19,218 +19,33 @@ reload(pcCreateRigAlt00AUtilities)
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
 
-class pcCreateRigAlt06HandsCode(object):
-    def __init__(self, lrSel=1, mirrorSel=2,
-                 cbGeo=True,
-                 jntFingerNamesCheck="JNT_BND_l_handBase", locPalmCheck="LOC_l_palmInner",
-                 jntBindEndCheck="JNT_l_arm_bindEnd", ctrlRootTransCheck="CTRL_rootTransform",
-                 jntArmHandBndCheck="JNT_BND_l_hand", ctrlSettingsCheck="CTRL_settings_l_arm"):
+class pcCreateRigAlt06HandsCodeAdjust(object):
+    def __init__(self, ):
+        self.makeFingersComplete("l_")
+        self.makeFingersComplete("r_")
+        pass
 
-        self.tgpMakeBC(lrSel, mirrorSel,
-                       cbGeo,
-                       jntFingerNamesCheck, locPalmCheck,
-                       jntBindEndCheck, ctrlRootTransCheck,
-                       jntArmHandBndCheck, ctrlSettingsCheck)
-
-    def getJntArray(self, jointArray, fingerType, subType=None):
-        if subType is None:
-            fingerArray = [x for x in jointArray if (fingerType in x.lower())]
-        else:
-            fingerArray = [x for x in jointArray if (fingerType in x.lower()) and subType in x]
-        return fingerArray
-
-    def getSuperJntArray(self, jointArray, subType):
-        jntThumbs = self.getJntArray(jointArray, "thumb", subType)
-        jntPointer = self.getJntArray(jointArray, "pointer", subType)
-        jntMiddle = self.getJntArray(jointArray, "middle", subType)
-        jntRing = self.getJntArray(jointArray, "ring", subType)
-        jntPink = self.getJntArray(jointArray, "pink", subType)
-
-        jntTIMRP = [jntThumbs, jntPointer, jntMiddle, jntRing, jntPink]
-        return jntTIMRP
-
-    def makeOrientJoints(self, bndTIMRP):
-        # creates the orient joints
-        orntTIMRP = []
-        for i in range(len(bndTIMRP)):
-            # note: when duplicating, I am going to use the duplicated end joint rather than the original. It's easier but this may end up screwing things up
-            dupVals = mc.duplicate(bndTIMRP[i][1], rc=True)
-            orntJnts = []
-            for j in range(len(dupVals)):
-                # in case we duplicate a geometry
-                if mc.objectType(dupVals[j]) == "joint":
-                    orntJnts.append(dupVals[j])
-                else:
-                    mc.delete(dupVals[j])
-            if "thumb" not in bndTIMRP[i][1]:
-                # thumbs have a different numbering
-                for k in range(len(orntJnts)):
-                    renameVal = "{0}{1}".format(orntJnts[k][:-1].replace("JNT_BND_", "JNT_ORNT_"), k + 1)
-                    mc.rename(orntJnts[k], renameVal)
-                    orntJnts[k] = renameVal
-            else:
-                for k in range(len(orntJnts)):
-                    if "Orbit" not in orntJnts[k]:
-                        renameVal = "{0}{1}".format(orntJnts[k][:-1].replace("JNT_BND_", "JNT_ORNT_"), k)
-                    else:
-                        renameVal = "{0}".format(orntJnts[k][:-1].replace("JNT_BND_", "JNT_ORNT_"))
-                    mc.rename(orntJnts[k], renameVal)
-                    orntJnts[k] = renameVal
-            bndTIMRPTemp = bndTIMRP[i][1:]
-
-            for l in range(len(bndTIMRPTemp)):
-                # parent the BND joint under the orient joint
-                # this is where we might have an issue regarding using the duplicated JNT_ORNT as the last value
-                if l == len(bndTIMRPTemp) - 1:
-                    mc.delete(bndTIMRPTemp[l])
-                else:
-                    mc.parent(bndTIMRPTemp[l], orntJnts[l])
-                    mc.parent(orntJnts[l + 1], bndTIMRPTemp[l])
-
-            orntTIMRP.append(orntJnts)
-        return orntTIMRP
-
-    def makeFKJoints(self, jointArray):
-        jntFKBase = jointArray[0].replace("BND", "CTRL")
-        dupVals = mc.duplicate(jointArray[0], rc=True, n=jntFKBase)
-        jointArrayFKHand = []
-        for j in range(len(dupVals)):
-            # in case we duplicate a geometry
-            if mc.objectType(dupVals[j]) == "joint":
-                jointArrayFKHand.append(dupVals[j])
-            else:
-                mc.delete(dupVals[j])
-        fkTIMRP = self.getSuperJntArray(jointArrayFKHand, "BND")
-
-        modBaseJntsLater = []
-
-        for i in range(len(fkTIMRP)):
-            for j in range(len(fkTIMRP[i])):
-                replaceVal = "CTRL_FK_"
-                dontSkipFK = True
-                if (j == 0):
-                    # a finger, the first value
-                    addVal = ""
-                    dontSkipFK = False
-                elif (i == 0 and j < 2):
-                    # a thumb, at the orient joint
-                    addVal = ""
-                elif (i == 0):
-                    # a thumb, after skipping the base and orient
-                    addVal = j - 1
-                else:
-                    # not a thumb, afte skipping the fingerBase
-                    addVal = j
-
-                renameVal = "{0}{1}".format(fkTIMRP[i][j][:-1].replace("JNT_BND_", replaceVal), addVal)
-                mc.rename(fkTIMRP[i][j], renameVal)
-                fkTIMRP[i][j] = renameVal
-                if dontSkipFK:
-                    toDelete = "toDelete"
-                    orientVal = (1, 0, 0)
-                    childJoint = mc.listRelatives(renameVal, type="joint")[0]
-                    sizeMove = mc.getAttr("{0}.tx".format(childJoint)) / 2
-                    if i == 0:
-                        size = 1.5
-                    else:
-                        size = 1
-                    mc.circle(nr=orientVal, r=size, n=toDelete)
-                    fkShapeName = "{0}Shape".format(renameVal)
-
-                    fkShape = mc.listRelatives(toDelete, s=True)[0]
-
-                    mc.parent(fkShape, renameVal, s=True, r=True)
-                    mc.delete(toDelete)
-                    mc.rename(fkShape, fkShapeName)
-                    mc.select("{0}.cv[:]".format(fkShapeName))
-
-                    mc.move(sizeMove, 0, 0, r=True, os=True)
-                else:
-                    modBaseJntsLater.append(renameVal)
-        return fkTIMRP, jntFKBase, modBaseJntsLater
-
-    def makeCmpdControl(self, jntFKBase, modBaseJntsLater):
-        jntFKHandJnts = mc.listRelatives(jntFKBase, type="joint", ad=True)
-        jntFKHandJnts.append(jntFKBase)
-        jntFKHandJnts.reverse()
-        cmpdCtrlTIMRP = self.getSuperJntArray(jntFKHandJnts, "ORNT")
-
-        for i in range(len(modBaseJntsLater)):
-            renameVal = modBaseJntsLater[i].replace("CTRL_FK_", "JNT_cmpdCTRL_")
-            mc.rename(modBaseJntsLater[i], renameVal)
-            modBaseJntsLater[i] = renameVal
-
-        for i in range(len(cmpdCtrlTIMRP)):
-            for j in range(len(cmpdCtrlTIMRP[i])):
-                replaceVal = "JNT_cmpdCTRL_"
-                if i == 0:
-                    # if the thumb, skip numbering the first two
-                    if j == 0:
-                        addVal = ""
-                    else:
-                        addVal = j
-                else:
-                    # if not the thumb
-                    addVal = j + 1
-                renameVal = "{0}{1}".format(cmpdCtrlTIMRP[i][j][:-1].replace("JNT_ORNT_", replaceVal), addVal)
-                mc.rename(cmpdCtrlTIMRP[i][j], renameVal)
-                cmpdCtrlTIMRP[i][j] = renameVal
-
-        jntFKHandJnts = mc.listRelatives(jntFKBase, type="joint", ad=True)
-        jntFKHandJnts.append(jntFKBase)
-        jntFKHandJnts.reverse()
-
-        cmpdCtrlTIMRP = self.getSuperJntArray(jntFKHandJnts, "cmpdCTRL")
-        fkTIMRP = self.getSuperJntArray(jntFKHandJnts, "CTRL_FK")
-
-        return jntFKHandJnts, cmpdCtrlTIMRP, fkTIMRP
-
-    def connectHandJoints(self, fkTIMRP, bndTIMRP, cmpdCTRLTIMRP, orntTIMRP):
-        rots = ["rx", "ry", "rz"]
-        trans = ["tx", "ty", "tz"]
-
-        for i in range(len(fkTIMRP)):
-            for j in range(len(fkTIMRP[i])):
-                for k in range(len(rots)):
-                    mc.connectAttr("{0}.{1}".format(fkTIMRP[i][j], rots[k]),
-                                   "{0}.{1}".format(bndTIMRP[i][j + 1], rots[k]))
-
-        for i in range(len(cmpdCTRLTIMRP)):
-            for j in range(len(cmpdCTRLTIMRP[i])):
-                translateThis = True
-                if j == 0:
-                    # we want the fingerBase if we're at the first value
-                    target = bndTIMRP[i][j]
-                else:
-                    # we want the other orients if we're past the first value
-                    target = orntTIMRP[i][j - 1]
-
-                if j < 2 or (i == 0 and j < 3):
-                    # skip the first two joints or three if the thumb is there
-                    translateThis = False
-
-                for k in range(len(rots)):
-                    mc.connectAttr("{0}.{1}".format(cmpdCTRLTIMRP[i][j], rots[k]), "{0}.{1}".format(target, rots[k]))
-                    if translateThis:
-                        mc.connectAttr("{0}.{1}".format(cmpdCTRLTIMRP[i][j], trans[k]),
-                                       "{0}.{1}".format(target, trans[k]))
-
-        return
-
-    def makeFingersAttr(self, ctrl, attr, cmpdCTRLs, valPos, valNeg, drvnAttr, passVals, skipNeg=False):
+    def makeFingersAttr(self, ctrl, attr, cmpdCTRLs, valPos, valNeg, drvnAttr, passVals, skipNeg=False, isLocked=False):
         # the 4 finger joints
         tangentToUse = ["linear", "linear"]
         for j in range(len(valPos)):
             if passVals[j]:
+                if isLocked:
+                    CRU.lockHideCtrls(cmpdCTRLs[j], rotate=True, attrVisible=True, toLock=False)
+                    # to delete: need to relock things at the end
+
                 CRU.setDriverDrivenValues(ctrl, attr, cmpdCTRLs[j], drvnAttr, 0, 0, modifyInOut=tangentToUse)
                 CRU.setDriverDrivenValues(ctrl, attr, cmpdCTRLs[j], drvnAttr, 10, valPos[j], modifyInOut=tangentToUse)
                 if not skipNeg:
                     CRU.setDriverDrivenValues(ctrl, attr, cmpdCTRLs[j], drvnAttr, -10, valNeg[j],
                                               modifyInOut=tangentToUse)
 
+                if isLocked:
+                    CRU.lockHideCtrls(cmpdCTRLs[j], rotate=True)
+
         return
 
-    def makeFingersCompound(self, ctrlTIRMP, fingerAttr, cmpdCtrlTIMRP, isHand=False):
+    def makeFingersCompound(self, ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP, isHand=False):
         # sets up the curls
 
         for i in range(len(cmpdCtrlTIMRP)):
@@ -247,7 +62,7 @@ class pcCreateRigAlt06HandsCode(object):
 
             if i == 0:
                 # thumb curls
-                valPos1 = [10, 40, 50, 90]
+                valPos1 = [10, 40, 35, 90]
                 valNeg1 = [-5, -15, -30, -25]
 
                 # thumb scrunch
@@ -270,7 +85,7 @@ class pcCreateRigAlt06HandsCode(object):
 
             else:
                 # finger curls
-                valPos1 = [10, 95, 95, 115]
+                valPos1 = [10, 65, 80, 100]
                 valNeg1 = [-5, -35, -35, -35]
 
                 # finger scrunch
@@ -316,17 +131,22 @@ class pcCreateRigAlt06HandsCode(object):
             drvnAttr3 = "ry"
             drvnAttr4 = "rz"
             if isHand:
-                ctrlPass = ctrlTIRMP
+                ctrlPass = ctrlTIMRP
             else:
-                ctrlPass = ctrlTIRMP[i]
+                ctrlPass = ctrlTIMRP[i]
 
-            self.makeFingersAttr(ctrlPass, fingerAttr[0], cmpdCtrlTIMRP[i], valPos1, valNeg1, drvnAttr1, passVals1)
-            self.makeFingersAttr(ctrlPass, fingerAttr[1], cmpdCtrlTIMRP[i], valPos2, valNeg2, drvnAttr2, passVals2)
-            self.makeFingersAttr(ctrlPass, fingerAttr[2], cmpdCtrlTIMRP[i], valPos3, valNeg3, drvnAttr3, passVals3)
+            self.makeFingersAttr(ctrlPass, fingerAttr[0], cmpdCtrlTIMRP[i], valPos1, valNeg1, drvnAttr1, passVals1,
+                                 isLocked=True)
+            self.makeFingersAttr(ctrlPass, fingerAttr[1], cmpdCtrlTIMRP[i], valPos2, valNeg2, drvnAttr2, passVals2,
+                                 isLocked=True)
+            self.makeFingersAttr(ctrlPass, fingerAttr[2], cmpdCtrlTIMRP[i], valPos3, valNeg3, drvnAttr3, passVals3,
+                                 isLocked=True)
             if i != 0:
                 # skip the thumb
-                self.makeFingersAttr(ctrlPass, fingerAttr[3], cmpdCtrlTIMRP[i], valPos4, valNeg4, drvnAttr4, passVals4)
-            self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5, valNeg5, drvnAttr5, passVals5)
+                self.makeFingersAttr(ctrlPass, fingerAttr[3], cmpdCtrlTIMRP[i], valPos4, valNeg4, drvnAttr4, passVals4,
+                                     isLocked=True)
+            self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5, valNeg5, drvnAttr5, passVals5,
+                                 isLocked=True)
 
         return
 
@@ -356,177 +176,25 @@ class pcCreateRigAlt06HandsCode(object):
             drvnAttr1 = "rz"
 
             self.makeFingersAttr(ctrlHand, handAttr[5], cmpdCtrlTIMRP[i], valPosZ, valNeg, drvnAttr1, passVals1,
-                                 skipNeg=True)
+                                 skipNeg=True, isLocked=True)
             if i == 0:
                 # only for thumb
                 self.makeFingersAttr(ctrlHand, handAttr[5], cmpdCtrlTIMRP[i], valPosX, valNeg, drvnAttrX, passVals1,
-                                     skipNeg=True)
+                                     skipNeg=True, isLocked=True)
                 self.makeFingersAttr(ctrlHand, handAttr[5], cmpdCtrlTIMRP[i], valPosY, valNeg, drvnAttrY, passVals1,
-                                     skipNeg=True)
+                                     skipNeg=True, isLocked=True)
         return
 
-    def addFingerStretch(self, ctrl, cmpdCtrl, skipJoints):
-        lengthAttr = "length"
-
-        mc.addAttr(ctrl, longName=lengthAttr, at="float", k=True, min=0, dv=1)
-        for j in range(len(cmpdCtrl)):
-            if j <= skipJoints:
-                # skip the first few joints
-                pass
-            else:
-
-                lenX = mc.getAttr("{0}.tx".format(cmpdCtrl[j]))
-
-                CRU.setDriverDrivenValues(ctrl, lengthAttr, cmpdCtrl[j], "tx", 0, 0, modifyInOut=["stepnext", "spline"])
-                CRU.setDriverDrivenValues(ctrl, lengthAttr, cmpdCtrl[j], "tx", 1, lenX,
-                                          modifyBoth="spline")
-                # mc.selectKey(cl=True)
-                mc.selectKey(cmpdCtrl[j], k=1, attribute="tx")
-                mc.setInfinity(poi='cycleRelative')
-
-        return
-
-    def makeFingerGeoStretch(self, orntJnts, bndJnts, skipJoints, leftRight):
-        # makes the fingers stretch
-        for x in range(len(orntJnts)):
-            if x <= skipJoints:
-                # under normal circumstances, skip the first orient joint, or first two if thumb
-                pass
-            else:
-                # creates the multiply divide node
-                baseName = orntJnts[x].replace("JNT_ORNT_", "")
-                normDivGeo = "{0}_normalize_DIV".format(baseName)
-                mc.shadingNode("multiplyDivide", n=normDivGeo, au=True)
-                mc.setAttr("{0}.operation".format(normDivGeo), 2)
-
-                # get the base length:
-                lenX = mc.getAttr("{0}.tx".format(orntJnts[x]))
-
-                mc.setAttr("{0}.input2X".format(normDivGeo), lenX)
-                mc.connectAttr("{0}.tx".format(orntJnts[x]), "{0}.input1X".format(normDivGeo))
-                geoName = bndJnts[x].replace("JNT_BND_", "GEO_")
-
-                # get the geoName
-                mc.connectAttr("{0}.outputX".format(normDivGeo), "{0}.scaleX".format(geoName))
-        return
-
-    def makeIKFingers(self, cmpdCtrlJnts, bndJnts, orntJnts, checkThumb, leftRight):
-        # duplicate the finger
-        # fingerBase
-        fb = 0
-        if checkThumb:
-            fBP = + 2
-        else:
-            fBP = + 1
-
-        baseVal = cmpdCtrlJnts[fBP].split("JNT_cmpdCTRL_")[1][:-1]
-        ikDup = mc.duplicate(cmpdCtrlJnts[fb + 1], rc=True)
-
-        # parent the last cmpdCTRL under the first, then delete the rest
-        ikStraightStartTemp = ikDup[0]
-        ikStraightEndTemp = ikDup[-1]
-        mc.parent(ikStraightEndTemp, ikStraightStartTemp)
-        mc.delete(ikDup[1])
-        ikStrStart = "JNT_{0}_straightStart".format(baseVal)
-        ikStrEnd = "JNT_{0}_straightEnd".format(baseVal)
-        mc.rename(ikStraightStartTemp, ikStrStart)
-        mc.rename(ikStraightEndTemp, ikStrEnd)
-
-        ikStrFingers = [ikStrStart, ikStrEnd]
-
-        # set up the ik stretch
-        hdlFinger = "HDL_{0}_straight".format(baseVal)
-        effFinger = "EFF_{0}_straight".format(baseVal)
-        ikSolver = "ikSCsolver"
-        ikFinger = mc.ikHandle(sj=ikStrStart, ee=ikStrEnd, sol=ikSolver)
-        mc.rename(ikFinger[0], hdlFinger)
-        mc.rename(ikFinger[1], effFinger)
-
-        ikFinger[0] = hdlFinger
-        ikFinger[1] = effFinger
-
-        # gruop them appropriately
-        grpHDL = "GRP_{0}hand_straightHDL".format(leftRight)
-        if not mc.objExists(grpHDL):
-            mc.group(n=grpHDL, w=True, em=True)
-        # put the finger Handle into the group
-        mc.parent(hdlFinger, grpHDL)
-
-        # we want to put this on the first joint for most fingers, but the
-        mc.parent(cmpdCtrlJnts[fb + 1], ikStrStart)
-
-        # create spacing joint for other hand
-        ikFingerStrBase = "JNT_{0}_straight".format(baseVal)
-        mc.duplicate(ikStrStart, n=ikFingerStrBase, po=True)
-
-        mc.parent(ikFingerStrBase, bndJnts[fb])
-
-        mc.parent(orntJnts[fb], ikFingerStrBase)
-
-        # connect the fingers
-        rots = ["rx", "ry", "rz"]
-        for x in range(len(rots)):
-            mc.connectAttr("{0}.{1}".format(ikStrStart, rots[x]), "{0}.{1}".format(ikFingerStrBase, rots[x]))
-
-        return ikFinger, grpHDL, ikStrFingers, ikFingerStrBase
-
-    def makePalmRaise(self, ctrlHand, locArray, leftRight):
-        palmAttr = "palmRaise"
-
-        if leftRight == CRU.valLeft:
-            m = 1
-        else:
-            m = -1
-
-        mc.addAttr(ctrlHand, longName=palmAttr, at="float", k=True, min=-90,
-                   max=90, dv=0)
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", 0, 0, modifyBoth="spline")
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", 90, -90 * m, modifyBoth="spline")
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", -90, 90 * m, modifyBoth="spline")
-        return
-
-    def makeSideRoll(self, ctrlHand, locArray):
-        palmAttr = "sideRoll"
-
-        mc.addAttr(ctrlHand, longName=palmAttr, at="float", k=True, min=-90,
-                   max=90, dv=0)
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[0], "rx", 0, 0, modifyBoth="spline")
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[1], "rx", 0, 0, modifyBoth="spline")
-
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[1], "rx", 90, -90, modifyBoth="spline")
-
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[0], "rx", -90, 90, modifyBoth="spline")
-        return
-
-    def cleanPalms(self, locArray, grpHDL, ctrlHand, ctrlTIRMP, jntConstHand, leftRight):
-
-        # hide these values
-        mc.setAttr("{0}.visibility".format(locArray[0]), False)
-        mc.setAttr("{0}.visibility".format(grpHDL), False)
-
-        # create group for controls
-        grpCtrlHand = "GRP_CTRL_{0}hand".format(leftRight)
-        mc.group(n=grpCtrlHand, w=True, em=True)
-        addHand = ctrlTIRMP[:]
-        addHand.append(ctrlHand)
-        mc.parent(addHand, grpCtrlHand)
-
-        # have the jntConstHand parent Constrain the bndBaseHand
-
-        mc.parentConstraint(jntConstHand, grpCtrlHand, mo=True)
-
-        return grpCtrlHand
-
-    def makeSpreadFix(self, cmpdCtrlTIMRP, ctrlTIRMP, ctrlHand):
-        fingerValsNeg = [-35, -8, -4, 1, 7]
+    def makeSpreadFix(self, cmpdCtrlTIMRP, ctrlTIMRP, ctrlHand):
+        fingerValsNeg = [-41, -15, -4, 1, 15]
         fingerValsPos = [15, 25, 5, -10, -30]
         for i in range(len(cmpdCtrlTIMRP)):
 
             if i == 0:
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", -10, 35,
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", -10, 35,
                                           modifyBoth="linear")
-                CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20,
+                CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20,
                                           modifyBoth="linear")
 
                 CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "rz", 0, 0, modifyBoth="linear")
@@ -534,10 +202,10 @@ class pcCreateRigAlt06HandsCode(object):
                 CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "rz", 10, -20, modifyBoth="linear")
 
             # sets the JNT_cmpdCTRL_finger1
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", -10, fingerValsNeg[i],
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", -10, fingerValsNeg[i],
                                       modifyBoth="linear")
-            CRU.setDriverDrivenValues(ctrlTIRMP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 10, fingerValsPos[i],
+            CRU.setDriverDrivenValues(ctrlTIMRP[i], "spread", cmpdCtrlTIMRP[i][1], "ry", 10, fingerValsPos[i],
                                       modifyBoth="linear")
 
             CRU.setDriverDrivenValues(ctrlHand, "spread", cmpdCtrlTIMRP[i][1], "ry", 0, 0)
@@ -547,249 +215,76 @@ class pcCreateRigAlt06HandsCode(object):
                                       modifyBoth="linear")
         return
 
-    def addHandToArm(self, jntBindEnd, jntFKBase, bndBaseHand, jntArmHandBnd, jntConstHand, locArray, grpCtrlHand,
-                     grpHDL, ctrlRootTrans, geoPalm, leftRight):
-        grpHand = "GRP_{0}hand".format(leftRight)
-        mc.group(n=grpHand, w=True, em=True)
+    def getJntArray(self, jointArray, fingerType, subType=None):
+        if subType is None:
+            fingerArray = [x for x in jointArray if (fingerType in x.lower())]
 
-        mc.parent(jntFKBase, bndBaseHand, locArray[0], grpCtrlHand, grpHDL, grpHand)
-        mc.parent(grpHand, ctrlRootTrans)
+        else:
+            fingerArray = [x for x in jointArray if (fingerType in x.lower()) and subType in x]
+        for i in range(len(fingerArray)):
+            if "Base" in fingerArray[i]:
+                move = fingerArray.pop(i)
+                fingerArray.insert(0, move, )
+                break
 
-        # create the do not touch
-        grpDNT = "GRP_DO_NOT_TOUCH_{0}hand".format(leftRight)
-        mc.group(n=grpDNT, w=True, em=True)
+        if fingerType == "thumb":
+            for i in range(len(fingerArray)):
+                if "Orbit" in fingerArray[i]:
+                    move = fingerArray.pop(i)
+                    fingerArray.insert(1, move)
+                    break
 
-        mc.parent(grpDNT, grpHand)
-        mc.parent(bndBaseHand, locArray[0], grpHDL, grpDNT)
-        if geoPalm is not None:
-            mc.parent(geoPalm, grpDNT)
+        return fingerArray
 
-        # create the const hand and parent the locators under it
-        grpHandConst = "GRP_const_{0}hand".format(leftRight)
-        mc.group(n=grpHandConst, w=True, em=True)
-        mc.parent(grpHandConst, grpDNT)
-        mc.parent(locArray[0], grpHandConst)
+    def getSuperJntArray(self, jointArray, subType, isControl=False):
+        jntThumbs = self.getJntArray(jointArray, "thumb", subType)
+        jntPointer = self.getJntArray(jointArray, "pointer", subType)
+        jntMiddle = self.getJntArray(jointArray, "middle", subType)
+        jntRing = self.getJntArray(jointArray, "ring", subType)
+        jntPink = self.getJntArray(jointArray, "pink", subType)
 
-        # pivot the Const hand to the wrist
-        toDelete = mc.spaceLocator(p=(0, 0, 0), name="toDelete")[0]
-        CRU.constrainMove(jntBindEnd, toDelete, point=True)
-        pivotTranslate = mc.xform(toDelete, q=True, ws=True, rotatePivot=True)
-        mc.delete(toDelete)
-        mc.xform(grpHandConst, ws=True, pivots=pivotTranslate)
+        if not isControl:
+            jntTIMRP = [jntThumbs, jntPointer, jntMiddle, jntRing, jntPink]
+        else:
+            jntTIMRP = []
+            jntTIMRP.extend(jntThumbs)
+            jntTIMRP.extend(jntPointer)
+            jntTIMRP.extend(jntMiddle)
+            jntTIMRP.extend(jntRing)
+            jntTIMRP.extend(jntPink)
+        return jntTIMRP
 
-        mc.parentConstraint(jntArmHandBnd, grpHandConst, mo=True)
-
-        # fixing some issues
-        mc.parent(grpHDL, grpHandConst)
-
-        # we are tying the bind end joint to the new hand and fingers to allow the arm to move appropriately
-        toDelete = mc.listRelatives(jntBindEnd, type="parentConstraint")[0]
-        mc.delete(toDelete)
-
-        mc.parentConstraint(jntConstHand, jntBindEnd, mo=True)
-
-        return
-
-    def setVisibilityModifiers(self, ctrlSettings, grpCtrlHand, jntFKBase):
-        # sets the visibility of the finger FK controls
-        handFKVisAttr = "hand_FK_visibility"
-
-        mc.addAttr(ctrlSettings, longName=handFKVisAttr, at="bool", k=True)
-        mc.setAttr("{0}.{1}".format(ctrlSettings, handFKVisAttr), True)
-        mc.connectAttr("{0}.{1}".format(ctrlSettings, handFKVisAttr), "{0}.visibility".format(jntFKBase))
-
-        # sets the visibility of the finger controls
-        handCtrlVisAttr = "hand_CTRL_visibility"
-
-        mc.addAttr(ctrlSettings, longName=handCtrlVisAttr, at="bool", k=True)
-        mc.setAttr("{0}.{1}".format(ctrlSettings, handCtrlVisAttr), True)
-        mc.connectAttr("{0}.{1}".format(ctrlSettings, handCtrlVisAttr), "{0}.visibility".format(grpCtrlHand))
-
-        return
-
-    def cleanupFingersMethod(self, jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand,
-                             ctrlTIRMP, bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP):
-        # lock and hide various traits
-        CRU.lockHideCtrls(jntFKBase, translate=True, rotate=True, scale=True, visibility=True)
-        CRU.lockHideCtrls(grpCtrlHand, translate=True, rotate=True, scale=True, visibility=True)
-
-        # we have to hide certain traits, not lock them
-        for i in range(len(cmpdCtrlTIMRP)):
-            for j in range(len(cmpdCtrlTIMRP[i])):
-                CRU.lockHideCtrls(cmpdCtrlTIMRP[i][j], translate=True, scale=True, visibility=True, rotate=True, )
-                CRU.lockHideCtrls(cmpdCtrlTIMRP[i][j], theVals=["radi"], channelBox=False)
-
-            for j in range(len(fkTIMRP[i])):
-                CRU.lockHideCtrls(fkTIMRP[i][j], translate=True, scale=True, visibility=True)
-                CRU.lockHideCtrls(fkTIMRP[i][j], theVals=["radi"], channelBox=False)
-
-            # we don't want to lock the rotate values for the start
-            mc.setAttr("{0}.visibility".format(ikStrFingerTIMRP[i][0]), True)
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visibility=True)
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], rotate=True, toLock=False)
-
-            # we don't want to lock the translate values for the end
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], rotate=True, scale=True, visibility=True)
-            CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], translate=True, toLock=False)
-
-            # hide the controls stuff
-            CRU.lockHideCtrls(ctrlTIRMP[i], translate=True, scale=True, visibility=True, rotate=True, )
-
-        CRU.lockHideCtrls(ctrlHand, translate=True, scale=True, visibility=True, rotate=True, )
-
-        CRU.layerEdit(bndBaseHand, bndLayer=True, noRecurse=True)
-
-        for i in range(len(orntTIMRP)):
-            CRU.layerEdit(orntTIMRP[i], bndAltLayer=True, noRecurse=True)
-            CRU.layerEdit(ikStrFingerTIMRP[i], bndAltLayer=True, noRecurse=True)
-            CRU.layerEdit(ikFingerStrBaseTIMRP[i], bndAltLayer=True, noRecurse=True)
-            CRU.layerEdit(bndTIMRP[i], bndLayer=True, noRecurse=True)
-            if i == 0:
-                # put the thumb base to the altBnd layer
-                CRU.layerEdit(bndTIMRP[i][0], bndAltLayer=True, noRecurse=True)
-
-        return
-
-    def makeFingersComplete(self, jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans, ctrlSettings,
-                            leftRight, colourTU, *args):
-
-        for i in range(len(locArray)):
-            if isinstance(locArray[i], int):
-                mc.setAttr('{0}.overrideEnabled'.format(locArray[i]), 1)
-
-                mc.setAttr("{0}.overrideColor".format(locArray[i]), colourTU)
-            else:
-                mc.setAttr("{0}.overrideColorRGB".format(locArray[i]), colourTU[0], colourTU[1], colourTU[2])
-                mc.setAttr("{0}.overrideRGBColors".format(locArray[i]), 1)
-
-        newLayerNameFK = "{0}hand_FK_LYR".format(leftRight)
-        bndBaseHand = jointArrayBaseHand[0]
-
-        geoJntArray = jointArrayBaseHand[:]
-
-        # TIMRP = Thumb, Index, Middle, Ring, Pinkie
-        bndTIMRP = self.getSuperJntArray(jointArrayBaseHand,
-                                         "BND")  # [jntThumbs, jntPointer, jntMiddle, jntRing, jntPink]
-
-        # here we would skin the hand if we had skinning turned on
-        if self.cbGeo:
-            CRU.tgpSetGeo(geoJntArray, setLayer=True, printOut=False)
-            geoPalm = "{0}Skin".format(bndBaseHand.replace("JNT_BND_", "GEO_"))
-            skinPalm = "{0}palmSkin".format(leftRight)
-
-            # we only want to skin the relevant bones
-            geoHandSkin = [bndBaseHand]
-            for i in range(len(bndTIMRP)):
-                if i == 0:
-                    geoHandSkin.extend(bndTIMRP[i][1:-2])
-                else:
-                    geoHandSkin.extend(bndTIMRP[i][:-3])
-
-            # mc.skinCluster(geoJntArray[0], geoPalm, n=skinPalm, dr=6)
-            mc.skinCluster(geoHandSkin, geoPalm, volumeBind=0, volumeType=1, toSelectedBones=True, bindMethod=0,
-                           mi=4, omi=True, n=skinPalm, dr=6)
-            # skinCluster -volumeBind 0  -volumeType 1 -toSelectedBones -bindMethod 0 -mi 4 -omi true -dr 4
-            CRU.layerEdit(geoPalm, geoLayer=True)
-        # probably the geo too
-
-        # Orient setup
-        orntTIMRP = self.makeOrientJoints(bndTIMRP)
-
-        jointArrayReplace = []
-        # we have renamed/deleted several joints, so we are purging it and resetting it
-        for i in range(len(jointArrayBaseHand)):
-            if mc.objExists(jointArrayBaseHand[i]):
-                jointArrayReplace.append(jointArrayBaseHand[i])
-        jointArray = jointArrayReplace
-        bndTIMRP = self.getSuperJntArray(jointArray, "BND")  # we did some adjustments so we may need to reset this one
-
-        # FK Setup
-        fkTIMRP, jntFKBase, modBaseJntsLater = self.makeFKJoints(jointArray, )
-        for i in range(len(fkTIMRP)):
-            CRU.layerEdit(fkTIMRP[i], newLayerName=newLayerNameFK, colourTU=colourTU)
-
-        jntFKHandJnts, cmpdCtrlTIMRP, fkTIMRP = self.makeCmpdControl(jntFKBase, modBaseJntsLater)
-
-        jntBaseHandJnts = mc.listRelatives(bndBaseHand, ad=True, type="joint")
-        jntBaseHandJnts.append(bndBaseHand)
-        jntBaseHandJnts.reverse()
-
-        # Connect Joints
-        self.connectHandJoints(fkTIMRP, bndTIMRP, cmpdCtrlTIMRP, orntTIMRP)
-
-        #  Compound finger controls
-        ctrlTIRMP = []
-        handsLayer = "hands_cmpdCTRL_LYR"
-        for i in range(len(bndTIMRP)):
-            orientVal = (1, 0, 0)
-            size = 0.5
-
-            ctrlName = bndTIMRP[i][0][:-4].replace("JNT_BND_", "CTRL_")
-
-            mc.circle(nr=orientVal, r=size, n=ctrlName)
-            if i == 0:
-                CRU.constrainMove(bndTIMRP[i][1], ctrlName, parent=True)
-                mc.move(0, -2, 2, ctrlName, r=True, os=True)
-            else:
-                CRU.constrainMove(bndTIMRP[i][0], ctrlName, parent=True)
-                mc.move(0, 2, 0, ctrlName, r=True)
-            ctrlTIRMP.append(ctrlName)
-            mc.makeIdentity(ctrlName, apply=True)
-
-        CRU.layerEdit(ctrlTIRMP, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
+    def makeFingersComplete(self, leftRight, *args):
 
         valsMinMaxDef = [-10, 10, 0]
         fingerAttr = ["curl", "scrunch", "lean", "relax", "spread"]
-        for i in range(len(ctrlTIRMP)):
-            # add the attributes
-            for j in range(len(fingerAttr)):
-                minVal = valsMinMaxDef[0]
-                maxVal = valsMinMaxDef[1]
-                defVal = valsMinMaxDef[2]
 
-                mc.addAttr(ctrlTIRMP[i], longName=fingerAttr[j], at="float", k=True, min=minVal,
-                           max=maxVal, dv=defVal)
+        cmpdCtrlTIMRP = mc.ls('*cmpdCTRL_{0}*'.format(leftRight), type='joint')
 
-        self.makeFingersCompound(ctrlTIRMP, fingerAttr, cmpdCtrlTIMRP)
+        print("check: {0}".format(cmpdCtrlTIMRP))
+
+        cmpdCtrlTIMRP = self.getSuperJntArray(cmpdCtrlTIMRP, "cmpdCTRL")
+
+        print("check: {0}".format(cmpdCtrlTIMRP))
+
+        ctrlTIMRPSetup = mc.ls('CTRL_{0}*'.format(leftRight), type='nurbsCurve')
+
+        ctrlTIMRPSetup = self.getSuperJntArray(ctrlTIMRPSetup, "CTRL", isControl=True)
+        ctrlTIMRP = []
+        for i in range(len(ctrlTIMRPSetup)):
+            parent = mc.listRelatives(ctrlTIMRPSetup[i], p=True)[0]
+            ctrlTIMRP.append(parent)
+
+        print("ctrlTIMRP: {0}".format(ctrlTIMRP))
+
+        self.makeFingersCompound(ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP)
+
 
         # create the hand
         ctrlHand = "CTRL_{0}hand".format(leftRight)
-        orientVal = (1, 0, 0)
-        size = 0.5
-        mc.circle(nr=orientVal, r=size, n=ctrlHand, sections=10)
-        CRU.constrainMove([ctrlTIRMP[2], ctrlTIRMP[3]], ctrlHand, parent=True)
-        mc.select("{0}.cv[:]".format(ctrlHand))
-        mc.scale(1, 1.45, 1, r=True, os=True)
-
-        dist = CRU.getDistance(ctrlTIRMP[1], ctrlTIRMP[4]) + 1
-
-        mc.select("{0}.cv[7:9] ".format(ctrlHand))
-        mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
-
-        mc.move(0, -.35, -dist / 2, r=True, os=True)
-
-        mc.select("{0}.cv[2:5] ".format(ctrlHand))
-        mc.move(0, -0, dist / 2, r=True, os=True)
-        mc.select(cl=True)
-        mc.makeIdentity(ctrlHand, apply=True)
-        CRU.layerEdit(ctrlHand, newLayerName=handsLayer, colourTU=CRU.clrHandCtrl)
 
         handAttr = ["curl", "scrunch", "lean", "relax", "spread", "fist"]
 
-        valsMinMaxDef = [-10, 10, 0]
-        for i in range(len(handAttr)):
-            # add the attributes to the hand
-
-            if "fist" in handAttr[i]:
-                minVal = 0
-            else:
-                minVal = valsMinMaxDef[0]
-            maxVal = valsMinMaxDef[1]
-
-            defVal = valsMinMaxDef[2]
-
-            mc.addAttr(ctrlHand, longName=handAttr[i], at="float", k=True, min=minVal,
-                       max=maxVal, dv=defVal)
         self.makeFingersCompound(ctrlHand, handAttr, cmpdCtrlTIMRP, isHand=True)
 
         self.makeFistCompound(ctrlHand, handAttr, cmpdCtrlTIMRP)
@@ -797,276 +292,5 @@ class pcCreateRigAlt06HandsCode(object):
         # Compound finger controls
         # Palm Control
 
-        rotsTrans = ["rx", "ry", "rz", "tx", "ty", "tz"]
-
-        for i in range(len(rotsTrans)):
-            mc.connectAttr("{0}.{1}".format(jntFKBase, rotsTrans[i]),
-                           "{0}.{1}".format(bndBaseHand, rotsTrans[i]))
-        jntConstHand = "JNT_baseConst_{0}hand".format(leftRight)
-        mc.duplicate(bndBaseHand, n=jntConstHand, po=True)
-        # parent the const under the LOC_palmMiddle
-        mc.parent(jntConstHand, locArray[-1])
-
-        mc.parentConstraint(jntConstHand, jntFKBase)
-
-        ikFingerTIMRP = []
-        ikStrFingerTIMRP = []
-        ikFingerStrBaseTIMRP = []
-        # IK Fingers
-        for i in range(len(cmpdCtrlTIMRP)):
-
-            if i == 0:
-                # we will come back to this
-                checkThumb = True
-            else:
-                checkThumb = False
-            # finger base helps us determine whcih values we use in case of thumb in particular
-            ikFinger, grpHDL, ikStrFingers, ikFingerStrBase = self.makeIKFingers(cmpdCtrlTIMRP[i], bndTIMRP[i],
-                                                                                 orntTIMRP[i], checkThumb,
-                                                                                 leftRight)
-            ikFingerTIMRP.append(ikFinger)
-            ikStrFingerTIMRP.append(ikStrFingers)
-            ikFingerStrBaseTIMRP.append(ikFingerStrBase)
-
-        # Custom Attributes
-        # Palm Raise
-        self.makePalmRaise(ctrlHand, locArray, leftRight)
-
-        # side roll
-        self.makeSideRoll(ctrlHand, locArray)
-
-        # Cleaning Up
-        grpCtrlHand = self.cleanPalms(locArray, grpHDL, ctrlHand, ctrlTIRMP, jntConstHand, leftRight)
         # Spread  Fix
-        self.makeSpreadFix(cmpdCtrlTIMRP, ctrlTIRMP, ctrlHand)
-
-        # Hand global transform and cleanup
-        # finger stretch
-        for i in range(len(ctrlTIRMP)):
-            if i == 0:
-                skipJoints = 2
-            else:
-                skipJoints = 1
-            self.addFingerStretch(ctrlTIRMP[i], cmpdCtrlTIMRP[i], skipJoints)
-
-        if self.cbGeo:
-            for i in range(len(orntTIMRP)):
-                if i == 0:
-                    skipJoints = 1
-                else:
-                    skipJoints = 0
-                self.makeFingerGeoStretch(orntTIMRP[i], bndTIMRP[i], skipJoints, leftRight)
-
-        # Attach to Arm
-        if not self.cbGeo:
-            geoPalm = None
-        self.addHandToArm(jntBindEnd, jntFKBase, bndBaseHand, jntArmHandBnd, jntConstHand, locArray, grpCtrlHand,
-                          grpHDL, ctrlRootTrans, geoPalm, leftRight)
-
-        # Visibility Attributes
-        self.setVisibilityModifiers(ctrlSettings, grpCtrlHand, jntFKBase)
-
-        self.cleanupFingersMethod(jntFKBase, grpCtrlHand, ikStrFingerTIMRP, cmpdCtrlTIMRP, fkTIMRP, ctrlHand, ctrlTIRMP,
-                                  bndBaseHand, orntTIMRP, ikFingerStrBaseTIMRP, bndTIMRP)
-
-        if self.cbGeo:
-            # turn off the inherits transform
-            mc.setAttr("{0}.inheritsTransform".format(geoPalm), 0)
-
-    def tgpCreateMirror(self, locArray, toReplace, toReplaceMirror):
-        # when you make a duplicate, the order of the duplicated children will get reversed. This reverses the reverse.
-        locMirrorWork = mc.duplicate(locArray, rc=True)
-
-        locMirror = []
-
-        for i in range(len(locMirrorWork)):
-            # switch the l/r,
-            toRename = locMirrorWork[i].replace(toReplace, toReplaceMirror)[:-1]
-            mc.rename(locMirrorWork[i], toRename)
-            locMirror.append(toRename)
-
-        locMirrorTop = locMirror[0]
-        # takes the initial offset value, duplicates it, flips the values around, then freezes the transformation
-        # translates everything into place
-        mirrorTrans = mc.xform(locMirrorTop, q=True, ws=True, rotatePivot=True)
-        # the rotatations should be zeroed out
-        # mirrorRot = mc.xform(locMirrorTop, q=True, ws=True, rotation=True)
-        mirrorTransX = mirrorTrans[0] * -1
-        mirrorTransY = mirrorTrans[1]
-        mirrorTransZ = mirrorTrans[2]
-
-        '''mirrorRotX = mirrorRot[0] * 1
-        mirrorRotY = mirrorRot[1] * -1
-        mirrorRotZ = mirrorRot[2] * -1'''
-
-        mirrorXScal = mc.getAttr("{0}.sx".format(locMirrorTop)) * -1
-
-        # mirrors the values
-
-        mc.xform(locMirrorTop, translation=(mirrorTransX, mirrorTransY, mirrorTransZ))
-        mc.xform(locMirrorTop, scale=(mirrorXScal, 1, 1))
-        # mc.xform(locMirrorTop, rotation=(mirrorRotX, mirrorRotY, mirrorRotZ))
-        checkList = mc.listRelatives(locMirrorTop)
-
-        # fix the scale and rotates
-        for i in range(len(locMirror)):
-            if i == 0:
-                pass
-            else:
-                mc.parent(locMirror[i], w=True)
-
-        for i in range(len(locMirror)):
-            mc.makeIdentity(locMirror[i], apply=True, scale=True, rotate=True)
-
-        for i in range(len(locMirror)):
-            if i == 0:
-                pass
-            else:
-                mc.parent(locMirror[i], locMirror[i - 1])
-        return locMirror
-
-    def tgpMakeBC(self, lrSel=None, mirrorSel=None,
-                  cbGeo=None,
-                  jntFingerNamesCheck=None, locPalmCheck=None, jntBindEndCheck=None, ctrlRootTransCheck=None,
-                  jntArmHandBndCheck=None, ctrlSettingsCheck=None, *args):
-        symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
-
-        if lrSel is None:
-            lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
-        if lrSel == 1:
-            isLeft = True
-            leftRight = CRU.valLeft
-            leftRightMirror = CRU.valRight
-            colourTU = CRU.clrLeftFK
-            colourTUMirror = CRU.clrRightFK
-        else:
-            isLeft = False
-            leftRight = CRU.valRight
-            leftRightMirror = CRU.valLeft
-            colourTU = CRU.clrRightFK
-            colourTUMirror = CRU.clrLeftFK
-        if mirrorSel is None:
-            mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
-
-        if cbGeo is None:
-            self.cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
-        else:
-            self.cbGeo = cbGeo
-
-        if jntFingerNamesCheck is None:
-            jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
-            passVal = "jntFingersLoad_tfbg"
-        else:
-            passVal = None
-        try:
-            fingerRoot = jntFingerNamesCheck
-
-        except:
-            mc.warning("No control selected!")
-            return
-        if not (CRU.checkLeftRight(isLeft, fingerRoot)):
-            # if the values are not lined up properly, break out
-            mc.warning("You are selecting the incorrect side for the fingers control")
-            return
-
-        jntFingerNames = CRU.tgpGetJnts(jntFingerNamesCheck, passVal, "joint", "Hand Base Joint",
-                                        ["jnt", "handBase"], "joint")
-
-        if locPalmCheck is None:
-            locPalmCheck = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
-            passVal = "locPalmLoad_tf"
-        else:
-            passVal = None
-        if not (CRU.checkLeftRight(isLeft, locPalmCheck)):
-            # if the values are not lined up properly, break out
-            mc.warning("You are selecting the incorrect side for the locators")
-            return
-        locArray = CRU.tgpGetLocs(locPalmCheck, passVal, "locator", "Inner Palm Locator",
-                                  ["loc", "palmInner"], "locator")
-
-        if jntBindEndCheck is None:
-            jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
-            passVal = "jntBindEndLoad_tf"
-        else:
-            passVal = None
-        if not (CRU.checkLeftRight(isLeft, jntBindEndCheck)):
-            # if the values are not lined up properly, break out
-            mc.warning("You are selecting the incorrect side for the bind end")
-            return
-        jntBindEnd = CRU.tgpGetTx(jntBindEndCheck, passVal, "joint", "Hand Base Joint",
-                                  ["jnt", "arm", "bindEnd"],
-                                  "joint")
-        if ctrlRootTransCheck is None:
-            ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
-            passVal = "rootTrans_tfbg"
-        else:
-            passVal = None
-        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, passVal , "nurbsCurve", "Root Control",
-                                     ["CTRL", "rootTransform"], "control")
-
-        if jntArmHandBndCheck is None:
-            jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
-            passVal = "jntHandLoad_tfbg"
-        else:
-            passVal = None
-        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, passVal , "joint", "Hand Joint",
-                                     ["jnt", "bnd", "hand", ], "joint")
-
-        if ctrlSettingsCheck is None:
-            ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
-            passVal = "ctrlSettingsLoad_tfbg"
-        else:
-            passVal = None
-        ctrlSettings = CRU.tgpGetTx(ctrlSettingsCheck, passVal, "nurbsCurve", "Arm Control Setting",
-                                    ["ctrl", "arm", "settings", ], "control")
-
-        jointArrayBaseHand = jntFingerNames[:]
-
-        if mirrorSel == 1:
-            mirrorRig = False
-        else:
-            mirrorRig = True
-
-        toReplace = "_" + leftRight
-        toReplaceMirror = "_" + leftRightMirror
-
-        # make sure the selections are not empty
-        checkList = [jntFingerNames]
-        # note: the isCopy is not applicable due to the differences between the leg and arm joint setup.
-        # However, editing them out is too much hassle,  it's easier just to leave them both false
-        if ((checkList[0] == "")):
-            mc.warning("You are missing a selection!")
-            return
-        else:
-
-            # CRU.createLocatorToDelete()
-
-            if mirrorRig:
-                # we want to get the finger control before we add anything to it. When doing this programmatically, it's easier
-                jntBindEndMirror = jntBindEnd.replace(toReplace, toReplaceMirror)
-                jntArmHandBndMirror = jntArmHandBnd.replace(toReplace, toReplaceMirror)
-                ctrlSettingsMirror = ctrlSettings.replace(toReplace, toReplaceMirror)
-
-                jointArrayBaseHandMirror = mc.mirrorJoint(jointArrayBaseHand[0], mirrorYZ=True, mirrorBehavior=True,
-                                                          searchReplace=[toReplace, toReplaceMirror])
-
-                # make sure the children are not locked
-                locArrayMirror = self.tgpCreateMirror(locArray, toReplace,
-                                                      toReplaceMirror)
-
-            self.makeFingersComplete(jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans,
-                                     ctrlSettings,
-                                     leftRight, colourTU)
-            if mirrorRig:
-                print("Mirroring")
-
-                isLeftMirror = not isLeft
-
-                # ctrlPalmMirror = ctrlPalm.replace(leftRightReplace, leftRightReplaceMirror)
-
-                self.makeFingersComplete(jointArrayBaseHandMirror, locArrayMirror, jntBindEndMirror,
-                                         jntArmHandBndMirror, ctrlRootTrans, ctrlSettingsMirror,
-                                         leftRightMirror, colourTUMirror)
-
-            # reset the symmetry to the default because otherwise we might get wonky results
-            # mc.symmetricModelling(symmetry=symmetry)
+        self.makeSpreadFix(cmpdCtrlTIMRP, ctrlTIMRP, ctrlHand)
