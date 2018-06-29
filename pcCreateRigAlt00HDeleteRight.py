@@ -1,13 +1,14 @@
 import maya.cmds as mc
 import maya.mel as mel
 
-class pcCreateRigAlt00GMakeBlendShapeCopies():
-    def __init__(self):
+
+class pcCreateRigAlt00HDeleteRight(object):
+    def __init__(self, deleteRight=False):
         mshChar = 'GEO_woman'
 
-        self.tgpMakeBC(mshChar)
+        self.tgpMakeBC(mshChar, deleteRight)
 
-    def tgpMakeBC(self, mshChar):
+    def tgpMakeBC(self, mshChar, deleteRight):
 
         history = mc.listHistory(mshChar)
         shape = history[0]
@@ -24,49 +25,11 @@ class pcCreateRigAlt00GMakeBlendShapeCopies():
         print("weightTotal: {0}".format(weightName))
         print("nonWeightName: {0}".format(nonWeightName))
 
+        # we only want to delete if the copies is set to true
+        if deleteRight:
 
-
-        lenBnld = len(blndVals)
-
-        increment = lenBnld
-
-        for i in range(lenBnld):
-
-            blVlI = blndVals[i]
-            if "weight" in blVlI[6:]:
-                pass
-            else:
-
-                print("blndVals[{1}]: {0}".format(blndVals[i], i))
-                newName = blVlI
-                if "GEO" in blVlI:
-                    newName = "{0}_copy".format(blVlI)
-                elif "l_" in  blVlI[:2]:
-                    newName = blVlI.replace("l_", "r_")
-                mel.eval('blendShapeEditorDuplicateTargets;')
-            """
-            blendShape -e -tc on -t |GEO_woman|GEO_womanShape 22 GEO_woman1 1 -w 22 1  blendShape1;
-            blendShape -e -rtd 0 22 blendShape1;
-            aliasAttr GEO_woman_base_Copy blendShape1.w[22];
-            """
-            '''
-            if "_Copy" in blndVals[i][-5:]:
-                toRename = blndVals[i][:-5]
-                if "l_" in toRename[:2]:
-                    toRename1 = toRename.replace("l_", "r_")
-                    print("l to r {0}".format(toRename1))
-                elif "r_" in toRename[:2]:
-                    toRename1 = toRename.replace("r_", "l_")
-                    print("r to l {0}".format(toRename1))
-                print(" --- c ---")
-                # print (toRename1)
-                print ("{0}.{1}".format(blndName, blndVals[i]))
-                if cmds.objExists('{0}.{1}'.format(blndName, toRename1)):
-                    cmds.aliasAttr('{0}.{1}'.format(blndName, toRename1), rm=True)
-                cmds.aliasAttr(toRename1, '{0}.{1}'.format(blndName, blndVals[i]))'''
-
-                # cmds.renameAttr( '{0}.{1}'.format(blndName, blndVals[i]), toRename1 )
-
-        blndVals = mc.aliasAttr(blndName, q=True)
-        print("blndVals {0}".format(blndVals))
+            for i in range(len(nonWeightName)):
+                # "d_" will stand for delete
+                if "r_" in nonWeightName[i][:2] or "d_" in nonWeightName[i][:2]:
+                    mc.aliasAttr("{0}.{1}".format(blndName, nonWeightName[i]), rm=True)
 
