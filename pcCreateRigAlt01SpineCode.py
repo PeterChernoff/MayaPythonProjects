@@ -329,7 +329,7 @@ class pcCreateRigAlt01SpineCode(object):
             CRU.lockHideCtrls(spineIKs[i], scale=True)
 
         for i in range(len(spineIKCtrls)):
-            CRU.lockHideCtrls(spineIKCtrls[i], visibility=True)
+            CRU.lockHideCtrls(spineIKCtrls[i], visibility=True, scale=True)
 
         mc.setAttr('{0}.v'.format(crvSpine), False)
         mc.setAttr('{0}.v'.format(hdlSpine), False)

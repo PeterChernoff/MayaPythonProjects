@@ -20,7 +20,7 @@ class pcCreateRigAlt00GMakeBlendShapeCopies():
         print("blndVals {0}".format(blndVals))
 
         weightName = [x for x in blndVals if ("weight" in x.lower())]
-        nonWeightName = [x for x in blndVals if ("weight" in x.lower())]
+        nonWeightName = [x for x in blndVals if ("weight" not in x.lower())]
         print("weightTotal: {0}".format(weightName))
         print("nonWeightName: {0}".format(nonWeightName))
 
