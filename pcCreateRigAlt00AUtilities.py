@@ -725,8 +725,10 @@ class pcCreateRigUtilities:
             mc.setAttr("{0}.visibility".format(endLoc), False)
             mc.setAttr("{0}.visibility".format(lenNodeName), False)
 
-        toDelete = mc.ls('locator*', type="transform")
-        mc.delete(toDelete) # we shouldn't have any extra locators at this point, but the distance node automatically creates one
+        '''toDelete = mc.ls('locator*', type="transform")
+
+        print("test")
+        mc.delete(toDelete) # we shouldn't have any extra locators at this point, but the distance node automatically creates one'''
         return lenNodeNameShape
 
     @staticmethod
@@ -764,8 +766,8 @@ class pcCreateRigUtilities:
         lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
         dist = mc.getAttr("{0}.distance".format(lenNodeNameShape))
         mc.delete(lenNodeName, startLoc, endLoc)
-        toDelete = mc.ls('locator*', type="transform")
-        mc.delete(toDelete) # we shouldn't have any extra locators at this point, but the distance node automatically creates one
+        '''toDelete = mc.ls('locator*', type="transform")
+        mc.delete(toDelete) # we shouldn't have any extra locators at this point, but the distance node automatically creates one'''
         return dist
 
     @staticmethod
@@ -801,6 +803,15 @@ class pcCreateRigUtilities:
         if symmetry != 0:
             mc.symmetricModelling(symmetry=0)
         return symmetry
+
+    @staticmethod
+    def checkSoftSelect(*args):
+        # checks if symmetry is on
+        softSelect = mc.softSelect(query=True, softSelectEnabled=True)
+        print("softSelect: {0}".format(softSelect))
+        if softSelect != 0:
+            mc.softSelect(softSelectEnabled=0)
+        return softSelect
 
 
     @staticmethod
