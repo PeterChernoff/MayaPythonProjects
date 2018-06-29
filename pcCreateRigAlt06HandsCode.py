@@ -106,6 +106,7 @@ class pcCreateRigAlt06HandsCode(object):
 
         for i in range(len(fkTIMRP)):
             for j in range(len(fkTIMRP[i])):
+                mto = 1 # modifyThumbOrient
                 replaceVal = "CTRL_FK_"
                 dontSkipFK = True
                 if (j == 0):
@@ -115,6 +116,7 @@ class pcCreateRigAlt06HandsCode(object):
                 elif (i == 0 and j < 2):
                     # a thumb, at the orient joint
                     addVal = ""
+                    mto=1.5
                 elif (i == 0):
                     # a thumb, after skipping the base and orient
                     addVal = j - 1
@@ -125,15 +127,16 @@ class pcCreateRigAlt06HandsCode(object):
                 renameVal = "{0}{1}".format(fkTIMRP[i][j][:-1].replace("JNT_BND_", replaceVal), addVal)
                 mc.rename(fkTIMRP[i][j], renameVal)
                 fkTIMRP[i][j] = renameVal
+                # NOTE: We may have to individualize the controls for the hand
                 if dontSkipFK:
                     toDelete = "toDelete"
                     orientVal = (1, 0, 0)
                     childJoint = mc.listRelatives(renameVal, type="joint")[0]
                     sizeMove = mc.getAttr("{0}.tx".format(childJoint)) / 2
                     if i == 0:
-                        size = 1.5
+                        size = 1.5*mto
                     else:
-                        size = 1
+                        size = 1.25
                     mc.circle(nr=orientVal, r=size, n=toDelete)
                     fkShapeName = "{0}Shape".format(renameVal)
 
@@ -627,10 +630,12 @@ class pcCreateRigAlt06HandsCode(object):
             mc.setAttr("{0}.visibility".format(ikStrFingerTIMRP[i][0]), True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], translate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], rotate=True, toLock=False)
+            CRU.lockHideCtrls(ikStrFingerTIMRP[i][0], theVals=["radi"], channelBox=False)
 
             # we don't want to lock the translate values for the end
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], rotate=True, scale=True, visibility=True)
             CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], translate=True, toLock=False)
+            CRU.lockHideCtrls(ikStrFingerTIMRP[i][1], theVals=["radi"], channelBox=False)
 
             # hide the controls stuff
             CRU.lockHideCtrls(ctrlTIMRP[i], translate=True, scale=True, visibility=True, rotate=True, )
@@ -652,6 +657,11 @@ class pcCreateRigAlt06HandsCode(object):
 
     def makeFingersComplete(self, jointArrayBaseHand, locArray, jntBindEnd, jntArmHandBnd, ctrlRootTrans, ctrlSettings,
                             leftRight, colourTU, *args):
+
+        if leftRight == CRU.valLeft:
+            im = 1
+        else:
+            im = -1
 
         for i in range(len(locArray)):
             if isinstance(locArray[i], int):
@@ -720,6 +730,8 @@ class pcCreateRigAlt06HandsCode(object):
         #  Compound finger controls
         ctrlTIMRP = []
         handsLayer = "hands_cmpdCTRL_LYR"
+        setMoveVals = 0
+        # NOTE: The finger controls will likely need to be adjusted for the individual hand
         for i in range(len(bndTIMRP)):
             orientVal = (1, 0, 0)
             size = 0.5
@@ -729,10 +741,18 @@ class pcCreateRigAlt06HandsCode(object):
             mc.circle(nr=orientVal, r=size, n=ctrlName)
             if i == 0:
                 CRU.constrainMove(bndTIMRP[i][1], ctrlName, parent=True)
-                mc.move(0, -2, 2, ctrlName, r=True, os=True)
+                # mc.move(0,   im *-2, 2, ctrlName, r=True, os=True)
+                mc.move(0, im * -2, im * 2, ctrlName, r=True, os=True)
             else:
-                CRU.constrainMove(bndTIMRP[i][0], ctrlName, parent=True)
-                mc.move(0, 2, 0, ctrlName, r=True)
+                CRU.constrainMove(bndTIMRP[i][0], ctrlName, point=True)
+                if i == 1:
+                    mc.move(0, 3, 0, ctrlName, r=True)
+                    setMoveVals = mc.xform(ctrlName, q=True, ws=True, rotatePivot=True)
+                    print("setMoveY: {0}".format(setMoveVals))
+                else:
+                    mc.move(setMoveVals[0], ctrlName, x=True, ws=True)
+                    mc.move(setMoveVals[1], ctrlName, y=True, ws=True)
+
             ctrlTIMRP.append(ctrlName)
             mc.makeIdentity(ctrlName, apply=True)
 
@@ -753,11 +773,13 @@ class pcCreateRigAlt06HandsCode(object):
         self.makeFingersCompound(ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP)
 
         # create the hand
+        # NOTE: The hand controls will likely need to be adjusted for the individual hand
         ctrlHand = "CTRL_{0}hand".format(leftRight)
         orientVal = (1, 0, 0)
         size = 0.5
         mc.circle(nr=orientVal, r=size, n=ctrlHand, sections=10)
-        CRU.constrainMove([ctrlTIMRP[2], ctrlTIMRP[3]], ctrlHand, parent=True)
+        CRU.constrainMove([ctrlTIMRP[2], ctrlTIMRP[3]], ctrlHand, point=True)
+        mc.move(setMoveVals[1], ctrlHand, y=True, ws=True)
         mc.select("{0}.cv[:]".format(ctrlHand))
         mc.scale(1, 1.45, 1, r=True, os=True)
 
@@ -766,7 +788,7 @@ class pcCreateRigAlt06HandsCode(object):
         mc.select("{0}.cv[7:9] ".format(ctrlHand))
         mc.select("{0}.cv[0] ".format(ctrlHand), add=True)
 
-        mc.move(0, -.35, -dist / 2, r=True, os=True)
+        mc.move(0, 0, -dist / 2, r=True, os=True)
 
         mc.select("{0}.cv[2:5] ".format(ctrlHand))
         mc.move(0, -0, dist / 2, r=True, os=True)
@@ -930,6 +952,7 @@ class pcCreateRigAlt06HandsCode(object):
                   jntFingerNamesCheck=None, locPalmCheck=None, jntBindEndCheck=None, ctrlRootTransCheck=None,
                   jntArmHandBndCheck=None, ctrlSettingsCheck=None, *args):
         symmetry = CRU.checkSymmetry()  # we want symmetry turned off for this process
+        softSelect = CRU.checkSoftSelect()
 
         if lrSel is None:
             lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
@@ -1001,7 +1024,7 @@ class pcCreateRigAlt06HandsCode(object):
             passVal = "rootTrans_tfbg"
         else:
             passVal = None
-        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, passVal , "nurbsCurve", "Root Control",
+        ctrlRootTrans = CRU.tgpGetTx(ctrlRootTransCheck, passVal, "nurbsCurve", "Root Control",
                                      ["CTRL", "rootTransform"], "control")
 
         if jntArmHandBndCheck is None:
@@ -1009,7 +1032,7 @@ class pcCreateRigAlt06HandsCode(object):
             passVal = "jntHandLoad_tfbg"
         else:
             passVal = None
-        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, passVal , "joint", "Hand Joint",
+        jntArmHandBnd = CRU.tgpGetTx(jntArmHandBndCheck, passVal, "joint", "Hand Joint",
                                      ["jnt", "bnd", "hand", ], "joint")
 
         if ctrlSettingsCheck is None:
