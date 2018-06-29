@@ -66,7 +66,7 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
                 valNeg1 = [-5, -15, -30, -25]
 
                 # thumb scrunch
-                valPos2 = [0, -25, 55, 90]
+                valPos2 = [15, -25, 55, 90]
                 valNeg2 = [0, -12, -20, -20]
 
                 # thumb lean
@@ -79,9 +79,13 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
                 # thumb spread
                 passVals5 = [True, True, True, False]
                 drvnAttr5 = "rz"
+                drvnAttr5y = "ry"
 
-                valPos5 = [-15, -5, -15, 0]
-                valNeg5 = [45, 0, 0, 0]
+                valPos5 = [0, -15, -15, 0]
+                valNeg5 = [45, 35, 0, 0]
+
+                valPos5y = [0, -15, 0, 0]
+                valNeg5y = [0, -40, 0, 0]
 
             else:
                 # finger curls
@@ -111,20 +115,20 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
 
                 if i == 1:
                     # index
-                    valPos5 = [7.5, 7.5]
-                    valNeg5 = [-5, 0]
+                    valPos5 = [5, 15]
+                    valNeg5 = [-5, -10]
                 elif i == 2:
                     # middle
-                    valPos5 = [1.5, 0]
-                    valNeg5 = [-1.5, 0]
+                    valPos5 = [-2, -1]
+                    valNeg5 = [1, 1]
                 elif i == 3:
                     # ring
-                    valPos5 = [-5, -4.5]
-                    valNeg5 = [1.5, 0]
+                    valPos5 = [-5, -10]
+                    valNeg5 = [5.5, 7.5]
                 elif i == 4:
                     # pinky
                     valPos5 = [-7.5, -30]
-                    valNeg5 = [5, 0]
+                    valNeg5 = [10, 20]
 
             drvnAttr1 = "rz"
             drvnAttr2 = "rz"
@@ -147,6 +151,9 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
                                      isLocked=True)
             self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5, valNeg5, drvnAttr5, passVals5,
                                  isLocked=True)
+            if i == 0:
+                self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5y, valNeg5y, drvnAttr5y, passVals5,
+                                     isLocked=True)
 
         return
 
@@ -163,7 +170,7 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
                 # thumb curls
                 valPosZ = [10, 45, 20, 80]
 
-                valPosX = [0, -15, 0, 0]
+                valPosX = [0, 10, 0, 0]
                 drvnAttrX = "rx"
 
                 valPosY = [0, 10, 0, 0]
@@ -171,7 +178,8 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
 
             else:
                 # finger curls
-                valPosZ = [10, 95, 95, 115]
+                valPosZ = [10, 65, 80, 100]
+                # valPosZ = [10, 95, 95, 115]
 
             drvnAttr1 = "rz"
 
