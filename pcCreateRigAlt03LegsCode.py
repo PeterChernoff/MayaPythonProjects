@@ -103,20 +103,15 @@ class pcCreateRigAlt03LegsCode(object):
         mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ctrlTwistValAttrName), "{0}.input1X".format(multNodePercent))
         mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodePercent))
 
-        if "foot" in nextJnt:
-            if self.cbAnkleTwist:
-                rotVal = "X"
-            else:
-                rotVal = "Z"
-            mv = -1
-        else:
-            rotVal = "X"
-            mv = 1
+
+        rotVal = "X"
+        mv = 1
 
         useAnkleTwist = False
         if "ankleTwist" in bndTwister:
             useAnkleTwist = True
-            setupFKFootSub = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_SUB")
+
+            '''setupFKFootSub = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_SUB")
             # get 1-FKIK value
             mc.shadingNode("plusMinusAverage", n=setupFKFootSub, au=True)
             mc.setAttr("{0}.operation".format(setupFKFootSub), 2)  # subtract
@@ -152,17 +147,17 @@ class pcCreateRigAlt03LegsCode(object):
             setupIKFootMulOffset = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "IKSetupTwist_offsetAVG_MUL")
             mc.shadingNode("multiplyDivide", n=setupIKFootMulOffset, au=True)
             mc.connectAttr("{0}.outputX".format(setupIKFootMul), "{0}.input1X".format(setupIKFootMulOffset))
-            mc.setAttr("{0}.input2X".format(setupIKFootMulOffset), lrm * 2)
+            mc.setAttr("{0}.input2X".format(setupIKFootMulOffset), lrm * 2)'''
 
             # now get the average between the FK and IK
-            avgFootRot = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "RotTwist_AVG")
+            '''avgFootRot = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "RotTwist_AVG")
             mc.shadingNode("plusMinusAverage", n=avgFootRot, au=True)
             mc.setAttr("{0}.operation".format(avgFootRot), 3)  # set to average
             mc.connectAttr("{0}.outputX".format(setupFKFootMulOffset), "{0}.input1D[0]".format(avgFootRot))
-            mc.connectAttr("{0}.outputX".format(setupIKFootMulOffset), "{0}.input1D[1]".format(avgFootRot))
+            mc.connectAttr("{0}.outputX".format(setupIKFootMulOffset), "{0}.input1D[1]".format(avgFootRot))'''
 
         if useAnkleTwist:
-            mnRXinput1X = "{0}.output1D".format(avgFootRot)
+            mnRXinput1X = "{0}.rotate{1}".format(bndTwister, rotVal)
         else:
             mnRXinput1X = "{0}.rotate{1}".format(nextJnt, rotVal)
 
@@ -392,7 +387,7 @@ class pcCreateRigAlt03LegsCode(object):
         ctrlName = "CTRL_{0}foot".format(leftRight)
         orientVal = (0, m * 1, 0)
         ctrlIKFoot = mc.circle(r=size, n=ctrlName, nr=orientVal, sections=10)[0]
-        mc.matchTransform(ctrlIKFoot, ikJntFoot, pos=True)
+        mc.matchTransform(ctrlIKFoot, ikJntAnkle, pos=True)
 
         # adjust size for foot
         mc.select("{0}.cv[:]".format(ctrlIKFoot))
@@ -420,15 +415,19 @@ class pcCreateRigAlt03LegsCode(object):
 
         if self.cbAnkleTwist:
             ikJntFootUse = ikJntEnd
+            ikJntFootUseForBall = ikJntAnkle
         else:
             ikJntFootUse = ikJntFoot
+            ikJntFootUseForBall = ikJntFoot
         jntsToUseFoot = [ikJnts[0], ikJntFootUse]
         ikSolver = "ikRPsolver"
 
         ikLegs = self.createIKVal(jntsToUseFoot, leftRight, "foot", ikSolver, )
         mc.parent(ikLegs[0], ctrlIKFoot)
 
-        jntsToUseBall = [ikJntFoot, ikJntBall]
+
+
+        jntsToUseBall = [ikJntFootUseForBall, ikJntBall]
         ikBall = self.createIKVal(jntsToUseBall, leftRight, "ball", ikSolver, )
         mc.parent(ikBall[0], ctrlIKFoot)
 
@@ -1307,6 +1306,7 @@ class pcCreateRigAlt03LegsCode(object):
         # IK Setup
         ctrlIKFoot, ikLegs, ikBall, ikToe = self.createIKLegs(ikJnts, newLayerNameIK, leftRight)
 
+
         # we need to put this here in case we have the ankleTwist option
         if self.cbTwists:
             mkTwists = 4
@@ -1336,6 +1336,7 @@ class pcCreateRigAlt03LegsCode(object):
             if not self.cbTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
                 CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Seg", stretch=True)
+
 
         # IK Stretch
         locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray = self.makeIKStretch(ikJnts,
