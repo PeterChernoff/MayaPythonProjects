@@ -235,9 +235,9 @@ class pcCreateRigAlt05ArmsCode(object):
 
     def makeBndStretchTwists(self, bndJnt, crvArm, twistJnts, leftRight):
         if leftRight == CRU.valLeft:
-            m = 1
+            mVal = 1
         else:
-            m = -1
+            mVal = -1
         nameEdit = bndJnt.replace("JNT_BND_", "")
 
         crvInfo = nameEdit + "Info"
@@ -251,7 +251,7 @@ class pcCreateRigAlt05ArmsCode(object):
         mc.setAttr("{0}.operation".format(armNrmlzDiv), 2)
         mc.connectAttr("{0}.arcLength".format(crvInfo), "{0}.input1X".format(armNrmlzDiv))
 
-        armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0])) * m  # get the joint child
+        armLen = mc.getAttr("{0}.tx".format(mc.listRelatives(bndJnt, type="joint")[0])) * mVal  # get the joint child
         # divide arm length by its base length
         mc.setAttr("{0}.input2X".format(armNrmlzDiv), armLen)
 
@@ -285,9 +285,9 @@ class pcCreateRigAlt05ArmsCode(object):
 
         if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
-            m = 1
+            mVal = 1
         else:
-            m = -1
+            mVal = -1
 
         locIKDistStart = "LOC_{0}arm_IK_lengthStart".format(leftRight)
         locIKDistEnd = "LOC_{0}arm_IK_lengthEnd".format(leftRight)
@@ -309,13 +309,13 @@ class pcCreateRigAlt05ArmsCode(object):
 
         mc.parent(locIKDistEnd, ctrlIKArm)
         driverAttr = "distance"
-        driverLen = mc.getAttr("{0}.{1}".format(distIKLenShape, driverAttr)) * m
+        driverLen = mc.getAttr("{0}.{1}".format(distIKLenShape, driverAttr)) * mVal
 
         ikLowerArm = ikJnts[1]
         ikJntHand = ikJnts[-2]
         upperLimbLen = mc.getAttr("{0}.translateX".format(ikLowerArm))
         lowerLimbLen = mc.getAttr("{0}.translateX".format(ikJntHand))
-        sumLegLen = (upperLimbLen + lowerLimbLen) * m
+        sumLegLen = (upperLimbLen + lowerLimbLen) * mVal
 
         drivenAttr = "translateX"
 
@@ -348,15 +348,15 @@ class pcCreateRigAlt05ArmsCode(object):
 
     def makeElbowCtrl(self, leftRight, ikJnts, hdlArm, *args):
         if leftRight == CRU.valLeft:
-            m = -1
+            mVal = -1
         else:
-            m = 1
+            mVal = 1
         locElbow = "LOC_{0}elbow".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locElbow)
         toDelete = mc.pointConstraint(ikJnts[1], locElbow)
         mc.delete(toDelete)
         armLength = mc.getAttr("{0}.tx".format(ikJnts[1]))
-        mc.move(m * armLength / 2, locElbow, z=True, os=True)
+        mc.move(mVal * armLength / 2, locElbow, z=True, os=True)
 
         # polevector constrain
         mc.poleVectorConstraint(locElbow, hdlArm)
@@ -587,9 +587,9 @@ class pcCreateRigAlt05ArmsCode(object):
     def makeShoulderStretchJoint(self, jntShoulders, locShldr, leftRight):
         if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
-            m = 1
+            mVal = 1
         else:
-            m = -1
+            mVal = 1
         cycleVis = []
         # creates locators for the shoulders
         locShldrDistStart = "LOC_{0}shoulder_lengthStart".format(leftRight)
@@ -603,8 +603,10 @@ class pcCreateRigAlt05ArmsCode(object):
         mc.spaceLocator(p=(0, 0, 0), name=locShldrDistStart)
         mc.spaceLocator(p=(0, 0, 0), name=locShldrDistEnd)
 
-        CRU.constrainMove(jntShoulders[0], locShldrDistStart, point=True)
-        CRU.constrainMove(jntShoulders[-1], locShldrDistEnd, point=True)
+        mc.matchTransform(locShldrDistStart, jntShoulders[0], pos=True)
+        mc.matchTransform(locShldrDistEnd, jntShoulders[-1], pos=True)
+        '''CRU.constrainMove(jntShoulders[0], locShldrDistStart, point=True)
+        CRU.constrainMove(jntShoulders[-1], locShldrDistEnd, point=True)'''
         distShldrShape = CRU.createDistanceDimensionNode(locShldrDistStart, locShldrDistEnd, distShldr)
 
         mc.parent(locShldrDistEnd, locShldr)
@@ -614,25 +616,26 @@ class pcCreateRigAlt05ArmsCode(object):
         shoulderLen = mc.getAttr("{0}.translateX".format(ikShoulderEnd))
 
         driverAttr = "distance"
-        sumLegLen = shoulderLen * m
+        sumLegLen = shoulderLen * mVal
 
         drivenAttr = "translateX"
 
         ctrlIKLengthKeyArray = []
 
-        # uses the total length to drive the length of the upper leg and  extrapolates it to infinity
+        # uses the total length to drive the length of the shoulder and  extrapolates it to infinity
         CRU.setDriverDrivenValues(distShldrShape, driverAttr, ikShoulderEnd, drivenAttr, sumLegLen, shoulderLen,
                                   modifyBoth="spline")
         CRU.setDriverDrivenValues(distShldrShape, driverAttr, ikShoulderEnd, drivenAttr, sumLegLen * 2, shoulderLen * 2,
                                   modifyBoth="spline")
-
         mc.selectKey(cl=True)
+
         mc.selectKey(ikShoulderEnd, add=True, k=sumLegLen * 2, attribute=drivenAttr)
         mc.setInfinity(poi='cycleRelative')
         ctrlIKLengthKeyArray.append("{0}_{1}".format(ikShoulderEnd, drivenAttr))
 
         for i in range(len(cycleVis)):
             mc.setAttr("{0}.visibility".format(cycleVis[i]), False)
+
 
         return locShldrDistStart, locShldrDistEnd, distShldr, distShldrShape
 
@@ -678,10 +681,10 @@ class pcCreateRigAlt05ArmsCode(object):
         defShoulderLen = mc.getAttr("{0}.translateX".format(jntShoulders[-1]))
         # create a pyramid
         if leftRight == CRU.valLeft:
-            m = 1
+            mVal = 1
         else:
-            m = -1
-        boxDimensionsLWH = [1, m * 4, 1]
+            mVal = 1
+        boxDimensionsLWH = [1, mVal * 4, 1]
         x = boxDimensionsLWH[0]
         y = boxDimensionsLWH[1]
         z = boxDimensionsLWH[2]
@@ -840,10 +843,10 @@ class pcCreateRigAlt05ArmsCode(object):
 
         mc.select(toDelete + ".cv[:]")
         if leftRight is CRU.valLeft:
-            m = -1
+            mVal = -1
         else:
-            m = 1
-        mc.move(m * sizeVal, os=True, r=True, y=True)
+            mVal = 1
+        mc.move(mVal * sizeVal, os=True, r=True, y=True)
 
         mc.parent(ctrlGimbalCorrSubShp, ctrlGimbalCorr, s=True, r=True)
         mc.select(cl=True)
@@ -945,7 +948,7 @@ class pcCreateRigAlt05ArmsCode(object):
 
         mc.connectAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), "{0}.blender".format(blndBndOrntChoice))
 
-    def cleanArm(self, fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings):
+    def cleanArm(self, fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlGimbalCorr, ctrlArmSettings):
 
         # We want to lock and hide as much as possible
         # Lock and hide all the controls on the elbow’s locators
@@ -962,6 +965,7 @@ class pcCreateRigAlt05ArmsCode(object):
         for i in range(len(fkJntsElbow)):
             CRU.lockHideCtrls(fkJntsElbow[i], scale=True, translate=True, visibility=True)
             CRU.lockHideCtrls(fkJntsElbow[i], theVals=["radi"], channelBox=False)
+        CRU.lockHideCtrls(ctrlGimbalCorr, translate=True, scale=True, visibility=True)
 
         # Lock and hide the non-rotate and length attributes of the FK controls
         for i in range(len(fkJnts)):
@@ -976,9 +980,9 @@ class pcCreateRigAlt05ArmsCode(object):
                    twistJntsUpper, twistJntsLower,
                    leftRight):
         if leftRight == CRU.valLeft:
-            m = 1
+            mVal = 1
         else:
-            m = -1
+            mVal = -1
         mdGScaleArmDiv = "globalScale_{0}arm_normalize_DIV".format(leftRight)
         mdGScaleShldrDiv = "globalScale_{0}shoulder_normalize_DIV".format(leftRight)
 
@@ -1023,8 +1027,8 @@ class pcCreateRigAlt05ArmsCode(object):
                        "{0}.input1X".format(gScaleElbowToHandNrmlzInvertMult))
 
         # multiplies by -1 if on the right
-        mc.setAttr("{0}.input2X".format(gScaleArmToElbowNrmlzInvertMult), m)
-        mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), m)
+        mc.setAttr("{0}.input2X".format(gScaleArmToElbowNrmlzInvertMult), mVal)
+        mc.setAttr("{0}.input2X".format(gScaleElbowToHandNrmlzInvertMult), mVal)
 
         mc.connectAttr("{0}.outputX".format(gScaleArmToElbowNrmlzInvertMult),
                        "{0}.input1X".format(gScaleArmToElbowNrmlzDiv))
@@ -1309,11 +1313,11 @@ class pcCreateRigAlt05ArmsCode(object):
                                                                                                       locShldrTemp,
                                                                                                       leftRight)
 
+
         if self.cbGeo:
             self.makeShoulderStretchGeo(jntShoulders, leftRight)
 
         ctrlShoulder = self.makeShoulderControl(jntShoulders, locShldrTemp, ctrlArmSettings, leftRight)
-
         # It's fine to put this here
         if self.cbGeo:
             defFKIKBlend = mc.getAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName))
@@ -1327,6 +1331,7 @@ class pcCreateRigAlt05ArmsCode(object):
                                                              jntShoulders, jntIKShoulder,
                                                              locShldrDistStart, distShldr,
                                                              leftRight)
+
 
         if not cbSpecialStretch:
             ikBndJnts = None
@@ -1369,7 +1374,7 @@ class pcCreateRigAlt05ArmsCode(object):
         self.fixSegRotInheritsTransformIK(bndOrientConstr, grpBNDConstArm, ctrlArmSettings, fkikBlendName, leftRight)
 
         # Clean up
-        self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlArmSettings)
+        self.cleanArm(fkJnts, grpFKConst, ctrlIKArm, fkJntsElbow, ctrlGimbalCorr, ctrlArmSettings)
         if cbSpecialStretch:
             # set the visibility of the IKs to 0 if we are working with the ikBndJnts
             mc.setAttr("{0}.v".format(ikJnts[0]), False)
@@ -1767,8 +1772,26 @@ class pcCreateRigAlt05ArmsCode(object):
             if mirrorRig:
                 mirrorBase = mc.mirrorJoint(jntArmArray[0], mirrorYZ=True, mirrorBehavior=True,
                                             searchReplace=[toReplace, toReplaceWith])
-                jntShoulderRootMirror = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
-                                                       searchReplace=[toReplace, toReplaceWith])[0]
+                jntShoulderMirror = mc.mirrorJoint(jntShoulderRoot, mirrorYZ=True, mirrorBehavior=True,
+                                                   searchReplace=[toReplace, toReplaceWith])
+                jntShouldeBaseEnd = jntShoulderMirror[-1].replace(toReplaceWith, toReplace)
+
+                jntOrntVals = mc.getAttr("{0}.jointOrient".format(jntShouldeBaseEnd))[0]
+                jntShoulderRootMirror = jntShoulderMirror[0]
+
+                '''
+                Orient the shoulder joint:
+                Primary Axis: 				X
+                Secondary Axis:				Y
+                Secondary World Orient:	    +Y
+                Orient children of selected joints +
+
+                '''
+                mc.joint(jntShoulderRootMirror, e=True, oj="xyz", secondaryAxisOrient="yup", ch=True,
+                         zso=True)  # set the preferred angle
+                mc.setAttr("{0}.jointOrientX".format(jntShoulderMirror[-1]), jntOrntVals[0])
+                mc.setAttr("{0}.jointOrientY".format(jntShoulderMirror[-1]), jntOrntVals[1])
+                mc.setAttr("{0}.jointOrientZ".format(jntShoulderMirror[-1]), jntOrntVals[2])
 
                 # mc.parent(jntShoulderRootMirror, w=True)
             self.makeArmComplete(isLeft, leftRight,
