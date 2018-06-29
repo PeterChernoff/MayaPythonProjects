@@ -477,15 +477,15 @@ class pcCreateRigAlt06HandsCode(object):
         palmAttr = "palmRaise"
 
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         mc.addAttr(ctrlHand, longName=palmAttr, at="float", k=True, min=-90,
                    max=90, dv=0)
         CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", 0, 0, modifyBoth="spline")
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", 90, -90 * m, modifyBoth="spline")
-        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", -90, 90 * m, modifyBoth="spline")
+        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", 90, -90 * imVal, modifyBoth="spline")
+        CRU.setDriverDrivenValues(ctrlHand, palmAttr, locArray[-1], "rz", -90, 90 * imVal, modifyBoth="spline")
         return
 
     def makeSideRoll(self, ctrlHand, locArray):

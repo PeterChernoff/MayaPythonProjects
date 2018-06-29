@@ -111,15 +111,15 @@ class pcCreateRigAlt04FeetCode(object):
     def createSideToSide(self, ctrlIKFoot, sideToSide, locInner, locOuter, leftRight, isLeft, *args):
 
         if isLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         # CRU.setDriverDrivenValues(driver, driverAttribute, driven, drivenAttribute, driverValue, drivenValue)
         CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locInner, "rotateZ", 0, 0)
         CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locOuter, "rotateZ", 0, 0)
-        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locInner, "rotateZ", -90, m * 90)
-        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locOuter, "rotateZ", 90, m * -90)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locInner, "rotateZ", -90, imVal * 90)
+        CRU.setDriverDrivenValues(ctrlIKFoot, sideToSide, locOuter, "rotateZ", 90, imVal * -90)
 
     def createToeWiggle(self, ctrlIKFoot, toeWiggle, ikToe, locBall, locToe, leftRight, *args):
         grpToeWiggle = "GRP_{0}toeWiggle".format(leftRight)

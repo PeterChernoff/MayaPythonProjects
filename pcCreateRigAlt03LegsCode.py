@@ -103,58 +103,12 @@ class pcCreateRigAlt03LegsCode(object):
         mc.connectAttr("{0}.{1}".format(ctrlFootSettings, ctrlTwistValAttrName), "{0}.input1X".format(multNodePercent))
         mc.connectAttr("{0}.outputX".format(multNodeRX), "{0}.input2X".format(multNodePercent))
 
-
         rotVal = "X"
         mv = 1
 
         useAnkleTwist = False
         if "ankleTwist" in bndTwister:
             useAnkleTwist = True
-
-            '''setupFKFootSub = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_SUB")
-            # get 1-FKIK value
-            mc.shadingNode("plusMinusAverage", n=setupFKFootSub, au=True)
-            mc.setAttr("{0}.operation".format(setupFKFootSub), 2)  # subtract
-            mc.setAttr("{0}.input1D[0]".format(setupFKFootSub), 1)
-            mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkikBlendName), "{0}.input1D[1]".format(setupFKFootSub))
-
-            # we want to multiply the FK twist by the FK blend value (1-fkikBlend),
-            # multiply it by 2 to offset the average, and then plug the value into the average calculation
-            fkTwister = bndTwister.replace("BND", "FK").replace("JNT", "CTRL")
-            # probably easier to just replace the BND with FK than to import it as a parameter
-            # setting up the FK
-            setupFKFootMul = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_MUL")
-            mc.shadingNode("multiplyDivide", n=setupFKFootMul, au=True)
-            mc.connectAttr("{0}.rotateX".format(fkTwister), "{0}.input1X".format(setupFKFootMul))
-            mc.connectAttr("{0}.output1D".format(setupFKFootSub), "{0}.input2X".format(setupFKFootMul))
-
-            setupFKFootMulOffset = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "FKSetupTwist_offsetAVG_MUL")
-            mc.shadingNode("multiplyDivide", n=setupFKFootMulOffset, au=True)
-            mc.connectAttr("{0}.outputX".format(setupFKFootMul), "{0}.input1X".format(setupFKFootMulOffset))
-            mc.setAttr("{0}.input2X".format(setupFKFootMulOffset), 2)
-
-            if leftRight is CRU.valLeft:
-                lrm = -1
-            else:
-                lrm = 1
-
-            # setting up the IK
-            setupIKFootMul = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "IKSetupTwist_MUL")
-            mc.shadingNode("multiplyDivide", n=setupIKFootMul, au=True)
-            mc.connectAttr("{0}.rotateY".format(ctrlIKFoot), "{0}.input1X".format(setupIKFootMul))
-            mc.connectAttr("{0}.{1}".format(ctrlFootSettings, fkikBlendName), "{0}.input2X".format(setupIKFootMul))
-
-            setupIKFootMulOffset = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "IKSetupTwist_offsetAVG_MUL")
-            mc.shadingNode("multiplyDivide", n=setupIKFootMulOffset, au=True)
-            mc.connectAttr("{0}.outputX".format(setupIKFootMul), "{0}.input1X".format(setupIKFootMulOffset))
-            mc.setAttr("{0}.input2X".format(setupIKFootMulOffset), lrm * 2)'''
-
-            # now get the average between the FK and IK
-            '''avgFootRot = "{0}{1}{2}".format(leftRight, ctrlTwistValAttr, "RotTwist_AVG")
-            mc.shadingNode("plusMinusAverage", n=avgFootRot, au=True)
-            mc.setAttr("{0}.operation".format(avgFootRot), 3)  # set to average
-            mc.connectAttr("{0}.outputX".format(setupFKFootMulOffset), "{0}.input1D[0]".format(avgFootRot))
-            mc.connectAttr("{0}.outputX".format(setupIKFootMulOffset), "{0}.input1D[1]".format(avgFootRot))'''
 
         if useAnkleTwist:
             mnRXinput1X = "{0}.rotate{1}".format(bndTwister, rotVal)
@@ -282,9 +236,9 @@ class pcCreateRigAlt03LegsCode(object):
 
     def createFKCtrls(self, fkJnts, colourTU, leftRight, *args):
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
         set = False
         for i in range(len(fkJnts[:-1])):
             fkJnt = fkJnts[i]
@@ -333,7 +287,7 @@ class pcCreateRigAlt03LegsCode(object):
                 elif "ball" in fkJnt:
 
                     sizeTU = 7
-                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(m * 1, 0, 0),
+                    ctrl, ctrlShape = CRU.createCTRLsFKDirect(fkJnt, size=sizeTU, orientVal=(imVal * 1, 0, 0),
                                                               colourTU=colourTU, override=False)
 
                     mc.select(ctrlShape + ".cv[5:7]")
@@ -379,13 +333,13 @@ class pcCreateRigAlt03LegsCode(object):
         ikJntToe = [x for x in ikJnts if "toe" in x][0]
 
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         size = mc.getAttr("{0}.tx".format(ikJnts[-1]))
         ctrlName = "CTRL_{0}foot".format(leftRight)
-        orientVal = (0, m * 1, 0)
+        orientVal = (0, imVal * 1, 0)
         ctrlIKFoot = mc.circle(r=size, n=ctrlName, nr=orientVal, sections=10)[0]
         mc.matchTransform(ctrlIKFoot, ikJntAnkle, pos=True)
 
@@ -398,7 +352,7 @@ class pcCreateRigAlt03LegsCode(object):
         mc.scale(1.2, z=True)
 
         mc.select("{0}.cv[3:8]".format(ctrlIKFoot))
-        mc.move(m * size * 1.4, moveZ=True, r=True)
+        mc.move(imVal * size * 1.4, moveZ=True, r=True)
 
         mc.select("{0}.cv[3]".format(ctrlIKFoot))
         mc.move(size * .1, moveX=True, r=True)
@@ -424,8 +378,6 @@ class pcCreateRigAlt03LegsCode(object):
 
         ikLegs = self.createIKVal(jntsToUseFoot, leftRight, "foot", ikSolver, )
         mc.parent(ikLegs[0], ctrlIKFoot)
-
-
 
         jntsToUseBall = [ikJntFootUseForBall, ikJntBall]
         ikBall = self.createIKVal(jntsToUseBall, leftRight, "ball", ikSolver, )
@@ -454,9 +406,9 @@ class pcCreateRigAlt03LegsCode(object):
     def makeIKStretch(self, ikJnts, leftRight, ctrlIKFoot, *args):
         if leftRight == CRU.valLeft:
             # need to make adjustments for the values making a mirror
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
         # creates locators that measure distance for the leg
         if self.cbAnkleTwist:
             ikJntFoot = [x for x in ikJnts if "legEnd" in x[-6:]][0]
@@ -477,14 +429,13 @@ class pcCreateRigAlt03LegsCode(object):
         disIKLeg = "DIST_IK_{0}leg_length".format(leftRight)
         disIKLegShape = CRU.createDistanceDimensionNode(locIKLegLenStart, locIKLegLenEnd, disIKLeg, toHide=True)
 
-
         mc.parent(locIKLegLenEnd, ctrlIKFoot)
 
-        driverLen = mc.getAttr("{0}.{1}".format(disIKLegShape, driverAttr)) * m
+        driverLen = mc.getAttr("{0}.{1}".format(disIKLegShape, driverAttr)) * imVal
 
         upperLegLen = mc.getAttr("{0}.translateX".format(ikJnts[1]))
         lowerLegLen = mc.getAttr("{0}.translateX".format(ikJntFoot))
-        sumLegLen = (upperLegLen + lowerLegLen) * m
+        sumLegLen = (upperLegLen + lowerLegLen) * imVal
 
         drivenAttr = "translateX"
 
@@ -528,15 +479,15 @@ class pcCreateRigAlt03LegsCode(object):
 
     def createNoFlipIKLeg(self, ikJnts, ctrlIKFoot, ikLegs, leftRight, *args):
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         locKnee = "LOC_{0}knee".format(leftRight)
         mc.spaceLocator(p=(0, 0, 0), name=locKnee)
         todelete = mc.pointConstraint(ikJnts[1], locKnee)
         mc.delete(todelete)
-        legLen = mc.getAttr("{0}.translateX".format(ikJnts[1])) * m
+        legLen = mc.getAttr("{0}.translateX".format(ikJnts[1])) * imVal
         mc.move(legLen, locKnee, r=True, moveZ=True)
         mc.makeIdentity(locKnee, apply=True)
 
@@ -572,9 +523,9 @@ class pcCreateRigAlt03LegsCode(object):
     def createDualKnee(self, ikJnts, ctrlIKFoot, ikLegs, grpNoFlipKnee, locIKLegLenEnd, locIKLegLenStart,
                        ctrlFootSettings, leftRight, newLayerNameIK, *args):
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         # get the noFlip values
         dupsNoFlip = mc.duplicate(ctrlIKFoot, ic=True, un=True, rc=True)
@@ -724,9 +675,9 @@ class pcCreateRigAlt03LegsCode(object):
 
     def createSnappableKnee(self, ikJntsPV, ctrlKnee, leftRight, ctrlIKFoot, animCrvPV, *args):
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         toHide = []
         # create a thigh to knee distance locator
@@ -742,7 +693,7 @@ class pcCreateRigAlt03LegsCode(object):
 
         disSnapUpper = "DIST_{0}upperLeg_to_knee_length".format(leftRight)
         disSnapUpperShape = CRU.createDistanceDimensionNode(locSnapUpperToKneeStart, locSnapUpperToKneeEnd,
-                                                             disSnapUpper)
+                                                            disSnapUpper)
         toHide.append(locSnapUpperToKneeEnd)
         toHide.append(locSnapUpperToKneeStart)
         toHide.append(disSnapUpper)
@@ -783,10 +734,10 @@ class pcCreateRigAlt03LegsCode(object):
         src2Lower = "{0}.output".format(animCrvPV[-1])
         tgtLower = "{0}.translateX".format(ikJntsPV[-1])
 
-        self.makeBlendStretch(src1Upper, src2Upper, tgtUpper, ctrlKnee, longName, blndNdUpperStretchChoice, m,
+        self.makeBlendStretch(src1Upper, src2Upper, tgtUpper, ctrlKnee, longName, blndNdUpperStretchChoice, imVal,
                               leftRight)
 
-        self.makeBlendStretch(src1Lower, src2Lower, tgtLower, ctrlKnee, longName, blndNdLowerStretchChoice, m)
+        self.makeBlendStretch(src1Lower, src2Lower, tgtLower, ctrlKnee, longName, blndNdLowerStretchChoice, imVal)
 
         for i in range(len(toHide)):
             mc.setAttr("{0}.v".format(toHide[i]), False)
@@ -1028,9 +979,9 @@ class pcCreateRigAlt03LegsCode(object):
                       blndNdUpperStretchChoice, blndNdLowerStretchChoice,
                       leftRight, *args):
         if leftRight == CRU.valLeft:
-            m = 1
+            imVal = 1
         else:
-            m = -1
+            imVal = -1
 
         gsLegNoFlipNormalizeDiv = "globalScale_{0}leg_noFlipNormalize_DIV".format(leftRight)
         gsLegPVNormalizeDiv = "globalScale_{0}leg_pvNormalize_DIV".format(leftRight)
@@ -1072,11 +1023,11 @@ class pcCreateRigAlt03LegsCode(object):
 
         mc.shadingNode("multiplyDivide", n=gScaleUpLegToKneeINV, au=True)
         mc.setAttr("{0}.operation".format(gScaleUpLegToKneeINV), 1)
-        mc.setAttr("{0}.input2X".format(gScaleUpLegToKneeINV), m)
+        mc.setAttr("{0}.input2X".format(gScaleUpLegToKneeINV), imVal)
 
         mc.shadingNode("multiplyDivide", n=gScaleKneeToFootINV, au=True)
         mc.setAttr("{0}.operation".format(gScaleKneeToFootINV), 1)
-        mc.setAttr("{0}.input2X".format(gScaleKneeToFootINV), m)
+        mc.setAttr("{0}.input2X".format(gScaleKneeToFootINV), imVal)
         ########
 
         disSnapUpperShape = mc.listRelatives(disSnapUpper, s=True)[0]
@@ -1267,7 +1218,8 @@ class pcCreateRigAlt03LegsCode(object):
             # we want to not have the legs in the bnd layer if we have twists
             altBnds = [x for x in bndJnts if "leg" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
         else:
-            altBnds = [x for x in bndJnts if "legend" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
+            altBnds = [x for x in bndJnts if
+                       "legend" in x.lower() or "ankletwist" in x.lower() or "toeend" in x.lower()]
 
         CRU.layerEdit(altBnds, bndAltLayer=True, noRecurse=True)
 
@@ -1306,7 +1258,6 @@ class pcCreateRigAlt03LegsCode(object):
         # IK Setup
         ctrlIKFoot, ikLegs, ikBall, ikToe = self.createIKLegs(ikJnts, newLayerNameIK, leftRight)
 
-
         # we need to put this here in case we have the ankleTwist option
         if self.cbTwists:
             mkTwists = 4
@@ -1320,10 +1271,10 @@ class pcCreateRigAlt03LegsCode(object):
             if self.cbAnkleTwist:
                 # use the foot for the foot twist
                 geoJntArrayExtend2 = self.makeTwists(mkTwists, bndJnts[1], bndJnts[3], ctrlFootSettings,
-                                                    ctrlIKFoot, leftRight, fkikBlendName, )
+                                                     ctrlIKFoot, leftRight, fkikBlendName, )
             else:
                 geoJntArrayExtend2 = self.makeTwists(mkTwists, bndJnts[1], bndJnts[2], ctrlFootSettings,
-                                                    ctrlIKFoot, leftRight)
+                                                     ctrlIKFoot, leftRight)
             altBnds = geoJntArrayExtend2[-1]
 
             CRU.layerEdit(geoJntArrayExtend2, bndLayer=True, noRecurse=True)
@@ -1336,7 +1287,6 @@ class pcCreateRigAlt03LegsCode(object):
             if not self.cbTwists:
                 jntLegsNoTwist = [x for x in geoJntArray if "Leg" in x[-3:]]
                 CRU.tgpSetGeoSpecial(jntLegsNoTwist, setLayer=True, keyWord="Seg", stretch=True)
-
 
         # IK Stretch
         locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray = self.makeIKStretch(ikJnts,
@@ -1495,7 +1445,7 @@ class pcCreateRigAlt03LegsCode(object):
             bndJnt = mc.textFieldButtonGrp("jointLoad_tfbg", q=True, text=True)
             passVal = "jointLoad_tfbg"
         else:
-            passVal= None
+            passVal = None
         try:
             jntLegRoot = bndJnt
         except:
