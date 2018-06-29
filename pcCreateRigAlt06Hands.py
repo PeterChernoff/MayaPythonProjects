@@ -18,8 +18,13 @@ reload(pcCreateRigAlt00AUtilities)
 
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
 
+import pcCreateRigAlt06HandsCode
 
-class pcCreateRigAlt06Hand(UI):
+reload(pcCreateRigAlt06HandsCode)
+from pcCreateRigAlt06HandsCode import pcCreateRigAlt06HandsCode as CRA6
+
+
+class pcCreateRigAlt06Hands(UI):
     def __init__(self):
 
         self.window = "bcWindow"
@@ -99,7 +104,20 @@ class pcCreateRigAlt06Hand(UI):
         mc.showWindow(self.window)
 
     def createButtonCmd(self, *args):
-        self.tgpMakeBC()
+
+        lrSel = mc.radioButtonGrp("selHandType_rbg", q=True, select=True)
+        mirrorSel = mc.radioButtonGrp("selHandMirrorType_rbg", q=True, select=True)
+        cbGeo = mc.checkBox("selGeo_cb", q=True, v=True)
+        jntFingerNamesCheck = mc.textFieldButtonGrp("jntFingersLoad_tfbg", q=True, text=True)
+        locPalmCheck = mc.textFieldButtonGrp("locPalmLoad_tf", q=True, text=True)
+        jntBindEndCheck = mc.textFieldButtonGrp("jntBindEndLoad_tf", q=True, text=True)
+        ctrlRootTransCheck = mc.textFieldButtonGrp("rootTrans_tfbg", q=True, text=True)
+        jntArmHandBndCheck = mc.textFieldButtonGrp("jntHandLoad_tfbg", q=True, text=True)
+        ctrlSettingsCheck = mc.textFieldButtonGrp("ctrlSettingsLoad_tfbg", q=True, text=True)
+
+        CRA6(lrSel=lrSel, mirrorSel=mirrorSel, cbGeo=cbGeo, jntFingerNamesCheck=jntFingerNamesCheck,
+             locPalmCheck=locPalmCheck, jntBindEndCheck=jntBindEndCheck,ctrlRootTransCheck=ctrlRootTransCheck,
+             jntArmHandBndCheck=jntArmHandBndCheck,ctrlSettingsCheck=ctrlSettingsCheck)
 
     def loadSrc1Btn(self):
         self.selSrc1 = CRU.tgpLoadJntsBtn("jntFingersLoad_tfbg", "joint", "Hand Base Joint", ["jnt", "handBase"],
@@ -131,7 +149,7 @@ class pcCreateRigAlt06Hand(UI):
                                         ["ctrl", "arm", "settings", ], "control")
         print(self.selSrc6)
 
-    def getJntArray(self, jointArray, fingerType, subType=None):
+    """def getJntArray(self, jointArray, fingerType, subType=None):
         if subType is None:
             fingerArray = [x for x in jointArray if (fingerType in x.lower())]
         else:
@@ -1138,4 +1156,4 @@ class pcCreateRigAlt06Hand(UI):
                                          leftRightMirror, colourTUMirror)
 
             # reset the symmetry to the default because otherwise we might get wonky results
-            # mc.symmetricModelling(symmetry=symmetry)
+            # mc.symmetricModelling(symmetry=symmetry)"""
