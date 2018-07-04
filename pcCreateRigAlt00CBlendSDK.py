@@ -14,6 +14,12 @@ import pcCreateRigAlt00AUtilities
 reload(pcCreateRigAlt00AUtilities)
 
 from pcCreateRigAlt00AUtilities import pcCreateRigUtilities as CRU
+from pcCreateRigAlt00DRenameBlendshapeCopies import pcCreateRigAlt00DRenameBlendshapeCopies as CRAd
+
+import pcCreateRigAlt00CBlendSDKCode
+
+reload(pcCreateRigAlt00CBlendSDKCode)
+from pcCreateRigAlt00CBlendSDKCode import pcCreateRigAlt00CBlendSDKCode as CRAc
 
 
 class pcCreateRigAlt00CBlendSDK(UI):
@@ -62,7 +68,13 @@ class pcCreateRigAlt00CBlendSDK(UI):
         mc.showWindow(self.window)
 
     def createButtonCmd(self, *args):
-        self.tgpMakeBC()
+
+        mc.textFieldButtonGrp("mshCharLoad_tf", e=True, bc=self.loadSrc1Btn)
+
+        mshCharCheck = mc.textFieldButtonGrp("mshCharLoad_tf", q=True, text=True)
+        mshChar = self.tgpGetTx(mshCharCheck, "mshCharLoad_tf", "mesh", "Body mesh", ["GEO"])
+
+        CRAc(mshChar, renameVals=True)
 
     def loadSrc1Btn(self):
         self.selSrc1 = self.tgpLoadTxBtn("mshCharLoad_tf", "mesh", "Body mesh", ["GEO"])
@@ -95,104 +107,3 @@ class pcCreateRigAlt00CBlendSDK(UI):
             return
         mc.textFieldButtonGrp(loadBtn, e=True, tx=selName)
         return selName
-
-    def tgpMakeBC(self, *args):
-
-        mc.textFieldButtonGrp("mshCharLoad_tf", e=True, bc=self.loadSrc1Btn)
-
-        mshCharCheck = mc.textFieldButtonGrp("mshCharLoad_tf", q=True, text=True)
-        mshChar = self.tgpGetTx(mshCharCheck, "mshCharLoad_tf", "mesh", "Body mesh", ["GEO"])
-        # print(mshChar)
-        history = mc.listHistory(mshChar)
-        print("history {0}".format(history))
-        blndName = mc.ls(history, typ='blendShape')[0]
-        print("blndName {0}".format(blndName))
-        blndVals = mc.aliasAttr(blndName, q=True)
-        print("blndVals {0}".format(blndVals))
-        blndValNames = []
-        blndValWeights = []
-
-        skip = False
-        for i in range(len(blndVals)):
-            if skip:
-                skip = False
-                continue  # skip to the next value. Only if Copy was the previous value
-            if "Copy" in blndVals[i][-4:]:
-                # If 'copy' is in there, it's probably badly named
-                skip = True
-                continue
-            if "base" in blndVals[i][-4:]:
-                # If 'base' is in there, it's referring to the basic shape
-                skip = True
-                continue
-            if "combo" in blndVals[i][:5]:
-                # If 'combo' is in there, it's referring to the basic shape
-                skip = True
-                continue
-            if "tempAlias" in blndVals[i]:
-                # If 'tempAlias' is in there, it's referring to the basic shape
-                skip = True
-                continue
-            if 'weight' in blndVals[i][:6]:
-                # These are typically
-                blndValWeights.append(blndVals[i])
-                theVals = mc.getAttr("{0}.{1}".format(blndName, blndVals[i]))
-                print(theVals)
-            else:
-                blndValNames.append(blndVals[i])
-
-        print(blndValWeights)
-        print(blndValNames)
-
-        for i in range(len(blndValNames)):
-            try:
-                driver, driverAttrDrvnVal = blndValNames[i].split("__", 1)
-            except:
-                print ("Error! {0}".format(blndValNames[i]))
-            if "FK_" in driver[:3]:
-
-                driver = "CTRL_" + driver
-
-            else:
-                driver = "JNT_BND_" + driver
-            print(driver)
-            print(driverAttrDrvnVal)
-            driverAttr, driverValNum = self.getDriverAttrDrivenVals(driverAttrDrvnVal)
-            print("driverAttr {0}".format(driverAttr))
-            print("drivenValue {0}".format(driverValNum))
-
-            CRU.setDriverDrivenValues(driver, driverAttr, blndName, blndValWeights[i], drivenValue=0, driverValue=0,
-                                      modifyBoth="linear")
-
-            CRU.setDriverDrivenValues(driver, driverAttr, blndName, blndValWeights[i], drivenValue=1,
-                                      driverValue=driverValNum,
-                                      modifyBoth="linear")
-            # CRU.setDriverDrivenValues(driver, driverAttr, driven, w0w1Attr[0], drivenValue=0, driverValue=1,
-            #                         modifyBoth="linear")
-
-        # CRU.createLocatorToDelete()
-
-        '''
-
-        vals = cmds.listAttr("correctives.w")
-        print(vals)
-        history = cmds.listHistory("male_geo")
-        print(history)
-        test = cmds.ls(history, typ='blendShape')
-        print(test)
-        
-        vals = cmds.aliasAttr("correctives", q=True)
-        print(vals)'''
-
-    def getDriverAttrDrivenVals(self, driverAttrDrvnVal, *args):
-        driverAttr, drivenVal = driverAttrDrvnVal.split("_", 1)
-        driverAttr = driverAttr.lower()
-        # print(driverAttr)
-        # print(drivenVal)
-        if drivenVal[0].lower() == 'p':
-            mult = 1
-        elif drivenVal[0].lower() == 'm':
-            mult = -1
-        driverValNum = int(drivenVal[1:])
-        # print(drivenValNum)
-        return driverAttr, driverValNum * mult

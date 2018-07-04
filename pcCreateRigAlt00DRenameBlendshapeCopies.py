@@ -1,18 +1,19 @@
-import maya.cmds as cmds
+import maya.cmds as mc
 
-class pcCreateRigAlt00DRenameBlendshapeCopies():
-    def __init__(self):
-        mshChar = 'GEO_woman'
+class pcCreateRigAlt00DRenameBlendshapeCopies(object):
+    def __init__(self, mshChar = 'GEO_woman'):
+
 
         self.tgpMakeBC(mshChar)
 
     def tgpMakeBC(self, mshChar):
 
-        history = cmds.listHistory(mshChar)
+
+        history = mc.listHistory(mshChar)
         # print("history {0}".format(history))
-        blndName = cmds.ls(history, typ='blendShape')[0]
+        blndName = mc.ls(history, typ='blendShape')[0]
         # print("blndName {0}".format(blndName))
-        blndVals = cmds.aliasAttr(blndName, q=True)
+        blndVals = mc.aliasAttr(blndName, q=True)
         # print("blndVals {0}".format(blndVals))
 
         # takes a value that is labelled as copy and renames it to its opposite
@@ -21,19 +22,48 @@ class pcCreateRigAlt00DRenameBlendshapeCopies():
                 toRename = blndVals[i][:-5]
                 if "l_" in toRename[:2]:
                     toRename1 = toRename.replace("l_", "r_")
-                    print("l to r {0}".format(toRename1))
+                    # print("l to r {0}".format(toRename1))
                 elif "r_" in toRename[:2]:
                     toRename1 = toRename.replace("r_", "l_")
-                    print("r to l {0}".format(toRename1))
-                print(" --- c ---")
+                    # print("r to l {0}".format(toRename1))
+                elif "combo" in toRename[:5]:
+                    if "_l_" in toRename:
+                        toRename1 = toRename.replace("_l_", "_r_")
+                        # print("l to r {0}".format(toRename1))
+                    elif "_r_" in toRename:
+                        toRename1 = toRename.replace("_r_", "_l_")
+                        # print("r to l {0}".format(toRename1))
+                    else:
+                        toRename1 = toRename
+                        # print("No renaming")
+                # print(" --- c ---")
                 # print (toRename1)
-                print ("{0}.{1}".format(blndName, blndVals[i]))
-                if cmds.objExists('{0}.{1}'.format(blndName, toRename1)):
-                    cmds.aliasAttr('{0}.{1}'.format(blndName, toRename1), rm=True)
-                cmds.aliasAttr(toRename1, '{0}.{1}'.format(blndName, blndVals[i]))
+                # print ("{0}.{1}".format(blndName, blndVals[i]))
+                if mc.objExists('{0}.{1}'.format(blndName, toRename1)):
+                    mc.aliasAttr('{0}.{1}'.format(blndName, toRename1), rm=True)
+                mc.aliasAttr(toRename1, '{0}.{1}'.format(blndName, blndVals[i]))
 
-                # cmds.renameAttr( '{0}.{1}'.format(blndName, blndVals[i]), toRename1 )
+                # mc.renameAttr( '{0}.{1}'.format(blndName, blndVals[i]), toRename1 )
 
-        blndVals = cmds.aliasAttr(blndName, q=True)
-        print("blndVals {0}".format(blndVals))
+        # this lets us rename any groups
+        for i in range(1000):
+            getName = mc.getAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)))
+            if "Group" in getName:
+                continue
+            print(getName)
+
+
+            if "l_" in getName[:2] and "_Copy" in getName[-5:]:
+                renameVal = "r_{0}".format(getName[2:-5])
+                mc.setAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)), renameVal,
+                           type='string')
+            elif "_Copy" in getName[-5:]:
+                renameVal = "{0}".format(getName[:-5])
+                mc.setAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)), renameVal,
+                           type='string')
+
+        blndVals = mc.aliasAttr(blndName, q=True)
+        # print("blndVals {0}".format(blndVals))
+
+
 

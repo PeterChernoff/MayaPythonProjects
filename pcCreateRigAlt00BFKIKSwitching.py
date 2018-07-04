@@ -79,12 +79,14 @@ class pcCreateRigAlt00BFKIKSwitching():
         # FK to IK
         try:
             default_upperLeg_length = mc.getAttr(
-                "GEO_{0}upperLeg_normalize_DIV.input2X".format(leftRight))  # default_upperLeg_length = 31.855
+                "{0}lowerLeg_noFlip_stretch_COND.colorIfFalseR".format(leftRight))  # default_upperLeg_length = 31.855
+            print("default_upperLeg_length: {0}".format(default_upperLeg_length))
         except:
             default_upperLeg_length = 31.855
         try:
             default_lowerLeg_length = mc.getAttr(
-                "GEO_{0}lowerLeg_normalize_DIV.input2X".format(leftRight))  # default_lowerLeg_length = 44.037
+                "{0}foot_noFlip_stretch_COND.colorIfFalseR".format(leftRight))  # default_lowerLeg_length = 44.037
+            print("default_lowerLeg_length: {0}".format(default_lowerLeg_length))
         except:
             default_lowerLeg_length = 44.037
 
@@ -114,12 +116,12 @@ class pcCreateRigAlt00BFKIKSwitching():
         # IK to FK
         try:
             default_upperLeg_length = mc.getAttr(
-                "GEO_{0}upperLeg_normalize_DIV.input2X".format(leftRight))  # default_upperLeg_length = 31.855
+                "{0}lowerLeg_noFlip_stretch_COND.colorIfFalseR".format(leftRight))  # default_upperLeg_length = 31.855
         except:
             default_upperLeg_length = 31.855
         try:
             default_lowerLeg_length = mc.getAttr(
-                "GEO_{0}lowerLeg_normalize_DIV.input2X".format(leftRight))  # default_lowerLeg_length = 44.037
+                "{0}foot_noFlip_stretch_COND.colorIfFalseR".format(leftRight))  # default_lowerLeg_length = 44.037
         except:
             default_lowerLeg_length = 44.037
 
