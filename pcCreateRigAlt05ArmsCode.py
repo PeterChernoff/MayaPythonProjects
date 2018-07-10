@@ -51,10 +51,8 @@ class pcCreateRigAlt05ArmsCode(object):
         # NOTE: we make the default value 0.5 for testing purposes
         mc.addAttr(ctrlArmSettings, longName=fkikBlendName, niceName=fkikBlendNiceName, at="float", k=True, min=0,
                    max=1, dv=1)
-        if isLeft:
-            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
-        else:
-            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 1)
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
+
         CRU.makeBlendBasic(fkJnts, ikJnts, bndJnts, ctrlArmSettings, fkikBlendName, rotate=True, translate=True)
         # connect the visibility of the controllers
         fkVis = "FK_visibility"
@@ -1438,21 +1436,29 @@ class pcCreateRigAlt05ArmsCode(object):
         mc.setAttr("{0}.overrideRGBColors".format(ikLayer), 1)
         # appendix A
         if self.cbSwitchSetup:
-            self.makeArmFKIKComplete(bndJnts, fkJnts, ctrlIKArm)
+            self.makeArmFKIKComplete(bndJnts, fkJnts, ctrlIKArm, ctrlArmSettings, fkikBlendName)
 
         # appendix B
         if self.cbToggleSpineStretch:
             self.setSpineStretchToggle(grpSpineToggle, grpShoulder)
+
+        if isLeft:
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
+        else:
+            mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 1)
         return
 
-    def makeArmFKIKComplete(self, bndJnts, fkJnts, ctrlIK, ):
-        fkSwitchJnts = self.makeFKSnapJnts(fkJnts, bndJnts)
+    def makeArmFKIKComplete(self, bndJnts, fkJnts, ctrlIK, ctrlArmSettings, fkikBlendName):
+        fkSwitchJnts = self.makeFKSnapJnts(fkJnts, bndJnts, ctrlArmSettings, fkikBlendName)
 
-        ctrlIKSwitch = self.makeIKSnap(ctrlIK, bndJnts)
+        ctrlIKSwitch = self.makeIKSnap(ctrlIK, bndJnts, ctrlArmSettings, fkikBlendName)
 
         return
 
-    def makeFKSnapJnts(self, fkJnts, bndJnts):
+    def makeFKSnapJnts(self, fkJnts, bndJnts, ctrlArmSettings, fkikBlendName):
+        # we need this to be the deault FK version
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 0)
+
         fkSwitchJnts = []
         for i in range(len(fkJnts[:-1])):
             # create duplicates of everything except the last joint
@@ -1466,14 +1472,20 @@ class pcCreateRigAlt05ArmsCode(object):
 
         return fkSwitchJnts
 
-    def makeIKSnap(self, ctrlIK, bndJnts):
+    def makeIKSnap(self, ctrlIK, bndJnts, ctrlArmSettings, fkikBlendName):
+        mc.setAttr("{0}.{1}".format(ctrlArmSettings, fkikBlendName), 1)
         # create the hand IK and parent it under the hand
         ctrlIKSwitch = ctrlIK.replace("CTRL_", "GRP_IKsnap_")
         mc.duplicate(ctrlIK, n=ctrlIKSwitch, po=True)
         mc.parent(ctrlIKSwitch, bndJnts[-2])
 
+        valName = 'radVal'  # this only exists to let me avoid deleting the group in case I try to optimize things
+        mc.addAttr(ctrlIKSwitch, longName=valName, at="float", k=True)
+
         CRU.lockHideCtrls(ctrlIKSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
         mc.setAttr("{0}.visibility".format(ctrlIKSwitch), False)
+
+        mc.connectAttr("{0}.radius".format(bndJnts[-2]), "{0}.{1}".format(ctrlIKSwitch, valName))
         CRU.lockHideCtrls(ctrlIKSwitch, visibility=True)
 
         return ctrlIKSwitch
