@@ -46,7 +46,7 @@ class pcCreateRigAlt00DRenameBlendshapeCopies(object):
                 # mc.renameAttr( '{0}.{1}'.format(blndName, blndVals[i]), toRename1 )
 
         # this lets us rename any groups
-        for i in range(1000):
+        for i in range(200):
             getName = mc.getAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)))
             if "Group" in getName:
                 continue

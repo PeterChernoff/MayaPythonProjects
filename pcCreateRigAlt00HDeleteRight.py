@@ -32,4 +32,6 @@ class pcCreateRigAlt00HDeleteRight(object):
                 # "d_" will stand for delete
                 if "r_" in nonWeightName[i][:2] or "d_" in nonWeightName[i][:2]:
                     mc.aliasAttr("{0}.{1}".format(blndName, nonWeightName[i]), rm=True)
+                if "l_" in nonWeightName[i][:2] and "_Copy" in nonWeightName[i][-5:]:
+                    mc.aliasAttr("{0}.{1}".format(blndName, nonWeightName[i]), rm=True)
 

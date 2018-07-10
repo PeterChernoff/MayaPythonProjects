@@ -42,7 +42,7 @@ class pcCreateRigAlt00FCreateRigUI(UI):
         mc.separator(st="in", h=17, w=500)
 
         mc.rowColumnLayout(nc=2, cw=[(1, 120), (2, 380)], cs=[1, 5], rs=[1, 3])
-        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=True)
+        mc.checkBox("selGeo_cb", l="Affect Geometry", en=True, v=False)
 
         mc.setParent("..")
         # load buttons
