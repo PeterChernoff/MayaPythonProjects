@@ -205,9 +205,6 @@ class pcCreateRigAlt03LegsCode(object):
                 mc.connectAttr(jntsSrc2[i] + val + "Y", blndNodeRot[i] + ".color1G")
                 mc.connectAttr(jntsSrc2[i] + val + "Z", blndNodeRot[i] + ".color1B")
 
-                '''mc.connectAttr(jntsSrc1[i] + val, blndNodeRot[i] + ".color2")
-                mc.connectAttr(jntsSrc2[i] + val, blndNodeRot[i] + ".color1")'''
-
                 mc.connectAttr(blndNodeRot[i] + ".outputR", jntsTgt[i] + "{0}".format(val + "X"))
                 mc.connectAttr(blndNodeRot[i] + ".outputG", jntsTgt[i] + "{0}".format(val + "Y"))
                 mc.connectAttr(blndNodeRot[i] + ".outputB", jntsTgt[i] + "{0}".format(val + "Z"))
@@ -463,19 +460,6 @@ class pcCreateRigAlt03LegsCode(object):
         ctrlIKLengthKeyArray.append("{0}_{1}".format(ikJntFoot, drivenAttr))
 
         return locIKLegLenStart, locIKLegLenEnd, disIKLeg, disIKLegShape, ctrlIKLengthKeyArray
-
-    def createDistanceDimensionNode(self, startLoc, endLoc, lenNodeName, toHide=False):
-        distDimShape = mc.distanceDimension(sp=(0, 0, 0), ep=(0, 0, 0))
-        mc.connectAttr("{0}.worldPosition".format(startLoc), "{0}.startPoint".format(distDimShape), f=True)
-        mc.connectAttr("{0}.worldPosition".format(endLoc), "{0}.endPoint".format(distDimShape), f=True)
-        distDimParent = mc.listRelatives(distDimShape, p=True)
-        mc.rename(distDimParent, lenNodeName)
-        lenNodeNameShape = mc.listRelatives(lenNodeName, s=True)[0]
-        if toHide:
-            mc.setAttr("{0}.visibility".format(startLoc), False)
-            mc.setAttr("{0}.visibility".format(endLoc), False)
-            mc.setAttr("{0}.visibility".format(lenNodeName), False)
-        return lenNodeNameShape
 
     def createNoFlipIKLeg(self, ikJnts, ctrlIKFoot, ikLegs, leftRight, *args):
         if leftRight == CRU.valLeft:
@@ -744,16 +728,13 @@ class pcCreateRigAlt03LegsCode(object):
         return locSnapUpperToKneeStart, disSnapUpper, disSnapLower, blndNdUpperStretchChoice, blndNdLowerStretchChoice
 
     def makeBlendStretch(self, src1, src2, tgt, ctrl, ctrlAttr, blendNodeName, mult, *args):
-        multValName = "{0}_MUL".format(blendNodeName)
-        mc.shadingNode("multiplyDivide", n=multValName, au=True)
-        mc.setAttr("{0}.operation".format(multValName), 1)
-        mc.setAttr("{0}.input2X".format(multValName), mult)
+        # the multiplication gets replaced later on, so might as well skip it
 
         # this lets us invert the numbers when we need to, like when we are working with the right side vs the left side
-        mc.connectAttr(src1, multValName + ".input1X")
+        # mc.connectAttr(src1, multValName + ".input1X")
 
         mc.shadingNode("blendColors", au=True, name=blendNodeName)
-        mc.connectAttr("{0}.outputX".format(multValName), blendNodeName + ".color1R")
+        # mc.connectAttr("{0}.outputX".format(multValName), blendNodeName + ".color1R")
         mc.connectAttr(src2, blendNodeName + ".color2R")
         mc.connectAttr(blendNodeName + ".outputR", tgt, f=True)
         blndName = "{0}.{1}".format(ctrl, ctrlAttr)
@@ -1166,12 +1147,23 @@ class pcCreateRigAlt03LegsCode(object):
 
     def makeIKSnap(self, ctrlIK, bndJnts):
         # create the foot IK and parent it under the foot
+        # may need to put this under ankleTwist
         ctrlIKSwitch = ctrlIK.replace("CTRL_", "GRP_IKsnap_")
+
         mc.duplicate(ctrlIK, n=ctrlIKSwitch, po=True)
-        mc.parent(ctrlIKSwitch, bndJnts[-3])
+        if self.cbAnkleTwist:
+            twistVal = -4
+        else:
+            twistVal = -3
+        mc.parent(ctrlIKSwitch, bndJnts[twistVal])
+        valName = 'radVal'  # this only exists to let me avoid deleting the group in case I try to optimize things
+        mc.addAttr(ctrlIKSwitch, longName=valName, at="float", k=True)
 
         CRU.lockHideCtrls(ctrlIKSwitch, translate=True, visibility=True, attrVisible=True, toLock=False)
-        mc.setAttr("{0}.visibility".format(ctrlIKSwitch), False)
+        mc.setAttr("{0}.visibility".format(ctrlIKSwitch),
+                   False)  # we want to have this linked to something so it doesn't get deleted
+
+        mc.connectAttr("{0}.radius".format(bndJnts[twistVal]), "{0}.{1}".format(ctrlIKSwitch, valName))
         CRU.lockHideCtrls(ctrlIKSwitch, visibility=True)
 
         return ctrlIKSwitch

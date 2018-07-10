@@ -152,7 +152,8 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
             self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5, valNeg5, drvnAttr5, passVals5,
                                  isLocked=True)
             if i == 0:
-                self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5y, valNeg5y, drvnAttr5y, passVals5,
+                self.makeFingersAttr(ctrlPass, fingerAttr[4], cmpdCtrlTIMRP[i], valPos5y, valNeg5y, drvnAttr5y,
+                                     passVals5,
                                      isLocked=True)
 
         return
@@ -269,11 +270,11 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
 
         cmpdCtrlTIMRP = mc.ls('*cmpdCTRL_{0}*'.format(leftRight), type='joint')
 
-        print("check: {0}".format(cmpdCtrlTIMRP))
+        # print("check: {0}".format(cmpdCtrlTIMRP))
 
         cmpdCtrlTIMRP = self.getSuperJntArray(cmpdCtrlTIMRP, "cmpdCTRL")
 
-        print("check: {0}".format(cmpdCtrlTIMRP))
+        # print("check: {0}".format(cmpdCtrlTIMRP))
 
         ctrlTIMRPSetup = mc.ls('CTRL_{0}*'.format(leftRight), type='nurbsCurve')
 
@@ -283,10 +284,9 @@ class pcCreateRigAlt06HandsCodeAdjust(object):
             parent = mc.listRelatives(ctrlTIMRPSetup[i], p=True)[0]
             ctrlTIMRP.append(parent)
 
-        print("ctrlTIMRP: {0}".format(ctrlTIMRP))
+        # print("ctrlTIMRP: {0}".format(ctrlTIMRP))
 
         self.makeFingersCompound(ctrlTIMRP, fingerAttr, cmpdCtrlTIMRP)
-
 
         # create the hand
         ctrlHand = "CTRL_{0}hand".format(leftRight)

@@ -748,7 +748,7 @@ class pcCreateRigAlt06HandsCode(object):
                 if i == 1:
                     mc.move(0, 3, 0, ctrlName, r=True)
                     setMoveVals = mc.xform(ctrlName, q=True, ws=True, rotatePivot=True)
-                    print("setMoveY: {0}".format(setMoveVals))
+
                 else:
                     mc.move(setMoveVals[0], ctrlName, x=True, ws=True)
                     mc.move(setMoveVals[1], ctrlName, y=True, ws=True)
