@@ -58,6 +58,10 @@ class pcCreateRigAlt00CBlendSDKCode(object):
                 # If 'copy' is in there, it's probably badly named
                 skip = True
                 continue
+            if "GEO_" in blndVals[i][:3]:
+                # If 'GEO' is in there, it's probably badly named
+                skip = True
+                continue
             if "base" in blndVals[i][-4:]:
                 # If 'base' is in there, it's referring to the basic shape
                 skip = True
@@ -89,6 +93,13 @@ class pcCreateRigAlt00CBlendSDKCode(object):
         # print(blndValWeights)
         # print(blndValNames)
 
+        # delete the preexisting blendshape animations
+        test = mc.ls("blendShape1_*", type="animCurveUU")
+        print("{0}".format(test))
+        # deletes pre-existing lists
+        if len(test) != 0:
+            mc.delete(test)
+
         for i in range(len(blndValNames)):
             try:
                 driver, driverAttrDrvnVal = blndValNames[i].split("__", 1)
@@ -119,9 +130,13 @@ class pcCreateRigAlt00CBlendSDKCode(object):
 
     def getDriverAttrDrivenVals(self, driverAttrDrvnVal, *args):
         driverAttr, drivenVal = driverAttrDrvnVal.split("_", 1)
+        # if the last character is 'e', remove the last letter
+        if drivenVal[-1:]=="e":
+            drivenVal =drivenVal[:-1]
+
         driverAttr = driverAttr.lower()
-        # print(driverAttr)
-        # print(drivenVal)
+
+        # determines if the value is positive or negative
         if drivenVal[0].lower() == 'p':
             mult = 1
         elif drivenVal[0].lower() == 'm':
