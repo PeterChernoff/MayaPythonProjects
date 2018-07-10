@@ -5,7 +5,7 @@ class pcCreateRigAlt00BFKIKSwitching():
     def __init__(self):
         self.window = "bcWindow"
         self.title = "pcRigHands"
-        self.winSize = (500, 100)
+        self.winSize = (525, 100)
 
         self.createUI()
 
@@ -19,8 +19,8 @@ class pcCreateRigAlt00BFKIKSwitching():
         curr_upperArm_length = mc.getAttr("JNT_BND_{0}lowerArm.translateX".format(leftRight))
         curr_lowerArm_length = mc.getAttr("JNT_BND_{0}hand.translateX".format(leftRight))
 
-        upperArm_length_factor = curr_upperArm_length / default_upperArm_length
-        lowerArm_length_factor = curr_lowerArm_length / default_lowerArm_length
+        upperArm_length_factor = abs(curr_upperArm_length / default_upperArm_length)
+        lowerArm_length_factor = abs(curr_lowerArm_length / default_lowerArm_length)
 
         mc.setAttr("CTRL_FK_{0}upperArm.length".format(leftRight), upperArm_length_factor)
         mc.setAttr("CTRL_FK_{0}lowerArm.length".format(leftRight), lowerArm_length_factor)
@@ -35,42 +35,61 @@ class pcCreateRigAlt00BFKIKSwitching():
 
     def arm_IKtoResult(self, forearm_mode, leftRight, *args):
         # IK to FK
-        default_upperArm_length = mc.getAttr(
-            "{0}upperArm_normalize_DIV.input2X".format(leftRight))  # default_upperArm_length = 23.508
+        default_upperArm_length = abs(mc.getAttr(
+            "{0}upperArm_normalize_DIV.input2X".format(leftRight)) ) # default_upperArm_length = 23.508
         default_lowerArm_length = mc.getAttr(
             "{0}lowerArm_normalize_DIV.input2X".format(leftRight))  # default_upperArm_length = 27.351
         # current values
-        curr_upperArm_length = mc.getAttr("JNT_BND_{0}lowerArm.translateX".format(leftRight))
-        curr_lowerArm_length = mc.getAttr("JNT_BND_{0}hand.translateX".format(leftRight))
+        curr_upperArm_length = abs(mc.getAttr("JNT_BND_{0}lowerArm.translateX".format(leftRight)))
+        curr_lowerArm_length = abs(mc.getAttr("JNT_BND_{0}hand.translateX".format(leftRight)))
 
         tolerance = 0.001
 
         if forearm_mode == 1:
 
-            if ((abs(curr_upperArm_length - default_upperArm_length) > tolerance) or (
-                    abs(curr_lowerArm_length - default_lowerArm_length) > tolerance)):
-                mc.setAttr("CTRL_{0}elbow.elbowSnap".format(leftRight), 1)
-                mc.setAttr("CTRL_settings_{0}arm.IK_stretch".format(leftRight), 0)
+            getValFKIK = mc.getAttr("CTRL_settings_{0}arm.fkik_blend".format(leftRight))
+            getValElb = mc.getAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight))
 
-            mc.matchTransform("CTRL_{0}arm".format(leftRight), "GRP_IKsnap_{0}arm".format(leftRight), rotation=True)
-            mc.matchTransform("CTRL_{0}arm".format(leftRight), "GRP_IKsnap_{0}arm".format(leftRight), position=True)
-            mc.matchTransform("CTRL_{0}elbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight), position=True)
+            val = getValFKIK == 1 and getValElb == 1
+            if val:
+                pass
+            else:
 
-            mc.setAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight), 1)
+                if ((abs(curr_upperArm_length - default_upperArm_length) > tolerance) or (
+                        abs(curr_lowerArm_length - default_lowerArm_length) > tolerance)):
+                    mc.setAttr("CTRL_{0}elbow.elbowSnap".format(leftRight), 1)
+                    mc.setAttr("CTRL_settings_{0}arm.IK_stretch".format(leftRight), 0)
+
+
+
+                mc.matchTransform("CTRL_{0}arm".format(leftRight), "GRP_IKsnap_{0}arm".format(leftRight), position=True)
+                mc.matchTransform("CTRL_{0}arm".format(leftRight), "GRP_IKsnap_{0}arm".format(leftRight), rotation=True)
+
+                mc.matchTransform("CTRL_{0}elbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight), position=True)
+                mc.setAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight), 1)
 
         else:  # if forearm 2/IK FKelbow is selected
-            lowerArm_length_factor = abs(curr_lowerArm_length / default_lowerArm_length)
 
-            mc.matchTransform("CTRL_{0}elbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight), position=True)
-            mc.matchTransform("CTRL_FK_{0}lowerArmElbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight),
-                              rotation=True)
-            mc.matchTransform("CTRL_FK_{0}handElbow".format(leftRight), "JNT_FKsnap_{0}hand".format(leftRight),
-                              rotation=True)
+            getValFKIK = mc.getAttr("CTRL_settings_{0}arm.fkik_blend".format(leftRight))
+            getValElb = mc.getAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight))
+            val = getValFKIK == 1 and getValElb == 0
+            if val:
+                pass
+            else:
 
-            mc.setAttr("CTRL_{0}elbow.elbowSnap".format(leftRight), 1)
-            mc.setAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight), 0)
+                lowerArm_length_factor = abs(curr_lowerArm_length / default_lowerArm_length)
 
-            mc.setAttr("CTRL_FK_{0}lowerArmElbow.length".format(leftRight), lowerArm_length_factor)
+                mc.matchTransform("CTRL_{0}elbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight), position=True)
+                mc.matchTransform("CTRL_FK_{0}lowerArmElbow".format(leftRight), "JNT_BND_{0}lowerArm".format(leftRight),
+                                  rotation=True)
+                mc.matchTransform("CTRL_FK_{0}handElbow".format(leftRight), "JNT_FKsnap_{0}hand".format(leftRight),
+                                  rotation=True)
+
+
+                mc.setAttr("CTRL_{0}elbow.elbowSnap".format(leftRight), 1)
+                mc.setAttr("CTRL_{0}elbow.FKIK_lowerArmBlend".format(leftRight), 0)
+
+                mc.setAttr("CTRL_FK_{0}lowerArmElbow.length".format(leftRight), lowerArm_length_factor)
 
         mc.setAttr("CTRL_settings_{0}arm.fkik_blend".format(leftRight),
                    1)  # now that we have the FIK in place, we want to switch to it
@@ -199,8 +218,10 @@ class pcCreateRigAlt00BFKIKSwitching():
                 print("attempt #: {0}".format(i))
                 # python doesn't really like recursion
                 if repeat:
-                    kneeTwistValue, repeat, minVal, maxVal  = self.iterToMatchSeq(sourceNode, center_shin_pos, driverAttr, centerToNoFlip,
-                                                        deltaAngle[3], kneeTwistValue, maxVal, minVal)
+                    kneeTwistValue, repeat, minVal, maxVal = self.iterToMatchSeq(sourceNode, center_shin_pos,
+                                                                                 driverAttr, centerToNoFlip,
+                                                                                 deltaAngle[3], kneeTwistValue, maxVal,
+                                                                                 minVal)
                 else:
                     print("value found")
                     break
@@ -216,7 +237,7 @@ class pcCreateRigAlt00BFKIKSwitching():
             if ((abs(curr_shin_pos[0] - bndLowerLegPos[0]) > tolerance) or
                     (abs(curr_shin_pos[1] - bndLowerLegPos[1]) > tolerance) or
                     (abs(curr_shin_pos[2] - bndLowerLegPos[2]) > tolerance)):
-                kneeTwistValue = kneeTwistValue*-1
+                kneeTwistValue = kneeTwistValue * -1
                 mc.setAttr(driverAttr, kneeTwistValue)
                 print("new kneeTwist: {0}".format(kneeTwistValue))
             print("centerToNoFlip: {0}".format(centerToNoFlip))
@@ -226,7 +247,8 @@ class pcCreateRigAlt00BFKIKSwitching():
         mc.setAttr("CTRL_settings_{0}leg.fkik_blend".format(leftRight),
                    1)  # now that we have the FIK in place, we want to switch to it
 
-    def iterToMatchSeq(self, sourceNode, centerPos, driverAttr, zeroVector, targetAngle, value, maxVal, minVal, altMode = False):
+    def iterToMatchSeq(self, sourceNode, centerPos, driverAttr, zeroVector, targetAngle, value, maxVal, minVal,
+                       altMode=False):
         # source node is JNT_IK_noFlip_l_lowerLeg
         # next we need the center position
         # after that, we need the driveAttr (kneeTwist)
@@ -266,8 +288,8 @@ class pcCreateRigAlt00BFKIKSwitching():
 
                     value = value - value / 2;
                 else:
-                    minVal = value # the min value is at least the current value
-                    value = (maxVal + value)/2 # get the average of the max value and the current value
+                    minVal = value  # the min value is at least the current value
+                    value = (maxVal + value) / 2  # get the average of the max value and the current value
 
             else:
                 # if we are coming in under our target angle, then we increase it by half the previous value
@@ -277,11 +299,11 @@ class pcCreateRigAlt00BFKIKSwitching():
                     value = value + value / 2;
                 else:
                     # I am making some adjustments to make this less bouncy
-                    maxVal = value # the min value is at least the current value
-                    value = (minVal + value)/2 # get the average of the max value and the current value
+                    maxVal = value  # the min value is at least the current value
+                    value = (minVal + value) / 2  # get the average of the max value and the current value
             # use recursion
             value = value % 360
-            return value, True, minVal, maxVal # adjust
+            return value, True, minVal, maxVal  # adjust
 
     def createUI(self):
         if mc.window("matchApp", exists=True):
@@ -302,9 +324,11 @@ class pcCreateRigAlt00BFKIKSwitching():
         mc.button(l="Left Arm FK to Arm BND", c=self.callLButtonArmFK)
         mc.button(l="Right Arm FK to Arm BND", c=self.callRButtonArmFK)
 
+
         mc.rowColumnLayout(numberOfColumns=2)
         mc.button(l="Left Arm IK to ArmBND", c=self.callLButtonArmIK)  # Match left IK arm to result arm
-        mc.radioButtonGrp("leftForeArmMode", vr=True, numberOfRadioButtons=2, labelArray2=["IK forearm", "FK forearm"],
+        mc.radioButtonGrp("leftForeArmMode", vr=True, numberOfRadioButtons=2,
+                          labelArray2=["IK forearm", "FK forearm", ],
                           select=1)
         mc.setParent("..")
 
