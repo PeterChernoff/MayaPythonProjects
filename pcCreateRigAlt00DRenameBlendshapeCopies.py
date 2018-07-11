@@ -20,6 +20,8 @@ class pcCreateRigAlt00DRenameBlendshapeCopies(object):
         for i in range(len(blndVals)):
             if "_Copy" in blndVals[i][-5:]:
                 toRename = blndVals[i][:-5]
+                toRename1 = "fakeanme"
+                print("toRename: {0}".format(toRename))
                 if "l_" in toRename[:2]:
                     toRename1 = toRename.replace("l_", "r_")
                     # print("l to r {0}".format(toRename1))
@@ -27,6 +29,25 @@ class pcCreateRigAlt00DRenameBlendshapeCopies(object):
                     toRename1 = toRename.replace("r_", "l_")
                     # print("r to l {0}".format(toRename1))
                 elif "combo" in toRename[:5]:
+                    if "_l_" in toRename:
+                        toRename1 = toRename.replace("_l_", "_r_")
+                        # print("l to r {0}".format(toRename1))
+                    elif "_r_" in toRename:
+                        toRename1 = toRename.replace("_r_", "_l_")
+                        # print("r to l {0}".format(toRename1))
+                    else:
+                        toRename1 = toRename
+                elif "CTRL_" in toRename[:5]:
+                    if "_l_" in toRename:
+                        toRename1 = toRename.replace("_l_", "_r_")
+                        # print("l to r {0}".format(toRename1))
+                    elif "_r_" in toRename:
+                        toRename1 = toRename.replace("_r_", "_l_")
+                        # print("r to l {0}".format(toRename1))
+                    else:
+                        toRename1 = toRename
+                        # print("No renaming")
+                elif "FK_" in toRename[:3]:
                     if "_l_" in toRename:
                         toRename1 = toRename.replace("_l_", "_r_")
                         # print("l to r {0}".format(toRename1))
@@ -46,7 +67,7 @@ class pcCreateRigAlt00DRenameBlendshapeCopies(object):
                 # mc.renameAttr( '{0}.{1}'.format(blndName, blndVals[i]), toRename1 )
 
         # this lets us rename any groups
-        for i in range(200):
+        for i in range(300):
             getName = mc.getAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)))
             if "Group" in getName:
                 continue
@@ -61,6 +82,7 @@ class pcCreateRigAlt00DRenameBlendshapeCopies(object):
                 renameVal = "{0}".format(getName[:-5])
                 mc.setAttr("{0}.{1}".format(blndName, "targetDirectory[{0}].directoryName".format(i)), renameVal,
                            type='string')
+
 
         blndVals = mc.aliasAttr(blndName, q=True)
         # print("blndVals {0}".format(blndVals))

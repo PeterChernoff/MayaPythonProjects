@@ -101,6 +101,7 @@ class pcCreateRigAlt00CBlendSDKCode(object):
             mc.delete(test)
 
         for i in range(len(blndValNames)):
+            custVal = False
             try:
                 driver, driverAttrDrvnVal = blndValNames[i].split("__", 1)
             except:
@@ -108,12 +109,14 @@ class pcCreateRigAlt00CBlendSDKCode(object):
             if "FK_" in driver[:3]:
 
                 driver = "CTRL_" + driver
+            elif "CTRL_" in driver[:5]:
+                custVal = True
 
             else:
                 driver = "JNT_BND_" + driver
             # print(driver)
             # print(driverAttrDrvnVal)
-            driverAttr, driverValNum = self.getDriverAttrDrivenVals(driverAttrDrvnVal)
+            driverAttr, driverValNum = self.getDriverAttrDrivenVals(driverAttrDrvnVal, custVal)
             # print("driverAttr {0}".format(driverAttr))
             # print("drivenValue {0}".format(driverValNum))
 
@@ -128,13 +131,14 @@ class pcCreateRigAlt00CBlendSDKCode(object):
 
         # CRU.createLocatorToDelete()
 
-    def getDriverAttrDrivenVals(self, driverAttrDrvnVal, *args):
+    def getDriverAttrDrivenVals(self, driverAttrDrvnVal, custVal, *args):
         driverAttr, drivenVal = driverAttrDrvnVal.split("_", 1)
         # if the last character is 'e', remove the last letter
         if drivenVal[-1:]=="e":
             drivenVal =drivenVal[:-1]
 
-        driverAttr = driverAttr.lower()
+        if not custVal:
+            driverAttr = driverAttr.lower()
 
         # determines if the value is positive or negative
         if drivenVal[0].lower() == 'p':
