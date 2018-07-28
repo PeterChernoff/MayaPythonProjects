@@ -15,10 +15,10 @@ reload(pcCreateRigAlt00AUtilities)
 
 
 class pcCreateRigAlt01SpineCodeExtras(object):
-    def __init__(self, addBreasts=True, bndJnt="JNT_BND_spine5", ):
+    def __init__(self, addChestBones=True, bndJnt="JNT_BND_spine5", ):
 
         # default passes these values
-        self.tgpMakeBC(addBreasts, bndJnt, )
+        self.tgpMakeBC(addChestBones, bndJnt, )
 
     def tgpMakeBC(self, addBreasts=None, bndJnt=None, *args):
         breastJoints = ["JNT_BND_l_breast", "JNT_BND_r_breast"]

@@ -58,7 +58,7 @@ class pcCreateRigAlt00ECreateRig(object):
     def runProgram(self, cbGeo):
         # runs the code to create a rig
         CRA1(cbGeo=cbGeo)
-        CRA1A(addBreasts=True)
+        CRA1A(addChestBones=True)
         CRA2(cbGeo=cbGeo)
         CRA2A(createAlerts=cbGeo)
         CRA3(cbGeo=cbGeo)
